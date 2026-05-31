@@ -17,7 +17,7 @@ const visibleCount      = document.getElementById('visible-count');
 const searchInput       = document.getElementById('search');
 const statusFilter      = document.getElementById('status-filter');
 const sortModeSelect    = document.getElementById('sort-mode');
-const pagination        = document.getElementById('pagination');
+const sentinel          = document.getElementById('scroll-sentinel');
 const bulkBar           = document.getElementById('bulk-bar');
 const bulkCount         = document.getElementById('bulk-count');
 const bulkSelectAllBtn  = document.getElementById('bulk-select-all');
@@ -266,75 +266,49 @@ function buildRow(item) {
   return node;
 }
 
-function render(items) {
-  linkList.innerHTML = '';
+function render(items, append = false) {
   totalCount.textContent = String(state.total);
   visibleCount.textContent = String(state.links.length);
 
-  if (!items.length) {
-    const empty = document.createElement('div');
-    empty.className = 'empty-state';
-    empty.textContent = 'No links match your current filters.';
-    linkList.appendChild(empty);
-  } else {
-    const grouped = new Map();
-    for (const item of items) {
-      const label = item.pinned ? 'Pinned' : groupLabel(item.date);
-      if (!grouped.has(label)) grouped.set(label, []);
-      grouped.get(label).push(item);
+  if (!append) {
+    linkList.innerHTML = '';
+    if (!items.length) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.textContent = 'No links match your current filters.';
+      linkList.appendChild(empty);
+      return;
     }
-    for (const [label, groupItems] of grouped) {
-      const wrapper = document.createElement('section');
+  }
+
+  const grouped = new Map();
+  for (const item of items) {
+    const label = item.pinned ? 'Pinned' : groupLabel(item.date);
+    if (!grouped.has(label)) grouped.set(label, []);
+    grouped.get(label).push(item);
+  }
+
+  for (const [label, groupItems] of grouped) {
+    let wrapper = null;
+    if (append) {
+      for (const el of linkList.querySelectorAll('.date-group')) {
+        if (el.querySelector('.date-group__header')?.textContent === label) {
+          wrapper = el;
+          break;
+        }
+      }
+    }
+    if (!wrapper) {
+      wrapper = document.createElement('section');
       wrapper.className = label === 'Pinned' ? 'date-group date-group--pinned' : 'date-group';
       const header = document.createElement('div');
       header.className = 'date-group__header';
       header.textContent = label;
       wrapper.appendChild(header);
-      for (const item of groupItems) wrapper.appendChild(buildRow(item));
       linkList.appendChild(wrapper);
     }
+    for (const item of groupItems) wrapper.appendChild(buildRow(item));
   }
-
-  renderPagination();
-}
-
-function renderPagination() {
-  if (!pagination) return;
-  const { page, totalPages } = state;
-  if (totalPages <= 1) { pagination.classList.add('hidden'); return; }
-  pagination.classList.remove('hidden');
-  pagination.innerHTML = '';
-
-  const btn = (label, targetPage, active = false, disabled = false) => {
-    const el = document.createElement('button');
-    el.type = 'button';
-    el.className = 'pagination__btn' + (active ? ' pagination__btn--active' : '');
-    el.textContent = label;
-    el.disabled = disabled;
-    if (!disabled && !active) el.addEventListener('click', () => { fetchPage(targetPage, false); window.scrollTo({ top: 0, behavior: 'smooth' }); });
-    return el;
-  };
-
-  pagination.appendChild(btn('‹', page - 1, false, page === 1));
-
-  const delta = 2;
-  const pages = [];
-  for (let i = 1; i <= totalPages; i++) {
-    if (i === 1 || i === totalPages || (i >= page - delta && i <= page + delta)) pages.push(i);
-  }
-  let prev = null;
-  for (const p of pages) {
-    if (prev !== null && p - prev > 1) {
-      const dots = document.createElement('span');
-      dots.className = 'pagination__dots';
-      dots.textContent = '…';
-      pagination.appendChild(dots);
-    }
-    pagination.appendChild(btn(String(p), p, p === page));
-    prev = p;
-  }
-
-  pagination.appendChild(btn('›', page + 1, false, page === totalPages));
 }
 
 function buildApiParams(page) {
@@ -358,23 +332,24 @@ function showSkeleton() {
   }
 }
 
-async function fetchPage(page) {
+async function fetchPage(page, append = false) {
   if (state.loading) return;
   state.loading = true;
-  showSkeleton();
+  if (!append) showSkeleton();
 
   try {
     const res = await window.LinkNest.apiFetch(`/api/links?${buildApiParams(page)}`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to load links');
-    state.links = data.links;
+    const newLinks = data.links || [];
+    state.links = append ? [...state.links, ...newLinks] : newLinks;
     state.page = data.page;
     state.totalPages = data.pages;
     state.total = data.total;
-    render(state.links);
+    render(newLinks, append);
   } catch (err) {
     console.error(err);
-    linkList.innerHTML = '<div class="empty-state">Failed to load links. Please refresh.</div>';
+    if (!append) linkList.innerHTML = '<div class="empty-state">Failed to load links. Please refresh.</div>';
   } finally {
     state.loading = false;
   }
@@ -434,6 +409,14 @@ bulkSelectAllBtn.addEventListener('click', () => {
 if (window.LinkNest.initPullToRefresh) {
   window.LinkNest.initPullToRefresh(() => fetchPage(1));
 }
+
+const scrollObserver = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting && !state.loading && state.page < state.totalPages) {
+    fetchPage(state.page + 1, true);
+  }
+}, { rootMargin: '200px' });
+
+if (sentinel) scrollObserver.observe(sentinel);
 
 fetchPage(1).catch(console.error);
 loadTagChips().catch(() => {});
