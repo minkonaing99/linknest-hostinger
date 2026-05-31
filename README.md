@@ -78,14 +78,14 @@ Link Nest is built with:
 
 - Node.js
 - a plain HTTP server
-- Supabase (PostgreSQL) via `pg`
+- MySQL via `mysql2`
 - vanilla HTML, CSS, and JavaScript on the frontend
 - `bcryptjs` for password hashing
 - JWT access tokens plus refresh tokens for app clients
 
 ## Data Model Notes
 
-Links are stored in Supabase (PostgreSQL) and include sync-friendly timestamps.
+Links are stored in MySQL and include sync-friendly timestamps.
 
 Key fields include:
 

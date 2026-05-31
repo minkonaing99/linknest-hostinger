@@ -226,7 +226,10 @@ A link document returned by the API looks like this:
   "pinned": false,
   "createdAt": "2026-04-14T00:00:00.000Z",
   "updatedAt": "2026-04-14T00:00:00.000Z",
-  "deletedAt": null
+  "deletedAt": null,
+  "lastOpenedAt": null,
+  "openedCount": 0,
+  "remindAt": null
 }
 ```
 
@@ -238,6 +241,9 @@ A link document returned by the API looks like this:
 - `deletedAt = null` means the link is active
 - `deletedAt != null` means the link is soft-deleted
 - `host` is derived from the normalized URL
+- `lastOpenedAt` is set each time `POST /api/links/:id/opened` is called
+- `openedCount` increments by 1 on each open call
+- `remindAt` is a nullable ISO datetime for user-set reminders
 
 ## Protected endpoints
 
@@ -263,6 +269,9 @@ Supported query params:
 - `order` = `asc`, `desc`
 - `updatedAfter` = ISO datetime
 - `includeDeleted` = `true|false`
+- `remindBefore` = ISO datetime — returns links where `remindAt` is set and `remindAt <= remindBefore`
+- `staleBefore` = ISO datetime — returns links not opened since this time (or never opened and created before it)
+- `neverOpened` = `true|false` — returns links where `openedCount = 0`
 
 Examples:
 
@@ -452,6 +461,34 @@ Behavior:
 - sets `deletedAt` back to `null`
 - refreshes `updatedAt`
 - if the old status was `archived`, it becomes `saved`
+
+### Track a link open
+
+```http
+POST /api/links/:id/opened
+```
+
+Requires auth. No request body needed.
+
+Success response:
+
+```json
+{
+  "ok": true,
+  "entry": {
+    "id": "link-id",
+    "lastOpenedAt": "2026-06-01T12:00:00.000Z",
+    "openedCount": 3
+  }
+}
+```
+
+Behavior:
+
+- sets `lastOpenedAt` to now
+- increments `openedCount` by 1
+- returns the full updated entry
+- returns `404` if the link does not exist or is soft-deleted
 
 ## Bulk operations
 

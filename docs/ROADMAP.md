@@ -1,8 +1,12 @@
 # Link Nest Roadmap
 
-Last updated: 2026-04-14
+Last updated: 2026-06-01
 
 This roadmap is based on the current codebase, current product shape, and the gaps that matter most for usefulness.
+
+## Implementation note
+
+The database is MySQL (mysql2). The README and any references to Supabase or PostgreSQL are outdated and have been corrected. The `supabase/` folder has been removed.
 
 It is intentionally opinionated. The goal is not to list every possible feature. The goal is to prioritize what will make Link Nest better fastest.
 
@@ -137,25 +141,11 @@ A personal library gets messy fast if duplicates pile up.
 
 ## P1: Strong next phase
 
-### 4. Add reminder and revisit workflow
+### 4. ~~Add reminder and revisit workflow~~ (done)
 
-Examples:
+Implemented 2026-06-01. Fields added: `remindAt`, `lastOpenedAt`, `openedCount`.
 
-- remind me in 3 days
-- revisit next week
-- surface stale unread links
-- review useful links not opened recently
-
-Possible model fields:
-
-- `remindAt`
-- `lastOpenedAt`
-- `openedCount`
-- `reviewState`
-
-Why this matters:
-
-The product should help users return to links, not just collect them.
+Browse has "Due to revisit" and "Stale unread (30d)" filter buttons. Editor has a "Remind me" date input. Opening a link in Browse fires `POST /api/links/:id/opened` to track engagement. Migration in `mysql/002_retention.sql`.
 
 ### 5. Add richer metadata capture
 
@@ -177,19 +167,9 @@ Why this matters:
 
 Better metadata improves scanability and organization.
 
-### 6. Add a dedicated single-link API
+### 6. ~~Add a dedicated single-link API~~ (done)
 
-Suggested endpoint:
-
-```text
-GET /api/links/:id
-```
-
-Why it matters:
-
-The current editor loads all links and finds one client-side. That is wasteful and will age badly.
-
-This is a small backend improvement with immediate cleanliness benefits.
+`GET /api/links/:id` exists in `lib/router.js` and the editor already uses it. Closed 2026-06-01.
 
 ### 7. Add tests for core backend behavior
 

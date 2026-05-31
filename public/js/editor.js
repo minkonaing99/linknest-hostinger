@@ -8,6 +8,7 @@ const els = {
   date: document.getElementById('date'),
   status: document.getElementById('status'),
   tags: document.getElementById('tags'),
+  remindAt: document.getElementById('remind-at'),
   fetchTitle: document.getElementById('fetch-title'),
   pasteClipboard: document.getElementById('paste-clipboard'),
   submitButton: document.getElementById('submit-button'),
@@ -32,6 +33,7 @@ function payload() {
     date: els.date.value,
     status: els.status.value,
     tags: parseTags(els.tags.value),
+    remindAt: els.remindAt.value || null,
   };
 }
 
@@ -70,6 +72,7 @@ async function loadForEdit() {
   els.date.value = item.date || new Date().toISOString().slice(0, 10);
   els.status.value = item.status || 'saved';
   els.tags.value = (item.tags || []).join(', ');
+  els.remindAt.value = item.remindAt ? item.remindAt.slice(0, 10) : '';
   els.formHeading.textContent = 'Edit link';
   els.pageTitle.textContent = 'Edit Link';
   els.submitButton.textContent = 'Save changes';

@@ -1,7 +1,7 @@
 const LIMIT = 50;
 const STATUS_CYCLE = ['saved', 'unread', 'useful'];
 
-const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false, selectMode: false, selected: new Set() };
+const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false, selectMode: false, selected: new Set(), quickFilter: null };
 
 const SORT_MAP = {
   recent:       { sort: 'updatedAt', order: 'desc' },
@@ -220,6 +220,9 @@ function buildRow(item) {
   titleEl.textContent = (() => { const limit = window.matchMedia('(max-width: 768px)').matches ? 55 : 70; return rawTitle.length > limit ? rawTitle.slice(0, limit) + '…' : rawTitle; })();
   titleEl.href = item.url;
   titleEl.title = rawTitle;
+  titleEl.addEventListener('click', () => {
+    window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}/opened`, { method: 'POST' }).catch(() => {});
+  });
 
   const tagRow = node.querySelector('.library-row__tags');
   if (item.tags?.length) {
@@ -320,6 +323,15 @@ function buildApiParams(page) {
   if (status !== 'all') params.set('status', status);
   params.set('sort', sort);
   params.set('order', order);
+
+  if (state.quickFilter === 'remind') {
+    params.set('remindBefore', new Date().toISOString());
+  } else if (state.quickFilter === 'stale') {
+    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    params.set('staleBefore', cutoff);
+    if (!q && status === 'all') params.set('status', 'unread');
+  }
+
   return params;
 }
 
@@ -404,6 +416,16 @@ bulkSelectAllBtn.addEventListener('click', () => {
     rows.forEach(r => r.classList.add('is-selected'));
   }
   updateBulkBar();
+});
+
+document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const filter = btn.dataset.filter;
+    const active = state.quickFilter === filter;
+    state.quickFilter = active ? null : filter;
+    document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.toggle('is-active', b.dataset.filter === state.quickFilter));
+    fetchPage(1);
+  });
 });
 
 if (window.LinkNest.initPullToRefresh) {
