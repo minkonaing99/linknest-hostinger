@@ -554,6 +554,11 @@ textarea.field {
   color: var(--danger);
   border-color: rgba(214, 64, 69, 0.25);
 }
+.button--ghost.is-active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
 .button:hover { opacity: 0.95; }
 
 .login-submit {
