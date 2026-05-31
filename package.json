@@ -1,0 +1,15 @@
+{
+  "name": "linknest",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Minimalist local website for saving and browsing links",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.7",
+    "mysql2": "^3.22.4"
+  }
+}

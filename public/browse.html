@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f2f2f7" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Link Nest" />
+    <title>Browse Links · Link Nest</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="/img/apple-touch-icon.png" />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body data-page="browse">
+    <div class="app-shell app-shell--narrow">
+      <header class="page-header">
+        <div class="page-bar">
+          <div class="page-bar__identity">
+            <img class="brand-mark" src="/img/logo-mark.png" alt="Link Nest logo" />
+            <span class="page-kicker">Link Nest</span>
+          </div>
+          <button type="button" class="button button--ghost button--small button--logout" id="logout-button">Logout</button>
+        </div>
+        <nav class="segmented-nav" aria-label="Primary">
+          <a class="segmented-nav__item" href="/">Home</a>
+          <a class="segmented-nav__item is-active" href="/browse.html">Browse <span class="nav-badge hidden" id="unread-badge"></span></a>
+          <a class="segmented-nav__item" href="/editor.html">Add Link</a>
+        </nav>
+      </header>
+
+      <main class="page-stack page-stack--airy">
+        <section class="surface surface--soft surface--group">
+          <div class="filter-stack">
+            <input id="search" class="field field--search" type="search" enterkeyhint="search" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Search title, host, tags, URL" />
+            <div class="filter-grid">
+              <select id="status-filter" class="field field--select">
+                <option value="all">All statuses</option>
+                <option value="saved">Saved</option>
+                <option value="unread">Unread</option>
+                <option value="useful">Useful</option>
+                <option value="archived">Archived</option>
+              </select>
+              <select id="sort-mode" class="field field--select">
+                <option value="recent">Most recent</option>
+                <option value="date-asc">Oldest first</option>
+                <option value="title-asc">Title A-Z</option>
+                <option value="title-desc">Title Z-A</option>
+              </select>
+              <a class="button" href="/editor.html">Add new</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="surface surface--soft surface--group">
+          <div class="section-header">
+            <div class="section-header__left">
+              <h2 class="section-title">Library</h2>
+              <p class="section-copy"><span id="visible-count">0</span> loaded of <span id="total-count">0</span> total</p>
+            </div>
+            <div class="browse-actions">
+              <button type="button" id="select-toggle-btn" class="button button--ghost">Select</button>
+              <button type="button" id="check-links-btn" class="button button--ghost">Check links</button>
+              <a class="button button--ghost" href="/archive.html">Archive</a>
+              <a class="button button--ghost" href="/api/links/export">Export</a>
+            </div>
+          </div>
+          <div id="tag-chips" class="tag-chips hidden"></div>
+          <div id="health-panel" class="health-panel hidden"></div>
+          <div id="link-list" class="list-stack list-stack--tight list-stack--rows"></div>
+          <nav id="pagination" class="pagination hidden" aria-label="Pagination"></nav>
+        </section>
+      </main>
+    </div>
+
+    <div id="bulk-bar" class="bulk-bar hidden">
+      <span id="bulk-count" class="bulk-bar__count">0 selected</span>
+      <div class="bulk-bar__actions">
+        <button type="button" id="bulk-select-all" class="button button--ghost button--small">Select all</button>
+        <select id="bulk-status-select" class="field field--select field--small">
+          <option value="" disabled selected>Set status…</option>
+          <option value="saved">Saved</option>
+          <option value="unread">Unread</option>
+          <option value="useful">Useful</option>
+        </select>
+        <button type="button" id="bulk-delete-btn" class="button button--small button--danger">Delete</button>
+        <button type="button" id="bulk-cancel-btn" class="button button--ghost button--small">Cancel</button>
+      </div>
+    </div>
+
+    <template id="link-template">
+      <article class="library-row">
+        <div class="library-row__status">
+          <span class="status-dot"></span>
+        </div>
+        <div class="library-row__main">
+          <div class="library-row__title-line">
+            <a class="library-row__title" target="_blank" rel="noreferrer"></a>
+          </div>
+          <div class="library-row__meta">
+            <span class="link-host"></span>
+            <span>&bull;</span>
+            <span class="link-date"></span>
+            <span>&bull;</span>
+            <span class="status-text"></span>
+          </div>
+          <div class="library-row__tags tag-row hidden"></div>
+        </div>
+        <div class="library-row__tail">
+          <button type="button" class="pin-toggle" title="Pin / unpin link" aria-label="Pin / unpin link">☆</button>
+          <div class="row-menu">
+            <button type="button" class="row-menu__trigger" aria-label="More actions" aria-expanded="false">•••</button>
+            <div class="row-menu__popover hidden">
+              <a class="row-menu__item edit-link" href="#">Edit</a>
+              <button type="button" class="row-menu__item row-menu__item--danger delete-button">Delete</button>
+            </div>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <script src="/js/shared.js"></script>
+    <script src="/js/browse.js"></script>
+  </body>
+</html>

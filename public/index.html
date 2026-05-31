@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f2f2f7" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Link Nest" />
+    <title>Link Nest</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="/img/apple-touch-icon.png" />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body data-page="home">
+    <div class="app-shell app-shell--narrow">
+      <header class="page-header">
+        <div class="page-bar">
+          <div class="page-bar__identity">
+            <img class="brand-mark" src="/img/logo-mark.png" alt="Link Nest logo" />
+            <span class="page-kicker">Link Nest</span>
+          </div>
+          <button type="button" class="button button--ghost button--small button--logout" id="logout-button">Logout</button>
+        </div>
+        <nav class="segmented-nav" aria-label="Primary">
+          <a class="segmented-nav__item is-active" href="/">Home</a>
+          <a class="segmented-nav__item" href="/browse.html">Browse <span class="nav-badge hidden" id="unread-badge"></span></a>
+          <a class="segmented-nav__item" href="/editor.html">Add Link</a>
+        </nav>
+      </header>
+
+      <main class="page-stack page-stack--airy">
+        <section class="surface surface--soft surface--group">
+          <div class="section-header section-header--stack">
+            <div>
+              <h2 class="section-title">Quick Add</h2>
+              <p class="section-copy">Paste a URL and save it with an auto-fetched title.</p>
+            </div>
+          </div>
+          <form id="quick-add-form" class="form-stack form-stack--tight">
+            <div class="quick-entry">
+              <input id="quick-add-url" class="field quick-add-row__input" type="url" inputmode="url" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://example.com/article" required />
+              <button type="button" id="quick-add-paste" class="button button--ghost quick-add-row__button">Paste</button>
+            </div>
+            <p id="quick-add-message" class="form-message"></p>
+          </form>
+        </section>
+
+        <section class="surface surface--soft surface--group shortcut-list">
+          <a class="shortcut-row" href="/browse.html">
+            <div>
+              <h2 class="section-title">Browse</h2>
+              <p class="section-copy">Search, filter, edit, and manage saved links.</p>
+            </div>
+            <span class="shortcut-row__chevron" aria-hidden="true">›</span>
+          </a>
+          <a class="shortcut-row" href="/editor.html">
+            <div>
+              <h2 class="section-title">Add Link</h2>
+              <p class="section-copy">Save a URL with tags and status.</p>
+            </div>
+            <span class="shortcut-row__chevron" aria-hidden="true">›</span>
+          </a>
+        </section>
+
+        <section class="surface surface--soft surface--group">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Recent</h2>
+              <p class="section-copy">Latest saved items.</p>
+            </div>
+            <a class="button button--ghost" href="/browse.html">Open library</a>
+          </div>
+          <div id="recent-links" class="recent-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <template id="link-template">
+      <article class="recent-row">
+        <div class="recent-row__status"><span class="status-dot"></span></div>
+        <div class="recent-row__main">
+          <a class="recent-row__title" target="_blank" rel="noreferrer"></a>
+          <div class="recent-row__meta">
+            <span class="link-host"></span>
+            <span>&bull;</span>
+            <span class="link-date"></span>
+            <span>&bull;</span>
+            <span class="status-text"></span>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <script src="/js/shared.js"></script>
+    <script src="/js/home.js"></script>
+  </body>
+</html>
