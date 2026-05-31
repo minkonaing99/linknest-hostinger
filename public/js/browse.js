@@ -407,53 +407,6 @@ if (bulkStatusSelect) {
   });
 }
 
-const checkLinksBtn = document.getElementById('check-links-btn');
-const healthPanel   = document.getElementById('health-panel');
-
-async function runHealthCheck() {
-  if (!checkLinksBtn || !healthPanel) return;
-  checkLinksBtn.textContent = 'Checking…';
-  checkLinksBtn.disabled = true;
-  healthPanel.className = 'health-panel health-panel--loading';
-  healthPanel.textContent = 'Checking links, this may take a moment…';
-
-  try {
-    const res = await window.LinkNest.apiFetch('/api/links/check-health?limit=100');
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Health check failed');
-
-    const broken = data.checks.filter(c => !c.ok);
-    if (!broken.length) {
-      healthPanel.className = 'health-panel health-panel--ok';
-      healthPanel.textContent = `All ${data.total} links are reachable.`;
-    } else {
-      healthPanel.className = 'health-panel health-panel--broken';
-      const summary = document.createElement('p');
-      summary.className = 'health-summary';
-      summary.textContent = `${broken.length} broken of ${data.total} checked`;
-      const list = document.createElement('ul');
-      list.className = 'health-list';
-      for (const item of broken) {
-        const li = document.createElement('li');
-        li.className = 'health-item';
-        const label = item.error ? `${item.error}` : `HTTP ${item.status}`;
-        li.innerHTML = `<span class="health-item__label">${label}</span> <a href="${item.url}" target="_blank" rel="noreferrer" class="health-item__title">${item.title || item.url}</a>`;
-        list.appendChild(li);
-      }
-      healthPanel.innerHTML = '';
-      healthPanel.appendChild(summary);
-      healthPanel.appendChild(list);
-    }
-  } catch (err) {
-    healthPanel.className = 'health-panel health-panel--error';
-    healthPanel.textContent = err.message;
-  } finally {
-    checkLinksBtn.textContent = 'Check links';
-    checkLinksBtn.disabled = false;
-  }
-}
-
-if (checkLinksBtn) checkLinksBtn.addEventListener('click', runHealthCheck);
 
 selectToggleBtn.addEventListener('click', () => {
   if (state.selectMode) exitSelectMode();
