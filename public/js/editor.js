@@ -112,12 +112,7 @@ els.form.addEventListener('submit', async event => {
     }
     if (!res.ok) throw new Error(data.error || 'Failed to save link');
     setMessage(els.message, editing ? 'Link updated.' : 'Link saved.', 'success');
-    if (!editing) {
-      els.form.reset();
-      els.id.value = '';
-      els.date.value = new Date().toISOString().slice(0, 10);
-      els.status.value = 'saved';
-    }
+    setTimeout(() => { window.location.href = '/browse.html'; }, 600);
   } catch (error) {
     setMessage(els.message, error.message, 'error');
   }
