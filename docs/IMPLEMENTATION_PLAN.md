@@ -183,4 +183,4 @@ Add `CORS_ORIGIN` env var (default `*`, document trade-off).
 | 1 — Backend Tests | Done (2026-06-01) — 153/153 pass |
 | 2 — Duplicate Detection | Done (2026-06-01) — 169/169 pass |
 | 3 — Scoped API Tokens | Done (2026-06-01) — 169/169 pass |
-| 4 — Browser Extension | Pending |
+| 4 — Browser Extension | Done (2026-06-01) |

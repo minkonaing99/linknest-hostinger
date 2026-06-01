@@ -20,10 +20,10 @@ Pending work organized by priority. See ROADMAP.md for full context and reasonin
 - Fuzzy duplicate suggestions by host + similar title: pending
 - Merge/review UI for flagged duplicates: pending
 
-### Scoped API tokens (in progress)
+### Scoped API tokens (completed 2026-06-01)
 See `docs/IMPLEMENTATION_PLAN.md` Phase 3.
 
-### Browser extension (in progress)
+### Browser extension (completed 2026-06-01)
 See `docs/IMPLEMENTATION_PLAN.md` Phase 4.
 
 ---
