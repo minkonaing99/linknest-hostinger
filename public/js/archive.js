@@ -34,17 +34,18 @@ function buildRow(item) {
     try {
       const res = await window.LinkNest.apiFetch(`/api/links/restore/${encodeURIComponent(item.id)}`, { method: 'POST' });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Restore failed'); }
+      window.LinkNest.showToast('Link restored', 'success');
       await fetchPage(1, false);
-    } catch (err) { alert(err.message); }
+    } catch (err) { window.LinkNest.showToast(err.message); }
   });
 
   node.querySelector('.hard-delete-button').addEventListener('click', async () => {
-    if (!confirm(`Permanently delete this link? This cannot be undone.\n\n${item.title}`)) return;
     try {
       const res = await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}?hardDelete=true`, { method: 'DELETE' });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Delete failed'); }
+      window.LinkNest.showToast('Permanently deleted', 'success');
       await fetchPage(1, false);
-    } catch (err) { alert(err.message); }
+    } catch (err) { window.LinkNest.showToast(err.message); }
   });
 
   return node;
@@ -108,11 +109,9 @@ const deleteAllBtn = document.getElementById('delete-all-btn');
 if (deleteAllBtn) {
   deleteAllBtn.addEventListener('click', async () => {
     if (!state.total) return;
-    if (!confirm(`Permanently delete all ${state.total} archived links? This cannot be undone.`)) return;
     try {
       deleteAllBtn.disabled = true;
       deleteAllBtn.textContent = 'Deleting…';
-      // Fetch all ids then hard-delete each
       let page = 1;
       const ids = [];
       while (true) {
@@ -126,9 +125,10 @@ if (deleteAllBtn) {
       await Promise.all(ids.map(id =>
         window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(id)}?hardDelete=true`, { method: 'DELETE' })
       ));
+      window.LinkNest.showToast('All archived links deleted', 'success');
       await fetchPage(1, false);
     } catch (err) {
-      alert(err.message);
+      window.LinkNest.showToast(err.message);
     } finally {
       deleteAllBtn.disabled = false;
       deleteAllBtn.textContent = 'Delete all';

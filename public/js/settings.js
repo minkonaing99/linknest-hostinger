@@ -73,20 +73,20 @@ createForm.addEventListener('submit', async (e) => {
     nameInput.value = '';
     await loadTokens();
   } catch (err) {
-    alert('Failed to create token: ' + err.message);
+    window.LinkNest.showToast('Failed to create token: ' + err.message);
   }
 });
 
 tokenList.addEventListener('click', async (e) => {
   const id = e.target.dataset.revoke;
   if (!id) return;
-  if (!confirm('Revoke this token? Any integrations using it will stop working.')) return;
   try {
     await apiFetch('DELETE', `/api/tokens/${encodeURIComponent(id)}`);
     await loadTokens();
     tokenReveal.classList.add('hidden');
+    window.LinkNest.showToast('Token revoked', 'success');
   } catch (err) {
-    alert('Failed to revoke token: ' + err.message);
+    window.LinkNest.showToast('Failed to revoke token: ' + err.message);
   }
 });
 

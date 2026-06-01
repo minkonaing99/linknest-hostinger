@@ -245,10 +245,14 @@ function buildRow(item) {
 
   node.querySelector('.delete-button').addEventListener('click', async event => {
     event.stopPropagation();
-    if (!confirm(`Delete this link?\n\n${item.title}`)) return;
-    await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}`, { method: 'DELETE' });
-    closeAllMenus();
-    await fetchPage(1);
+    try {
+      await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}`, { method: 'DELETE' });
+      window.LinkNest.showToast('Moved to archive', 'success');
+      closeAllMenus();
+      await fetchPage(1);
+    } catch (err) {
+      window.LinkNest.showToast(err.message);
+    }
   });
 
   const menu    = node.querySelector('.row-menu');
