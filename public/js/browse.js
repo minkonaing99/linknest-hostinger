@@ -1,7 +1,7 @@
 const LIMIT = 50;
 const STATUS_CYCLE = ['saved', 'unread', 'useful'];
 
-const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false, selectMode: false, selected: new Set(), quickFilter: null };
+const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false, selectMode: false, selected: new Set(), quickFilter: null, tagFilter: null };
 
 const SORT_MAP = {
   recent:       { sort: 'updatedAt', order: 'desc' },
@@ -119,7 +119,7 @@ async function bulkChangeStatus(status) {
     });
     if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Failed'); }
   } catch (err) {
-    alert(err.message);
+    window.LinkNest.showToast(err.message);
   }
   exitSelectMode();
   await fetchPage(state.page);
@@ -143,10 +143,10 @@ async function loadTagChips() {
         const isActive = chip.classList.contains('is-active');
         tagChipsContainer.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('is-active'));
         if (isActive) {
-          searchInput.value = '';
+          state.tagFilter = null;
         } else {
           chip.classList.add('is-active');
-          searchInput.value = tag;
+          state.tagFilter = tag;
         }
         fetchPage(1);
       });
@@ -201,7 +201,7 @@ function buildRow(item) {
       applyStatusStyles(statusDot, statusText, next);
       window.LinkNest.updateUnreadBadge();
     } catch (err) {
-      alert(err.message);
+      window.LinkNest.showToast(err.message);
     } finally {
       statusDot.classList.remove('status-dot--transitioning');
     }
@@ -212,12 +212,12 @@ function buildRow(item) {
   pinToggle.classList.toggle('is-pinned', Boolean(item.pinned));
   pinToggle.addEventListener('click', async event => {
     event.stopPropagation();
-    try { await togglePinned(item); } catch (err) { alert(err.message); }
+    try { await togglePinned(item); } catch (err) { window.LinkNest.showToast(err.message); }
   });
 
   const titleEl = node.querySelector('.library-row__title');
   const rawTitle = item.title || item.url;
-  titleEl.textContent = (() => { const limit = window.matchMedia('(max-width: 768px)').matches ? 55 : 70; return rawTitle.length > limit ? rawTitle.slice(0, limit) + '…' : rawTitle; })();
+  titleEl.textContent = rawTitle;
   titleEl.href = item.url;
   titleEl.title = rawTitle;
   titleEl.addEventListener('click', () => {
@@ -320,6 +320,7 @@ function buildApiParams(page) {
   const status = statusFilter.value;
   const { sort, order } = SORT_MAP[sortModeSelect.value] || SORT_MAP.recent;
   if (q) params.set('q', q);
+  if (state.tagFilter) params.set('tag', state.tagFilter);
   if (status !== 'all') params.set('status', status);
   params.set('sort', sort);
   params.set('order', order);
@@ -374,13 +375,10 @@ function debounce(fn, delay) {
 
 document.addEventListener('click', closeAllMenus);
 searchInput.addEventListener('input', debounce(() => {
-  // keep chip active state in sync with manual search
   if (tagChipsContainer) {
-    const val = searchInput.value.trim();
-    tagChipsContainer.querySelectorAll('.tag-chip').forEach(c => {
-      c.classList.toggle('is-active', c.dataset.tag === val);
-    });
+    tagChipsContainer.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('is-active'));
   }
+  state.tagFilter = null;
   fetchPage(1);
 }, 300));
 statusFilter.addEventListener('change', () => fetchPage(1));

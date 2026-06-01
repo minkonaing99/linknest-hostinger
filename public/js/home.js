@@ -29,7 +29,7 @@ function renderRecent(items) {
   if (!items.length) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
-    empty.textContent = 'No links saved yet.';
+    empty.innerHTML = 'No links saved yet. <a href="/editor.html">Add your first link</a>.';
     recentLinks.appendChild(empty);
     return;
   }
@@ -44,8 +44,7 @@ function renderRecent(items) {
     applyStatusStyles(dot, statusText, item.status);
     const title = node.querySelector('.recent-row__title');
     const rawTitle = item.title || item.url;
-    const titleLimit = window.matchMedia('(max-width: 768px)').matches ? 55 : 70;
-    title.textContent = rawTitle.length > titleLimit ? rawTitle.slice(0, titleLimit) + '…' : rawTitle;
+    title.textContent = rawTitle;
     title.href = item.url;
     title.title = rawTitle;
     fragment.appendChild(node);
@@ -94,6 +93,8 @@ async function saveQuickAdd(rawUrl) {
     return;
   }
 
+  quickAddUrl.disabled = true;
+  quickAddPaste.disabled = true;
   setMessage(quickAddMessage, 'Fetching title...');
 
   try {
@@ -120,6 +121,9 @@ async function saveQuickAdd(rawUrl) {
     await loadHome();
   } catch (error) {
     setMessage(quickAddMessage, error.message, 'error');
+  } finally {
+    quickAddUrl.disabled = false;
+    quickAddPaste.disabled = false;
   }
 }
 

@@ -77,6 +77,18 @@ async function updateUnreadBadge() {
 
 window.LinkNest.updateUnreadBadge = updateUnreadBadge;
 
+window.LinkNest.showToast = function(message, kind = 'error') {
+  const toast = document.createElement('div');
+  toast.className = `toast toast--${kind}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('toast--visible'));
+  setTimeout(() => {
+    toast.classList.remove('toast--visible');
+    toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+  }, 3000);
+};
+
 window.addEventListener('DOMContentLoaded', () => {
   const logoutButton = document.getElementById('logout-button');
   if (logoutButton) {
