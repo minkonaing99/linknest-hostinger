@@ -11,7 +11,7 @@ const assert = require('node:assert/strict');
 const {
   normalizeUrl, deriveHost, normalizeStatus, normalizeTags,
   parseBooleanFlag, parsePositiveInt, ensurePlainObject,
-  parseLinkListQuery, sanitizeEntry, normalizeStoredEntry, isPrivateIp,
+  parseLinkListQuery, sanitizeEntry, normalizeStoredEntry, isPrivateIp, jaroWinkler,
 } = require('../lib/utils');
 
 describe('normalizeUrl', () => {
@@ -77,6 +77,62 @@ describe('normalizeUrl', () => {
 
   it('throws on invalid URL', () => {
     assert.throws(() => normalizeUrl('not-a-url'));
+  });
+
+  it('canonicalizes http:// to https://', () => {
+    const result = normalizeUrl('http://example.com/path');
+    assert.ok(result.startsWith('https://'));
+  });
+
+  it('strips m. mobile subdomain', () => {
+    assert.equal(normalizeUrl('https://m.example.com/path'), 'https://example.com/path');
+  });
+
+  it('strips mobile. subdomain', () => {
+    assert.equal(normalizeUrl('https://mobile.example.com/page'), 'https://example.com/page');
+  });
+
+  it('strips amp. subdomain', () => {
+    assert.equal(normalizeUrl('https://amp.example.com/article'), 'https://example.com/article');
+  });
+
+  it('does not strip non-mobile subdomains', () => {
+    const result = normalizeUrl('https://app.example.com/path');
+    assert.ok(result.includes('app.example.com'));
+  });
+});
+
+describe('jaroWinkler', () => {
+  it('returns 1 for identical strings', () => {
+    assert.equal(jaroWinkler('hello', 'hello'), 1);
+  });
+
+  it('returns 0 for completely different strings', () => {
+    assert.ok(jaroWinkler('abc', 'xyz') < 0.5);
+  });
+
+  it('returns high similarity for similar titles', () => {
+    const sim = jaroWinkler('JavaScript: The Good Parts', 'JavaScript: The Good Parts (2nd ed)');
+    assert.ok(sim > 0.75, `expected > 0.75, got ${sim}`);
+  });
+
+  it('returns high similarity for strings differing only in case', () => {
+    const sim = jaroWinkler('Hello World', 'hello world');
+    assert.ok(sim > 0.9, `expected > 0.9, got ${sim}`);
+  });
+
+  it('returns 0 for empty strings', () => {
+    assert.equal(jaroWinkler('', 'hello'), 0);
+    assert.equal(jaroWinkler('hello', ''), 0);
+  });
+
+  it('returns 1 for two empty strings', () => {
+    assert.equal(jaroWinkler('', ''), 1);
+  });
+
+  it('returns low similarity for unrelated titles', () => {
+    const sim = jaroWinkler('Introduction to Python', 'AWS Pricing Calculator');
+    assert.ok(sim < 0.75, `expected < 0.75, got ${sim}`);
   });
 });
 
