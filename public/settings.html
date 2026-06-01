@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f2f2f7" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Link Nest" />
+    <title>Settings · Link Nest</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="/img/apple-touch-icon.png" />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body data-page="settings">
+    <div class="app-shell app-shell--narrow">
+      <header class="page-header">
+        <div class="page-bar">
+          <div class="page-bar__identity">
+            <img class="brand-mark" src="/img/logo-mark.png" alt="Link Nest logo" />
+            <span class="page-kicker">Link Nest</span>
+          </div>
+          <button type="button" class="button button--ghost button--small button--logout" id="logout-button">Logout</button>
+        </div>
+        <nav class="segmented-nav" aria-label="Primary">
+          <a class="segmented-nav__item" href="/">Home</a>
+          <a class="segmented-nav__item" href="/browse.html">Browse</a>
+          <a class="segmented-nav__item" href="/editor.html">Add Link</a>
+          <a class="segmented-nav__item is-active" href="/settings.html">Settings</a>
+        </nav>
+      </header>
+
+      <main class="page-stack page-stack--airy">
+        <section class="surface surface--soft surface--group">
+          <h2 class="surface-title">API Tokens</h2>
+          <p class="surface-description">Create long-lived tokens for iOS shortcuts, browser extensions, and scripts. A token is shown only once — save it immediately.</p>
+
+          <form id="create-token-form" class="token-form">
+            <div class="field-row">
+              <input id="token-name" class="field" type="text" placeholder="Token name (e.g. iOS Shortcut)" maxlength="100" required />
+              <select id="token-scope" class="field field--select">
+                <option value="write">Read + Write</option>
+                <option value="read">Read only</option>
+              </select>
+              <button type="submit" class="button button--primary button--small">Create</button>
+            </div>
+          </form>
+
+          <div id="token-reveal" class="token-reveal hidden">
+            <p class="token-reveal__label">Copy this token now — it will not be shown again.</p>
+            <div class="token-reveal__row">
+              <code id="token-reveal-value" class="token-reveal__value"></code>
+              <button type="button" class="button button--ghost button--small" id="copy-token-button">Copy</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="surface surface--soft surface--group">
+          <h2 class="surface-title">Active Tokens</h2>
+          <div id="token-list" class="token-list">
+            <p class="empty-state" id="token-empty">No tokens yet.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="/js/settings.js"></script>
+  </body>
+</html>

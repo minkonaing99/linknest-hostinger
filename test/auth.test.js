@@ -179,8 +179,12 @@ describe('getAuthenticatedUser — bearer JWT', () => {
     currentImpl = async () => ({ rows: [], rowCount: 1 });
     const { accessToken } = await issueTokenPair({ id: 'user-1', username: 'admin' });
 
-    // Test bearer auth: SELECT user
-    seq({ rows: [USER_SELECT_ROW], rowCount: 1 });
+    // getAuthenticatedUser calls getApiTokenUser first (api_tokens JOIN query → empty),
+    // then getBearerUser (users SELECT → user row)
+    seq(
+      { rows: [], rowCount: 0 },              // api_tokens JOIN: no match
+      { rows: [USER_SELECT_ROW], rowCount: 1 }, // users SELECT for bearer
+    );
     const req = makeReq({ authorization: `Bearer ${accessToken}` });
     const auth = await getAuthenticatedUser(req);
     assert.ok(auth);
