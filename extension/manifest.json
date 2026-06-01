@@ -18,5 +18,14 @@
     "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
   },
-  "options_page": "settings.html"
+  "options_page": "settings.html",
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Open Link Nest quick-save popup"
+    }
+  }
 }
