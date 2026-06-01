@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Link Nest — Extension Settings</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 14px;
+        color: #111;
+        background: #f2f2f7;
+        max-width: 480px;
+        margin: 32px auto;
+        padding: 0 16px 32px;
+      }
+      .header { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
+      .header img { width: 28px; height: 28px; }
+      .header h1 { font-size: 18px; font-weight: 700; }
+      label { display: block; font-size: 13px; font-weight: 500; color: #6e6e73; margin-bottom: 4px; margin-top: 14px; }
+      .field {
+        width: 100%;
+        padding: 9px 11px;
+        border: 1px solid rgba(60,60,67,.2);
+        border-radius: 10px;
+        font-size: 14px;
+        background: #fff;
+        outline: none;
+        font-family: inherit;
+      }
+      .field:focus { border-color: #007aff; box-shadow: 0 0 0 3px rgba(0,122,255,.15); }
+      .hint { font-size: 12px; color: #6e6e73; margin-top: 4px; }
+      .button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        background: #007aff;
+        color: #fff;
+      }
+      .status { margin-top: 12px; font-size: 13px; }
+      .status--ok  { color: #1f9c55; }
+      .status--err { color: #d64045; }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <img src="icons/icon-48.png" alt="" />
+      <h1>Link Nest Settings</h1>
+    </div>
+
+    <form id="settings-form">
+      <label for="server-url">Link Nest server URL</label>
+      <input id="server-url" class="field" type="url" placeholder="https://your-server.example.com" required />
+      <p class="hint">The base URL of your Link Nest instance, without trailing slash.</p>
+
+      <label for="api-token">API token</label>
+      <input id="api-token" class="field" type="password" placeholder="Paste a write-scoped API token" required autocomplete="off" />
+      <p class="hint">Create a token on the <a href="#" id="open-settings-link">Link Nest settings page</a> (write scope required).</p>
+
+      <button type="submit" class="button">Save</button>
+      <p id="status" class="status"></p>
+    </form>
+
+    <script src="settings.js"></script>
+  </body>
+</html>

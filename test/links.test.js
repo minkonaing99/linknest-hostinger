@@ -31,7 +31,7 @@ require.cache[titlePath] = {
 const {
   createLink, readLink, readLinks, updateLink,
   deleteLink, restoreLink, readTagCounts, bulkUpdateStatus,
-  parseBookmarksHtml, openLink,
+  parseBookmarksHtml, openLink, findDuplicateCandidates,
 } = require('../lib/links');
 
 // Helpers
@@ -156,15 +156,17 @@ describe('readLinks', () => {
 });
 
 describe('createLink', () => {
-  it('creates and returns a new link', async () => {
+  it('creates and returns a new link with duplicateCandidates', async () => {
     seq(
       { rows: [], rowCount: 0 },  // no existing url match
       { rows: [], rowCount: 1 },  // insert succeeded
+      { rows: [], rowCount: 0 },  // findDuplicateCandidates host query
     );
-    const entry = await createLink({ url: 'https://example.com/new', title: 'New Link' });
+    const { entry, duplicateCandidates } = await createLink({ url: 'https://example.com/new', title: 'New Link' });
     assert.equal(typeof entry.id, 'string');
     assert.ok(entry.url.startsWith('https://example.com'));
     assert.equal(entry.title, 'New Link');
+    assert.deepEqual(duplicateCandidates, []);
   });
 
   it('throws 409 on duplicate url', async () => {
@@ -341,5 +343,50 @@ describe('openLink', () => {
       assert.equal(err.statusCode, 404);
       return true;
     });
+  });
+});
+
+describe('findDuplicateCandidates', () => {
+  it('returns empty array when no links on same host', async () => {
+    seq({ rows: [], rowCount: 0 });
+    const candidates = await findDuplicateCandidates('https://example.com/page', 'Example Page');
+    assert.deepEqual(candidates, []);
+  });
+
+  it('returns candidates above similarity threshold', async () => {
+    seq({
+      rows: [
+        { id: 'link-2', url: 'https://example.com/page2', title: 'Example Page - Updated' },
+      ],
+      rowCount: 1,
+    });
+    const candidates = await findDuplicateCandidates('https://example.com/new', 'Example Page');
+    assert.equal(candidates.length, 1);
+    assert.equal(candidates[0].id, 'link-2');
+    assert.ok(candidates[0].similarity >= 0.75);
+  });
+
+  it('excludes candidates below similarity threshold', async () => {
+    seq({
+      rows: [
+        { id: 'link-3', url: 'https://example.com/other', title: 'Completely Unrelated Topic' },
+      ],
+      rowCount: 1,
+    });
+    const candidates = await findDuplicateCandidates('https://example.com/new', 'Introduction to Python');
+    assert.deepEqual(candidates, []);
+  });
+
+  it('sorts candidates by similarity descending', async () => {
+    seq({
+      rows: [
+        { id: 'link-a', url: 'https://example.com/a', title: 'Example Page Summary' },
+        { id: 'link-b', url: 'https://example.com/b', title: 'Example Page' },
+      ],
+      rowCount: 2,
+    });
+    const candidates = await findDuplicateCandidates('https://example.com/new', 'Example Page');
+    assert.equal(candidates.length, 2);
+    assert.ok(candidates[0].similarity >= candidates[1].similarity);
   });
 });
