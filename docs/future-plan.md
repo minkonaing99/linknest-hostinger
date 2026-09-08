@@ -1,0 +1,103 @@
+# Future Plan
+
+Link Nest should become a personal knowledge inbox, not a larger bookmark warehouse.
+The product should optimize for the percentage of eligible links meaningfully
+revisited, not the number of links stored.
+
+This plan supersedes earlier feature priorities where they conflict with the core
+revisit loop below.
+
+## Product Rules
+
+- Capture requires only a URL. The server fetches the title.
+- Notes are optional, plain text, and added later during review.
+- A review should end with a decision.
+- Opening or snoozing a link does not count as a meaningful action.
+- Keep the workflow private and single-user until real usage proves otherwise.
+
+## Next Release
+
+### Plain-Text Notes
+
+- Add notes to links.
+- Allow adding and editing notes during review.
+- Show a short note preview in Browse.
+- Include notes in search, import, and export.
+- Never require a note during capture.
+
+### Five-Link Review Queue
+
+- Reuse the existing Browse rows and filters.
+- Show five links per review session.
+- Fill the queue with due reminders first.
+- Fill remaining slots with the oldest saved or unread links that:
+  - are at least 14 days old; and
+  - have no meaningful action.
+- Keep opened links in the queue until a meaningful action occurs.
+
+This replaces the current 30-day stale-unread rule for the review workflow.
+
+### Review Actions
+
+- Open.
+- Add or edit note.
+- Mark useful.
+- Snooze for one week.
+- Snooze until a custom date.
+- Archive using the existing soft-delete behavior.
+
+Hard deletion is not part of review because deleted rows cannot remain in the
+revisit metric without a full event-history system.
+
+### Homepage
+
+- Show a badge when review items are pending.
+- Put due reminders first.
+- Show the five-link review queue next.
+- Show five recent links for capture confirmation and quick correction.
+- Keep other statistics secondary.
+
+### Revisit Measurement
+
+- Add a nullable `firstMeaningfulAt` timestamp.
+- Set it once, when the first meaningful action occurs.
+- Meaningful actions are:
+  - adding or editing a note;
+  - marking a link useful; or
+  - archiving through soft delete.
+- Do not set it when a link is opened or snoozed.
+- Measure links saved during the selected 30-day period that have become at
+  least 14 days old.
+- Show `Building baseline` during the first 30 days.
+- Afterward, compare the current rate with the previous period.
+- Target a 20 percentage-point improvement over the baseline.
+
+### iPhone Shortcut
+
+- Accept a URL from the iOS share sheet.
+- Send it to the existing authenticated API.
+- Let the server fetch the title.
+- Show a small native success or failure notification.
+- Do not show a second metadata form.
+
+## Build Order
+
+1. Plain-text notes.
+2. Review queue and actions.
+3. Meaningful-action measurement.
+4. Homepage changes.
+5. iPhone Shortcut setup documentation.
+
+## Explicitly Deferred
+
+- AI summaries and automatic tagging.
+- Collections and folders.
+- Full activity history.
+- Rich-text notes.
+- Email, push, or browser notifications.
+- Native iOS app.
+- Collaboration and multi-user support.
+- Gamification.
+- Recommendation scoring.
+- Richer metadata capture.
+- Saved views beyond the focused review queue.
