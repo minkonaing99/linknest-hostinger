@@ -721,6 +721,17 @@ textarea.field {
   font-size: 11px;
   line-height: 1.25;
 }
+.library-row__notes {
+  margin: 2px 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
 .library-row__tags { margin-top: 1px; }
 .library-row__tail {
   display: flex;
@@ -755,7 +766,7 @@ textarea.field {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  min-width: 120px;
+  min-width: 184px;
   display: grid;
   gap: 2px;
   padding: 6px;
@@ -766,6 +777,7 @@ textarea.field {
   z-index: 30;
 }
 .row-menu__item {
+  width: 100%;
   min-height: 34px;
   padding: 0 10px;
   border: 0;
@@ -778,12 +790,30 @@ textarea.field {
   font: inherit;
   font-size: 13px;
   cursor: pointer;
+  white-space: nowrap;
 }
 .row-menu__item:hover {
   background: rgba(118, 118, 128, 0.08);
 }
 .row-menu__item--danger {
   color: var(--danger);
+}
+.row-menu__date-label {
+  display: grid;
+  gap: 4px;
+  padding: 6px 10px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.row-menu__date {
+  width: 100%;
+  min-height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  color: var(--text);
+  font: inherit;
+  padding: 0 8px;
 }
 
 .tag-row {

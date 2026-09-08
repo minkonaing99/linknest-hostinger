@@ -221,6 +221,7 @@ A link document returned by the API looks like this:
   "title": "Example Article",
   "url": "https://example.com/article",
   "host": "example.com",
+  "notes": "Useful explanation of the topic.",
   "tags": ["reading", "reference"],
   "status": "saved",
   "pinned": false,
@@ -229,7 +230,8 @@ A link document returned by the API looks like this:
   "deletedAt": null,
   "lastOpenedAt": null,
   "openedCount": 0,
-  "remindAt": null
+  "remindAt": null,
+  "firstMeaningfulAt": null
 }
 ```
 
@@ -241,9 +243,11 @@ A link document returned by the API looks like this:
 - `deletedAt = null` means the link is active
 - `deletedAt != null` means the link is soft-deleted
 - `host` is derived from the normalized URL
+- `notes` is optional plain text, limited to 10,000 characters
 - `lastOpenedAt` is set each time `POST /api/links/:id/opened` is called
 - `openedCount` increments by 1 on each open call
 - `remindAt` is a nullable ISO datetime for user-set reminders
+- `firstMeaningfulAt` records the first note change, useful status, or soft archive
 
 ## Protected endpoints
 
@@ -316,8 +320,27 @@ Response:
 
 - active lists exclude deleted links by default
 - `status=deleted` returns only soft-deleted links
-- `q` searches `title`, `url`, `host`, `tags`, and `date`
+- `q` searches `title`, `notes`, `url`, `host`, `tags`, and `date`
 - sorting always keeps pinned items first
+
+### Review queue
+
+```http
+GET /api/links/review
+```
+
+Returns up to five active saved or unread links with no meaningful action.
+Due reminders come first, followed by the oldest links that are at least 14
+days old. A future reminder suppresses an otherwise eligible link until due.
+
+```json
+{
+  "links": []
+}
+```
+
+Opening and snoozing do not count as meaningful actions. Changing a note,
+marking useful, or soft-archiving sets `firstMeaningfulAt` once.
 
 ## Link write operations
 
@@ -337,6 +360,7 @@ Request body:
   "date": "2026-04-14",
   "status": "saved",
   "tags": ["reading", "reference"],
+  "notes": "Useful explanation of the topic.",
   "pinned": false
 }
 ```
@@ -353,6 +377,7 @@ Success response:
     "url": "https://example.com/article",
     "host": "example.com",
     "tags": ["reading", "reference"],
+    "notes": "Useful explanation of the topic.",
     "status": "saved",
     "pinned": false,
     "createdAt": "2026-04-14T00:00:00.000Z",
@@ -642,7 +667,8 @@ Request body:
       "title": "Example Article",
       "date": "2026-04-14",
       "status": "saved",
-      "tags": []
+      "tags": [],
+      "notes": "Review during the next research session."
     }
   ]
 }

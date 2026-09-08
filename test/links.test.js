@@ -31,7 +31,7 @@ require.cache[titlePath] = {
 const {
   createLink, readLink, readLinks, updateLink,
   deleteLink, restoreLink, readTagCounts, bulkUpdateStatus,
-  parseBookmarksHtml, openLink, findDuplicateCandidates,
+  parseBookmarksHtml, importLinks, openLink, findDuplicateCandidates, readReviewQueue,
 } = require('../lib/links');
 
 // Helpers
@@ -52,6 +52,8 @@ function makeRow(overrides = {}) {
     last_opened_at: null,
     opened_count: 0,
     remind_at: null,
+    notes: '',
+    first_meaningful_at: null,
     ...overrides,
   };
 }
@@ -101,15 +103,31 @@ describe('parseBookmarksHtml', () => {
   });
 });
 
+describe('importLinks', () => {
+  it('imports notes', async () => {
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      if (args[0].includes('COUNT(*)')) return { rows: [{ count: '1' }], rowCount: 1 };
+      return { rows: [], rowCount: 1 };
+    };
+    await importLinks([{ url: 'https://example.com/imported', notes: 'Imported note' }]);
+    const insert = calls.find(([sql]) => sql.includes('INSERT IGNORE'));
+    assert.ok(insert[0].includes('notes'));
+    assert.ok(insert[1].includes('Imported note'));
+  });
+});
+
 describe('readLink', () => {
   it('returns a normalized entry for a found row', async () => {
-    seq({ rows: [makeRow()], rowCount: 1 });
+    seq({ rows: [makeRow({ notes: 'Remember this' })], rowCount: 1 });
     const entry = await readLink('link-id-123');
     assert.equal(entry.id, 'link-id-123');
     assert.equal(entry.url, 'https://example.com');
     assert.equal(entry.status, 'saved');
     assert.deepEqual(entry.tags, []);
     assert.equal(entry.pinned, false);
+    assert.equal(entry.notes, 'Remember this');
   });
 
   it('throws 404 when link is not found', async () => {
@@ -155,6 +173,26 @@ describe('readLinks', () => {
   });
 });
 
+describe('readReviewQueue', () => {
+  it('returns at most five due then oldest untouched links', async () => {
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      return { rows: [makeRow({ id: 'due' }), makeRow({ id: 'old' })], rowCount: 2 };
+    };
+    const links = await readReviewQueue(new Date('2026-06-15T00:00:00.000Z'));
+    const [sql, params] = calls[0];
+    assert.deepEqual(links.map(link => link.id), ['due', 'old']);
+    assert.ok(sql.includes("status IN ('saved', 'unread')"));
+    assert.ok(sql.includes('first_meaningful_at IS NULL'));
+    assert.ok(sql.includes('remind_at <= ?'));
+    assert.ok(sql.includes('created_at <= ?'));
+    assert.ok(sql.includes('LIMIT 5'));
+    assert.equal(params[0].toISOString(), '2026-06-15T00:00:00.000Z');
+    assert.equal(params[1].toISOString(), '2026-06-01T00:00:00.000Z');
+  });
+});
+
 describe('createLink', () => {
   it('creates and returns a new link with duplicateCandidates', async () => {
     seq(
@@ -175,6 +213,23 @@ describe('createLink', () => {
       () => createLink({ url: 'https://example.com', title: 'Dup' }),
       err => { assert.equal(err.statusCode, 409); return true; }
     );
+  });
+
+  it('stores notes with a new link', async () => {
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      return { rows: [], rowCount: 1 };
+    };
+    const { entry } = await createLink({
+      url: 'https://example.com/notes',
+      title: 'Notes Link',
+      notes: 'Why this matters',
+    });
+    const insert = calls.find(([sql]) => sql.includes('INSERT INTO links'));
+    assert.ok(insert[0].includes('notes'));
+    assert.ok(insert[1].includes('Why this matters'));
+    assert.equal(entry.notes, 'Why this matters');
   });
 
   it('sets archived flag in 409 payload when existing link is soft-deleted', async () => {
@@ -216,6 +271,40 @@ describe('updateLink', () => {
     });
   });
 
+  it('updates notes', async () => {
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      if (calls.length === 1) return { rows: [makeRow({ notes: 'Old note' })], rowCount: 1 };
+      return { rows: [], rowCount: 1 };
+    };
+    const entry = await updateLink('link-id-123', { notes: 'New note' });
+    const update = calls.find(([sql]) => sql.includes('UPDATE links'));
+    assert.ok(update[0].includes('notes=?'));
+    assert.ok(update[0].includes('COALESCE(first_meaningful_at, ?)'));
+    assert.ok(update[1].includes('New note'));
+    assert.equal(update[1].at(-3), 1);
+    assert.equal(entry.notes, 'New note');
+  });
+
+  it('marks useful as meaningful but not unchanged saves or snoozes', async () => {
+    for (const [body, expected] of [
+      [{ title: 'Example' }, 0],
+      [{ remindAt: '2026-07-01T00:00:00.000Z' }, 0],
+      [{ status: 'useful' }, 1],
+    ]) {
+      const calls = [];
+      currentImpl = async (...args) => {
+        calls.push(args);
+        if (calls.length === 1) return { rows: [makeRow()], rowCount: 1 };
+        return { rows: [], rowCount: 1 };
+      };
+      await updateLink('link-id-123', body);
+      const update = calls.find(([sql]) => sql.includes('UPDATE links'));
+      assert.equal(update[1].at(-3), expected);
+    }
+  });
+
   it('throws 409 when new url conflicts with another link', async () => {
     seq(
       { rows: [makeRow({ url: 'https://old.com' })], rowCount: 1 },
@@ -247,6 +336,19 @@ describe('deleteLink', () => {
     );
     const result = await deleteLink('link-id-123', { hardDelete: true });
     assert.equal(result.total, 4);
+  });
+
+  it('marks soft archive as meaningful', async () => {
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      if (calls.length === 1) return { rows: [{ id: 'link-id-123' }], rowCount: 1 };
+      if (args[0].includes('COUNT(*)')) return { rows: [{ count: '0' }], rowCount: 1 };
+      return { rows: [], rowCount: 1 };
+    };
+    await deleteLink('link-id-123');
+    const update = calls.find(([sql]) => sql.includes('UPDATE links'));
+    assert.ok(update[0].includes('COALESCE(first_meaningful_at, ?)'));
   });
 
   it('throws 404 when link not found', async () => {
@@ -303,9 +405,14 @@ describe('readTagCounts', () => {
 
 describe('bulkUpdateStatus', () => {
   it('updates status for given ids and returns updated count', async () => {
-    seq({ rows: [], rowCount: 3 });
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      return { rows: [], rowCount: 3 };
+    };
     const result = await bulkUpdateStatus(['id1', 'id2', 'id3'], 'useful');
     assert.equal(result.updated, 3);
+    assert.ok(calls[0][0].includes('COALESCE(first_meaningful_at, ?)'));
   });
 
   it('throws 400 for empty ids array', async () => {

@@ -264,7 +264,7 @@ describe('sanitizeEntry', () => {
   };
 
   it('returns a valid entry for good input', () => {
-    const entry = sanitizeEntry(base);
+    const entry = sanitizeEntry({ ...base, notes: '  First line\nSecond line  ' });
     assert.equal(typeof entry.id, 'string');
     assert.ok(entry.id.length > 0);
     assert.equal(entry.title, 'Test Title');
@@ -273,6 +273,7 @@ describe('sanitizeEntry', () => {
     assert.ok(entry.createdAt);
     assert.ok(entry.updatedAt);
     assert.equal(entry.deletedAt, null);
+    assert.equal(entry.notes, 'First line\nSecond line');
   });
 
   it('throws when url is missing', () => {
@@ -289,6 +290,14 @@ describe('sanitizeEntry', () => {
 
   it('throws when title exceeds max length', () => {
     assert.throws(() => sanitizeEntry({ ...base, title: 'x'.repeat(301) }), /title must be/);
+  });
+
+  it('throws when notes exceed max length', () => {
+    assert.throws(() => sanitizeEntry({ ...base, notes: 'x'.repeat(10001) }), /notes must be/);
+  });
+
+  it('throws when notes are not plain text', () => {
+    assert.throws(() => sanitizeEntry({ ...base, notes: { text: 'no' } }), /notes must be plain text/);
   });
 
   it('throws when tags exceed max count', () => {
@@ -335,6 +344,7 @@ describe('normalizeStoredEntry', () => {
     assert.equal(entry.status, 'saved');
     assert.equal(entry.pinned, false);
     assert.deepEqual(entry.tags, []);
+    assert.equal(entry.notes, '');
   });
 
   it('normalizes unknown status to saved', () => {
@@ -453,6 +463,8 @@ describe('parseLinkListQuery', () => {
   it('builds full-text search filter', () => {
     const q = parseLinkListQuery(p({ q: 'react hooks' }));
     assert.ok(q.whereClause.includes('LIKE ?'));
+    assert.ok(q.whereClause.includes('notes LIKE ?'));
+    assert.equal(q.params.length, 6);
     assert.equal(q.query, 'react hooks');
   });
 

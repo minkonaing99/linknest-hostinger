@@ -1,7 +1,8 @@
 const LIMIT = 50;
 const STATUS_CYCLE = ['saved', 'unread', 'useful'];
 
-const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false, selectMode: false, selected: new Set(), quickFilter: null, tagFilter: null };
+const initialReview = new URLSearchParams(window.location.search).get('review') === '1';
+const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false, selectMode: false, selected: new Set(), quickFilter: initialReview ? 'review' : null, tagFilter: null };
 
 const SORT_MAP = {
   recent:       { sort: 'updatedAt', order: 'desc' },
@@ -64,6 +65,18 @@ async function togglePinned(item) {
     throw new Error(data.error || 'Failed to update pin state');
   }
   await fetchPage(1);
+}
+
+async function updateLinkFields(item, fields) {
+  const res = await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(fields),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Failed to update link');
+  await fetchPage(1);
+  window.LinkNest.updateUnreadBadge();
 }
 
 function closeAllMenus() {
@@ -224,6 +237,12 @@ function buildRow(item) {
     window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}/opened`, { method: 'POST' }).catch(() => {});
   });
 
+  const notesEl = node.querySelector('.library-row__notes');
+  if (item.notes) {
+    notesEl.textContent = item.notes;
+    notesEl.classList.remove('hidden');
+  }
+
   const tagRow = node.querySelector('.library-row__tags');
   if (item.tags?.length) {
     tagRow.classList.remove('hidden');
@@ -241,7 +260,33 @@ function buildRow(item) {
     }
   }
 
-  node.querySelector('.edit-link').href = `/editor.html?id=${encodeURIComponent(item.id)}`;
+  const editLink = node.querySelector('.edit-link');
+  const returnTo = state.quickFilter === 'review' ? '&returnTo=%2Fbrowse.html%3Freview%3D1' : '';
+  editLink.href = `/editor.html?id=${encodeURIComponent(item.id)}${returnTo}#notes`;
+  editLink.textContent = item.notes ? 'Edit note' : 'Add note';
+
+  const usefulButton = node.querySelector('.mark-useful-button');
+  usefulButton.classList.toggle('hidden', item.status === 'useful');
+  usefulButton.addEventListener('click', async event => {
+    event.stopPropagation();
+    try { await updateLinkFields(item, { status: 'useful' }); }
+    catch (err) { window.LinkNest.showToast(err.message); }
+  });
+
+  node.querySelector('.snooze-week-button').addEventListener('click', async event => {
+    event.stopPropagation();
+    const remindAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    try { await updateLinkFields(item, { remindAt }); }
+    catch (err) { window.LinkNest.showToast(err.message); }
+  });
+
+  node.querySelector('.row-menu__date').addEventListener('change', async event => {
+    event.stopPropagation();
+    if (!event.target.value) return;
+    const remindAt = new Date(`${event.target.value}T00:00:00`).toISOString();
+    try { await updateLinkFields(item, { remindAt }); }
+    catch (err) { window.LinkNest.showToast(err.message); }
+  });
 
   node.querySelector('.delete-button').addEventListener('click', async event => {
     event.stopPropagation();
@@ -249,6 +294,10 @@ function buildRow(item) {
       await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}`, { method: 'DELETE' });
       window.LinkNest.showToast('Moved to archive', 'success');
       closeAllMenus();
+      if (state.quickFilter === 'review') {
+        await fetchPage(1);
+        return;
+      }
       const group = rowArticle.closest('.date-group');
       rowArticle.remove();
       if (!group.querySelector('.library-row')) group.remove();
@@ -275,6 +324,7 @@ function buildRow(item) {
     menu.classList.toggle('is-open', willOpen);
     row.classList.toggle('is-menu-open', willOpen);
   });
+  popover.addEventListener('click', event => event.stopPropagation());
 
   return node;
 }
@@ -296,7 +346,9 @@ function render(items, append = false) {
 
   const grouped = new Map();
   for (const item of items) {
-    const label = item.pinned ? 'Pinned' : groupLabel(item.date);
+    const label = state.quickFilter === 'review'
+      ? 'Review queue'
+      : (item.pinned ? 'Pinned' : groupLabel(item.date));
     if (!grouped.has(label)) grouped.set(label, []);
     grouped.get(label).push(item);
   }
@@ -337,10 +389,6 @@ function buildApiParams(page) {
 
   if (state.quickFilter === 'remind') {
     params.set('remindBefore', new Date().toISOString());
-  } else if (state.quickFilter === 'stale') {
-    const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    params.set('staleBefore', cutoff);
-    if (!q && status === 'all') params.set('status', 'unread');
   }
 
   return params;
@@ -361,14 +409,17 @@ async function fetchPage(page, append = false) {
   if (!append) showSkeleton();
 
   try {
-    const res = await window.LinkNest.apiFetch(`/api/links?${buildApiParams(page)}`);
+    const url = state.quickFilter === 'review'
+      ? '/api/links/review'
+      : `/api/links?${buildApiParams(page)}`;
+    const res = await window.LinkNest.apiFetch(url);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to load links');
     const newLinks = data.links || [];
     state.links = append ? [...state.links, ...newLinks] : newLinks;
-    state.page = data.page;
-    state.totalPages = data.pages;
-    state.total = data.total;
+    state.page = data.page || 1;
+    state.totalPages = data.pages || 1;
+    state.total = Number.isFinite(data.total) ? data.total : newLinks.length;
     render(newLinks, append);
   } catch (err) {
     console.error(err);
@@ -427,6 +478,7 @@ bulkSelectAllBtn.addEventListener('click', () => {
 });
 
 document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+  btn.classList.toggle('is-active', btn.dataset.filter === state.quickFilter);
   btn.addEventListener('click', () => {
     const filter = btn.dataset.filter;
     const active = state.quickFilter === filter;

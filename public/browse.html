@@ -34,7 +34,7 @@
       <main class="page-stack page-stack--airy">
         <section class="surface surface--soft surface--group">
           <div class="filter-stack">
-            <input id="search" class="field field--search" type="search" enterkeyhint="search" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Search title, host, tags, URL" />
+            <input id="search" class="field field--search" type="search" enterkeyhint="search" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Search title, notes, host, tags, URL" />
             <div class="filter-grid">
               <select id="status-filter" class="field field--select">
                 <option value="all">All statuses</option>
@@ -53,7 +53,7 @@
             </div>
             <div class="quick-filter-row">
               <button type="button" class="button button--ghost button--small quick-filter-btn" data-filter="remind">Due to revisit</button>
-              <button type="button" class="button button--ghost button--small quick-filter-btn" data-filter="stale">Stale unread (30d)</button>
+              <button type="button" class="button button--ghost button--small quick-filter-btn" data-filter="review">Review queue</button>
             </div>
           </div>
         </section>
@@ -107,6 +107,7 @@
             <span>&bull;</span>
             <span class="status-text"></span>
           </div>
+          <p class="library-row__notes hidden"></p>
           <div class="library-row__tags tag-row hidden"></div>
         </div>
         <div class="library-row__tail">
@@ -114,8 +115,14 @@
           <div class="row-menu">
             <button type="button" class="row-menu__trigger" aria-label="More actions" aria-expanded="false">•••</button>
             <div class="row-menu__popover hidden">
-              <a class="row-menu__item edit-link" href="#">Edit</a>
-              <button type="button" class="row-menu__item row-menu__item--danger delete-button">Delete</button>
+              <a class="row-menu__item edit-link" href="#">Add note</a>
+              <button type="button" class="row-menu__item mark-useful-button">Mark useful</button>
+              <button type="button" class="row-menu__item snooze-week-button">Snooze 1 week</button>
+              <label class="row-menu__date-label">
+                <span>Snooze until</span>
+                <input type="date" class="row-menu__date" aria-label="Snooze until" />
+              </label>
+              <button type="button" class="row-menu__item row-menu__item--danger delete-button">Archive</button>
             </div>
           </div>
         </div>

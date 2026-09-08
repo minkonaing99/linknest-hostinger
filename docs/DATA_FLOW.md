@@ -260,6 +260,8 @@ The backend can filter by:
 - search text
 - updated-after timestamp
 
+Search text matches titles, notes, URLs, hosts, tags, and dates.
+
 It can sort by:
 
 - `updatedAt`
@@ -268,6 +270,15 @@ It can sort by:
 - `title`
 
 Pinned items are always sorted first.
+
+### Review queue
+
+`GET /api/links/review` returns at most five saved or unread links. Due
+reminders are ordered first. Remaining slots use the oldest links that are at
+least 14 days old, have no future reminder, and have no meaningful action.
+
+Editing a note, marking useful, or soft-archiving sets `firstMeaningfulAt` once.
+Opening or snoozing leaves it unchanged.
 
 ### Database activity
 
@@ -520,6 +531,7 @@ Returns downloadable JSON.
 Important detail:
 
 - export includes all links, not only active ones
+- plain-text notes are included in JSON export and import
 
 ## Flow 13: Tag chip loading
 

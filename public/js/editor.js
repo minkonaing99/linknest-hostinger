@@ -8,6 +8,7 @@ const els = {
   date: document.getElementById('date'),
   status: document.getElementById('status'),
   tags: document.getElementById('tags'),
+  notes: document.getElementById('notes'),
   remindAt: document.getElementById('remind-at'),
   fetchTitle: document.getElementById('fetch-title'),
   pasteClipboard: document.getElementById('paste-clipboard'),
@@ -33,6 +34,7 @@ function payload() {
     date: els.date.value,
     status: els.status.value,
     tags: parseTags(els.tags.value),
+    notes: els.notes.value.trim(),
     remindAt: els.remindAt.value || null,
   };
 }
@@ -72,6 +74,7 @@ async function loadForEdit() {
   els.date.value = item.date || new Date().toISOString().slice(0, 10);
   els.status.value = item.status || 'saved';
   els.tags.value = (item.tags || []).join(', ');
+  els.notes.value = item.notes || '';
   els.remindAt.value = item.remindAt ? item.remindAt.slice(0, 10) : '';
   els.formHeading.textContent = 'Edit link';
   els.pageTitle.textContent = 'Edit Link';
@@ -115,7 +118,9 @@ els.form.addEventListener('submit', async event => {
     }
     if (!res.ok) throw new Error(data.error || 'Failed to save link');
     setMessage(els.message, editing ? 'Link updated.' : 'Link saved.', 'success');
-    setTimeout(() => { window.location.href = '/browse.html'; }, 600);
+    const returnTo = queryParam('returnTo');
+    const destination = returnTo === '/browse.html?review=1' ? returnTo : '/browse.html';
+    setTimeout(() => { window.location.href = destination; }, 600);
   } catch (error) {
     setMessage(els.message, error.message, 'error');
   }
