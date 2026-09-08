@@ -12,8 +12,17 @@ async function linkNestApiFetch(url, options = {}) {
   return res;
 }
 
+function thailandDateString(value = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date(value));
+  const fields = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return `${fields.year}-${fields.month}-${fields.day}`;
+}
+
 window.LinkNest = {
   apiFetch: linkNestApiFetch,
+  thailandDateString,
 
   async getLinks() {
     const res = await linkNestApiFetch('/api/links');

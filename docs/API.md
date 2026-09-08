@@ -231,7 +231,8 @@ A link document returned by the API looks like this:
   "lastOpenedAt": null,
   "openedCount": 0,
   "remindAt": null,
-  "firstMeaningfulAt": null
+  "firstMeaningfulAt": null,
+  "thumbnailUrl": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
 }
 ```
 
@@ -248,6 +249,8 @@ A link document returned by the API looks like this:
 - `openedCount` increments by 1 on each open call
 - `remindAt` is a nullable ISO datetime for user-set reminders
 - `firstMeaningfulAt` records the first note change, useful status, or soft archive
+- `thumbnailUrl` is derived for supported YouTube videos and is otherwise `null`
+- clients cannot set arbitrary thumbnail URLs
 
 ## Protected endpoints
 
@@ -276,6 +279,7 @@ Supported query params:
 - `remindBefore` = ISO datetime — returns links where `remindAt` is set and `remindAt <= remindBefore`
 - `staleBefore` = ISO datetime — returns links not opened since this time (or never opened and created before it)
 - `neverOpened` = `true|false` — returns links where `openedCount = 0`
+- `youtube` = `only|exclude` — includes only YouTube links or removes them from results
 
 Examples:
 

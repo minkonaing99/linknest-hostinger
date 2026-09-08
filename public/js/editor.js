@@ -1,4 +1,4 @@
-const { getLinks, setMessage, parseTags, queryParam, apiFetch } = window.LinkNest;
+const { getLinks, setMessage, parseTags, queryParam, apiFetch, thailandDateString: thailandDate } = window.LinkNest;
 
 const els = {
   form: document.getElementById('link-form'),
@@ -24,7 +24,7 @@ const els = {
   bookmarksMessage: document.getElementById('bookmarks-message'),
 };
 
-els.date.value = new Date().toISOString().slice(0, 10);
+els.date.value = thailandDate();
 
 function payload() {
   return {
@@ -71,7 +71,7 @@ async function loadForEdit() {
   els.id.value = item.id;
   els.title.value = item.title || '';
   els.url.value = item.url || '';
-  els.date.value = item.date || new Date().toISOString().slice(0, 10);
+  els.date.value = item.date || thailandDate();
   els.status.value = item.status || 'saved';
   els.tags.value = (item.tags || []).join(', ');
   els.notes.value = item.notes || '';
@@ -186,7 +186,7 @@ els.batchImport.addEventListener('click', async () => {
   if (!parsed.length) return setMessage(els.importMessage, 'No valid lines found.', 'error');
 
   setMessage(els.importMessage, `Preparing ${parsed.length} link(s)...`);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = thailandDate();
   const links = [];
 
   for (let i = 0; i < parsed.length; i += 1) {

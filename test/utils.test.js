@@ -12,7 +12,40 @@ const {
   normalizeUrl, deriveHost, normalizeStatus, normalizeTags,
   parseBooleanFlag, parsePositiveInt, ensurePlainObject,
   parseLinkListQuery, sanitizeEntry, normalizeStoredEntry, isPrivateIp, jaroWinkler,
+  youtubeThumbnailUrl, thailandDateString,
 } = require('../lib/utils');
+
+describe('thailandDateString', () => {
+  it('changes calendar day at Bangkok midnight', () => {
+    assert.equal(thailandDateString(new Date('2026-09-08T16:59:59.000Z')), '2026-09-08');
+    assert.equal(thailandDateString(new Date('2026-09-08T17:00:00.000Z')), '2026-09-09');
+  });
+});
+
+describe('youtubeThumbnailUrl', () => {
+  const thumbnail = 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg';
+
+  it('supports standard YouTube video URL formats', () => {
+    for (const url of [
+      'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      'https://m.youtube.com/shorts/dQw4w9WgXcQ',
+      'https://youtube.com/embed/dQw4w9WgXcQ',
+      'https://youtube.com/live/dQw4w9WgXcQ',
+      'https://youtu.be/dQw4w9WgXcQ?t=10',
+      'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
+    ]) assert.equal(youtubeThumbnailUrl(url), thumbnail);
+  });
+
+  it('rejects untrusted hosts and invalid video IDs', () => {
+    for (const url of [
+      'https://youtube.com.evil.test/watch?v=dQw4w9WgXcQ',
+      'https://youtube.com/watch?v=too-short',
+      'https://youtube.com/playlist?list=dQw4w9WgXcQ',
+      'https://example.com/watch?v=dQw4w9WgXcQ',
+      'not a URL',
+    ]) assert.equal(youtubeThumbnailUrl(url), null);
+  });
+});
 
 describe('normalizeUrl', () => {
   it('strips utm_* tracking params', () => {
@@ -376,6 +409,12 @@ describe('normalizeStoredEntry', () => {
     assert.equal(entry.openedCount, 3);
     assert.equal(entry.remindAt, ts);
   });
+
+  it('derives a safe YouTube thumbnail URL', () => {
+    const entry = normalizeStoredEntry({ url: 'https://youtu.be/dQw4w9WgXcQ' });
+    assert.equal(entry.thumbnailUrl, 'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg');
+    assert.equal(normalizeStoredEntry({ url: 'https://example.com' }).thumbnailUrl, null);
+  });
 });
 
 describe('sanitizeEntry — remindAt', () => {
@@ -451,6 +490,23 @@ describe('parseLinkListQuery', () => {
     const q = parseLinkListQuery(p({ status: 'unread' }));
     assert.ok(q.whereClause.includes('status = ?'));
     assert.ok(q.params.includes('unread'));
+  });
+
+  it('filters YouTube links into or out of Browse', () => {
+    const only = parseLinkListQuery(p({ youtube: 'only' }));
+    assert.ok(only.whereClause.includes('host IN (?, ?, ?, ?)'));
+    assert.deepEqual(only.params, ['youtube.com', 'm.youtube.com', 'youtu.be', 'youtube-nocookie.com']);
+
+    const exclude = parseLinkListQuery(p({ youtube: 'exclude' }));
+    assert.ok(exclude.whereClause.includes('host NOT IN (?, ?, ?, ?)'));
+    assert.deepEqual(exclude.params, only.params);
+  });
+
+  it('rejects invalid YouTube filters', () => {
+    assert.throws(() => parseLinkListQuery(p({ youtube: 'maybe' })), err => {
+      assert.equal(err.statusCode, 400);
+      return true;
+    });
   });
 
   it('handles deleted as special status', () => {

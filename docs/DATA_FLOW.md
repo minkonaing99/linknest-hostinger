@@ -196,7 +196,7 @@ That function:
 
 ```text
 GET /api/links/review
-GET /api/links?limit=5&sort=createdAt&order=desc
+GET /api/links?limit=5&sort=createdAt&order=desc&youtube=exclude
 GET /api/stats
 ```
 
@@ -208,6 +208,15 @@ The page displays:
 
 Opening a link records an open through `POST /api/links/:id/opened`. It does not
 count as a meaningful action.
+
+### YouTube thumbnails
+
+`normalizeStoredEntry()` derives `thumbnailUrl` from validated YouTube video URLs.
+It accepts standard watch, short, embed, live, and `youtu.be` formats, then returns
+a fixed `i.ytimg.com` URL. No thumbnail value is stored or accepted from clients.
+
+Browse shows the image when available. A failed image request returns the row to
+its text-only layout. Home remains text-only.
 
 ## Flow 4: Add or edit link from the editor page
 
@@ -245,6 +254,7 @@ PUT /api/links/:id
 
 - form message updates to success or error
 - duplicate archived links offer a restore action
+- new link calendar dates use the `Asia/Bangkok` timezone
 
 ## Flow 5: Browse library
 
@@ -278,6 +288,7 @@ The backend can filter by:
 - tag
 - search text
 - updated-after timestamp
+- YouTube-only or YouTube-excluded results
 
 Search text matches titles, notes, URLs, hosts, tags, and dates.
 
@@ -288,7 +299,12 @@ It can sort by:
 - `date`
 - `title`
 
-Pinned items are always sorted first.
+Pinned items are sorted first except when sorting strictly by creation time.
+
+Normal Browse requests use `youtube=exclude`. The YouTube quick filter uses
+`youtube=only`; search, status, tag, sorting, and pagination continue to compose
+with that filter. Review queue also excludes YouTube links so they remain in one
+dedicated tab.
 
 ### Review queue
 

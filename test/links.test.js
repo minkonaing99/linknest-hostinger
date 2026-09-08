@@ -184,6 +184,7 @@ describe('readReviewQueue', () => {
     const [sql, params] = calls[0];
     assert.deepEqual(links.map(link => link.id), ['due', 'old']);
     assert.ok(sql.includes("status IN ('saved', 'unread')"));
+    assert.ok(sql.includes("host NOT IN ('youtube.com', 'm.youtube.com', 'youtu.be', 'youtube-nocookie.com')"));
     assert.ok(sql.includes('first_meaningful_at IS NULL'));
     assert.ok(sql.includes('first_meaningful_at < DATE_ADD(created_at, INTERVAL 1 DAY)'));
     assert.ok(sql.includes('remind_at <= ?'));

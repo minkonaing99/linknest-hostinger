@@ -1,4 +1,4 @@
-const { safeHost, apiFetch, setMessage } = window.LinkNest;
+const { safeHost, apiFetch, setMessage, thailandDateString: thailandDate } = window.LinkNest;
 
 const recentLinks = document.getElementById('recent-links');
 const reviewLinks = document.getElementById('review-links');
@@ -10,10 +10,6 @@ const quickAddForm = document.getElementById('quick-add-form');
 const quickAddUrl = document.getElementById('quick-add-url');
 const quickAddPaste = document.getElementById('quick-add-paste');
 const quickAddMessage = document.getElementById('quick-add-message');
-
-function todayString() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function applyStatusStyles(dot, textEl, status) {
   const value = status || 'saved';
@@ -33,7 +29,8 @@ function isDue(item) {
 }
 
 function fillLinkRow(node, item) {
-  node.querySelector('.link-date').textContent = (item.createdAt || item.date || '').slice(0, 10) || 'Unknown date';
+  node.querySelector('.link-date').textContent = item.date
+    || (item.createdAt ? thailandDate(item.createdAt) : 'Unknown date');
   node.querySelector('.link-host').textContent = item.host || safeHost(item.url);
   applyStatusStyles(node.querySelector('.status-dot'), node.querySelector('.status-text'), item.status);
 
@@ -44,9 +41,22 @@ function fillLinkRow(node, item) {
   title.title = rawTitle;
   title.addEventListener('click', () => trackOpen(item));
 
-  const open = node.querySelector('.row-action--open');
-  open.href = item.url;
-  open.addEventListener('click', () => trackOpen(item));
+  const pin = node.querySelector('.pin-toggle');
+  pin.textContent = item.pinned ? '★' : '☆';
+  pin.classList.toggle('is-pinned', Boolean(item.pinned));
+  pin.addEventListener('click', async () => {
+    try {
+      const res = await apiFetch(`/api/links/${encodeURIComponent(item.id)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pinned: !item.pinned }),
+      });
+      if (!res.ok) throw new Error('Failed to update pin');
+      await loadHome();
+    } catch (error) {
+      window.LinkNest.showToast(error.message);
+    }
+  });
   return node;
 }
 
@@ -65,8 +75,7 @@ function renderRecent(items) {
   for (const item of items) {
     const node = template.content.cloneNode(true);
     fillLinkRow(node, item);
-    const edit = node.querySelector('.row-action--edit');
-    edit.textContent = 'Edit';
+    const edit = node.querySelector('.home-edit-link');
     edit.href = `/editor.html?id=${encodeURIComponent(item.id)}`;
     fragment.appendChild(node);
   }
@@ -87,8 +96,8 @@ function renderReview(items) {
     const node = template.content.cloneNode(true);
     fillLinkRow(node, item);
     if (isDue(item)) node.querySelector('.status-text').textContent = 'due';
-    const decide = node.querySelector('.row-action--edit');
-    decide.textContent = 'Decide';
+    const decide = node.querySelector('.home-edit-link');
+    decide.setAttribute('aria-label', 'Review link');
     decide.href = '/browse.html?review=1';
     fragment.appendChild(node);
   }
@@ -122,7 +131,7 @@ async function loadHome() {
 
   const [reviewRes, recentRes] = await Promise.all([
     apiFetch('/api/links/review'),
-    apiFetch('/api/links?limit=5&sort=createdAt&order=desc'),
+    apiFetch('/api/links?limit=5&sort=createdAt&order=desc&youtube=exclude'),
   ]);
   const [review, recent] = await Promise.all([reviewRes.json(), recentRes.json()]);
   if (!reviewRes.ok || !recentRes.ok) throw new Error('Failed to load home');
@@ -150,7 +159,7 @@ async function saveQuickAdd(rawUrl) {
       body: JSON.stringify({
         url: metadata.url || rawUrl,
         title: metadata.title || metadata.url || rawUrl,
-        date: todayString(),
+        date: thailandDate(),
         status: 'saved',
         tags: [],
         pinned: false,

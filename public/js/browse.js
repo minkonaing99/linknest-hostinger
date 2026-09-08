@@ -2,7 +2,8 @@ const LIMIT = 50;
 const STATUS_CYCLE = ['saved', 'unread', 'useful'];
 
 const initialReview = new URLSearchParams(window.location.search).get('review') === '1';
-const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false, selectMode: false, selected: new Set(), quickFilter: initialReview ? 'review' : null, tagFilter: null };
+const initialYoutube = new URLSearchParams(window.location.search).get('youtube') === '1';
+const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false, selectMode: false, selected: new Set(), quickFilter: initialReview ? 'review' : (initialYoutube ? 'youtube' : null), tagFilter: null };
 
 const SORT_MAP = {
   recent:       { sort: 'updatedAt', order: 'desc' },
@@ -39,18 +40,13 @@ function applyStatusStyles(dot, textEl, status) {
   textEl.textContent = value;
 }
 
-function formatDateStr(date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}
-
 function groupLabel(dateString) {
   if (!dateString) return 'Unknown date';
-  const today = new Date();
-  const todayStr = formatDateStr(today);
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
+  const today = Date.now();
+  const todayStr = window.LinkNest.thailandDateString(today);
+  const yesterdayStr = window.LinkNest.thailandDateString(today - 24 * 60 * 60 * 1000);
   if (dateString === todayStr) return 'Today';
-  if (dateString === formatDateStr(yesterday)) return 'Yesterday';
+  if (dateString === yesterdayStr) return 'Yesterday';
   return `Earlier · ${dateString}`;
 }
 
@@ -228,6 +224,17 @@ function buildRow(item) {
     try { await togglePinned(item); } catch (err) { window.LinkNest.showToast(err.message); }
   });
 
+  const thumbnail = node.querySelector('.link-thumbnail');
+  if (item.thumbnailUrl) {
+    thumbnail.src = item.thumbnailUrl;
+    thumbnail.classList.remove('hidden');
+    rowArticle.classList.add('has-thumbnail');
+    thumbnail.addEventListener('error', () => {
+      thumbnail.classList.add('hidden');
+      rowArticle.classList.remove('has-thumbnail');
+    }, { once: true });
+  }
+
   const titleEl = node.querySelector('.library-row__title');
   const rawTitle = item.title || item.url;
   titleEl.textContent = rawTitle;
@@ -261,7 +268,9 @@ function buildRow(item) {
   }
 
   const editLink = node.querySelector('.edit-link');
-  const returnTo = state.quickFilter === 'review' ? '&returnTo=%2Fbrowse.html%3Freview%3D1' : '';
+  const returnTo = state.quickFilter === 'review'
+    ? '&returnTo=%2Fbrowse.html%3Freview%3D1'
+    : (state.quickFilter === 'youtube' ? '&returnTo=%2Fbrowse.html%3Fyoutube%3D1' : '');
   editLink.href = `/editor.html?id=${encodeURIComponent(item.id)}${returnTo}#notes`;
   editLink.textContent = item.notes ? 'Edit note' : 'Add note';
 
@@ -390,6 +399,8 @@ function buildApiParams(page) {
   if (state.quickFilter === 'remind') {
     params.set('remindBefore', new Date().toISOString());
   }
+  if (state.quickFilter === 'youtube') params.set('youtube', 'only');
+  else params.set('youtube', 'exclude');
 
   return params;
 }
