@@ -188,7 +188,26 @@ That function:
 ### Browser result
 
 - success message is shown
-- home page reloads recent links
+- home page reloads review, recent, and measurement sections
+
+## Flow 3A: Load the home workflow
+
+`public/js/home.js` requests these resources in parallel:
+
+```text
+GET /api/links/review
+GET /api/links?limit=5&sort=createdAt&order=desc
+GET /api/stats
+```
+
+The page displays:
+
+1. review badge and queue, with due reminders already sorted first by the API
+2. five most recently created links, each with an edit shortcut
+3. revisit measurement and secondary library counts
+
+Opening a link records an open through `POST /api/links/:id/opened`. It does not
+count as a meaningful action.
 
 ## Flow 4: Add or edit link from the editor page
 
@@ -593,10 +612,19 @@ Counts active links by status:
 - useful
 - archived
 
+The same query measures meaningful revisits in two fair 30-day cohorts:
+
+- current: links saved 14 to 44 days ago
+- previous: links saved 44 to 74 days ago
+- meaningful: first note, useful decision, or soft archive at least 24 hours after save
+
+Soft-archived links remain in these cohorts. Hard-deleted links cannot be measured.
+
 ### Browser result
 
 - unread badge updates in navigation
 - home dashboard stats can render from the same endpoint
+- clients receive current rate, previous rate, percentage-point change, target, and baseline state
 
 ## Flow 15: Link health check
 

@@ -48,32 +48,40 @@
           </form>
         </section>
 
-        <section class="surface surface--soft surface--group shortcut-list">
-          <a class="shortcut-row" href="/browse.html">
-            <div>
-              <h2 class="section-title">Browse</h2>
-              <p class="section-copy">Search, filter, edit, and manage saved links.</p>
-            </div>
-            <span class="shortcut-row__chevron" aria-hidden="true">›</span>
-          </a>
-          <a class="shortcut-row" href="/editor.html">
-            <div>
-              <h2 class="section-title">Add Link</h2>
-              <p class="section-copy">Save a URL with tags and status.</p>
-            </div>
-            <span class="shortcut-row__chevron" aria-hidden="true">›</span>
-          </a>
-        </section>
-
-        <section class="surface surface--soft surface--group">
+        <section class="surface surface--soft surface--group" aria-labelledby="review-heading">
           <div class="section-header">
             <div>
-              <h2 class="section-title">Recent</h2>
-              <p class="section-copy">Latest saved items.</p>
+              <div class="title-with-badge">
+                <h2 class="section-title" id="review-heading">Review</h2>
+                <span class="review-badge hidden" id="review-badge" aria-label="Review items pending" aria-live="polite"></span>
+              </div>
+              <p class="section-copy">Due reminders first, then oldest untouched links.</p>
+            </div>
+            <a class="button button--ghost" href="/browse.html?review=1">Review all</a>
+          </div>
+          <div id="review-links" class="recent-list" aria-live="polite"></div>
+        </section>
+
+        <section class="surface surface--soft surface--group" aria-labelledby="recent-heading">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title" id="recent-heading">Recently saved</h2>
+              <p class="section-copy">Confirm captures and correct details quickly.</p>
             </div>
             <a class="button button--ghost" href="/browse.html">Open library</a>
           </div>
           <div id="recent-links" class="recent-list"></div>
+        </section>
+
+        <section class="surface surface--soft surface--group insight-section" aria-labelledby="revisit-heading">
+          <div class="section-header section-header--compact">
+            <div>
+              <h2 class="section-title" id="revisit-heading">Revisit progress</h2>
+              <p class="section-copy">Meaningful decisions after 24 hours.</p>
+            </div>
+          </div>
+          <div id="revisit-summary" class="revisit-summary" aria-live="polite"></div>
+          <p id="library-summary" class="library-summary"></p>
         </section>
       </main>
     </div>
@@ -89,6 +97,10 @@
             <span class="link-date"></span>
             <span>&bull;</span>
             <span class="status-text"></span>
+          </div>
+          <div class="recent-row__actions">
+            <a class="row-action row-action--open" target="_blank" rel="noreferrer">Open</a>
+            <a class="row-action row-action--edit"></a>
           </div>
         </div>
       </article>

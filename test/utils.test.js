@@ -442,6 +442,11 @@ describe('parseLinkListQuery', () => {
     assert.equal(q.sortOrder, 'desc');
   });
 
+  it('sorts createdAt strictly by save time', () => {
+    const q = parseLinkListQuery(p({ sort: 'createdAt', order: 'desc' }));
+    assert.equal(q.orderClause, 'created_at DESC, updated_at DESC, id ASC');
+  });
+
   it('builds status filter', () => {
     const q = parseLinkListQuery(p({ status: 'unread' }));
     assert.ok(q.whereClause.includes('status = ?'));

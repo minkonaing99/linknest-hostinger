@@ -589,7 +589,16 @@ Success response:
   "unread": 30,
   "saved": 70,
   "useful": 20,
-  "archived": 0
+  "archived": 0,
+  "revisit": {
+    "windowDays": 30,
+    "minimumAgeDays": 14,
+    "current": { "eligible": 10, "meaningful": 4, "rate": 40 },
+    "previous": { "eligible": 8, "meaningful": 2, "rate": 25 },
+    "percentagePointChange": 15,
+    "targetRate": 45,
+    "buildingBaseline": false
+  }
 }
 ```
 
@@ -597,6 +606,9 @@ Notes:
 
 - counts are based on current stored status values
 - `total` counts active links only
+- revisit cohorts include soft-archived links and exclude links under 14 days old
+- rates are whole percentages; unavailable rates, changes, and targets are `null`
+- the target is 20 percentage points above the previous cohort, capped at 100
 
 ## Title metadata
 

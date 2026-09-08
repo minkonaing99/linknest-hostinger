@@ -185,6 +185,7 @@ describe('readReviewQueue', () => {
     assert.deepEqual(links.map(link => link.id), ['due', 'old']);
     assert.ok(sql.includes("status IN ('saved', 'unread')"));
     assert.ok(sql.includes('first_meaningful_at IS NULL'));
+    assert.ok(sql.includes('first_meaningful_at < DATE_ADD(created_at, INTERVAL 1 DAY)'));
     assert.ok(sql.includes('remind_at <= ?'));
     assert.ok(sql.includes('created_at <= ?'));
     assert.ok(sql.includes('LIMIT 5'));
@@ -281,7 +282,7 @@ describe('updateLink', () => {
     const entry = await updateLink('link-id-123', { notes: 'New note' });
     const update = calls.find(([sql]) => sql.includes('UPDATE links'));
     assert.ok(update[0].includes('notes=?'));
-    assert.ok(update[0].includes('COALESCE(first_meaningful_at, ?)'));
+    assert.ok(update[0].includes('first_meaningful_at IS NULL'));
     assert.ok(update[1].includes('New note'));
     assert.equal(update[1].at(-3), 1);
     assert.equal(entry.notes, 'New note');
@@ -303,6 +304,39 @@ describe('updateLink', () => {
       const update = calls.find(([sql]) => sql.includes('UPDATE links'));
       assert.equal(update[1].at(-3), expected);
     }
+  });
+
+  it('does not count a note change during the first 24 hours', async () => {
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      if (calls.length === 1) {
+        return { rows: [makeRow({ created_at: new Date().toISOString() })], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 1 };
+    };
+    const entry = await updateLink('link-id-123', { notes: 'Immediate note' });
+    const update = calls.find(([sql]) => sql.includes('UPDATE links'));
+    assert.equal(update[1].at(-3), 0);
+    assert.equal(entry.firstMeaningfulAt, null);
+  });
+
+  it('replaces an early timestamp on a later qualifying action', async () => {
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      if (calls.length === 1) {
+        return {
+          rows: [makeRow({ first_meaningful_at: '2026-01-01T01:00:00.000Z' })],
+          rowCount: 1,
+        };
+      }
+      return { rows: [], rowCount: 1 };
+    };
+    const entry = await updateLink('link-id-123', { notes: 'Later note' });
+    const update = calls.find(([sql]) => sql.includes('UPDATE links'));
+    assert.ok(update[0].includes('first_meaningful_at < DATE_ADD(created_at, INTERVAL 1 DAY)'));
+    assert.notEqual(entry.firstMeaningfulAt, '2026-01-01T01:00:00.000Z');
   });
 
   it('throws 409 when new url conflicts with another link', async () => {
@@ -348,7 +382,8 @@ describe('deleteLink', () => {
     };
     await deleteLink('link-id-123');
     const update = calls.find(([sql]) => sql.includes('UPDATE links'));
-    assert.ok(update[0].includes('COALESCE(first_meaningful_at, ?)'));
+    assert.ok(update[0].includes('created_at <= DATE_SUB(?, INTERVAL 1 DAY)'));
+    assert.ok(update[0].includes('first_meaningful_at < DATE_ADD(created_at, INTERVAL 1 DAY)'));
   });
 
   it('throws 404 when link not found', async () => {
@@ -412,7 +447,8 @@ describe('bulkUpdateStatus', () => {
     };
     const result = await bulkUpdateStatus(['id1', 'id2', 'id3'], 'useful');
     assert.equal(result.updated, 3);
-    assert.ok(calls[0][0].includes('COALESCE(first_meaningful_at, ?)'));
+    assert.ok(calls[0][0].includes('created_at <= DATE_SUB(?, INTERVAL 1 DAY)'));
+    assert.ok(calls[0][0].includes('first_meaningful_at < DATE_ADD(created_at, INTERVAL 1 DAY)'));
   });
 
   it('throws 400 for empty ids array', async () => {

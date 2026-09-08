@@ -1,6 +1,10 @@
-const { getLinks, safeHost, apiFetch, setMessage } = window.LinkNest;
+const { safeHost, apiFetch, setMessage } = window.LinkNest;
 
 const recentLinks = document.getElementById('recent-links');
+const reviewLinks = document.getElementById('review-links');
+const reviewBadge = document.getElementById('review-badge');
+const revisitSummary = document.getElementById('revisit-summary');
+const librarySummary = document.getElementById('library-summary');
 const template = document.getElementById('link-template');
 const quickAddForm = document.getElementById('quick-add-form');
 const quickAddUrl = document.getElementById('quick-add-url');
@@ -17,39 +21,78 @@ function applyStatusStyles(dot, textEl, status) {
   textEl.textContent = value;
 }
 
-function updateSummary(links) {
-  const recent = links.slice().sort((a, b) =>
-    String(b.updatedAt || b.date || '').localeCompare(String(a.updatedAt || a.date || ''))
-  ).slice(0, 5);
-  renderRecent(recent);
+function emptyState(text) {
+  const empty = document.createElement('div');
+  empty.className = 'empty-state';
+  empty.textContent = text;
+  return empty;
+}
+
+function isDue(item) {
+  return item.remindAt && Date.parse(item.remindAt) <= Date.now();
+}
+
+function fillLinkRow(node, item) {
+  node.querySelector('.link-date').textContent = (item.createdAt || item.date || '').slice(0, 10) || 'Unknown date';
+  node.querySelector('.link-host').textContent = item.host || safeHost(item.url);
+  applyStatusStyles(node.querySelector('.status-dot'), node.querySelector('.status-text'), item.status);
+
+  const rawTitle = item.title || item.url;
+  const title = node.querySelector('.recent-row__title');
+  title.textContent = rawTitle;
+  title.href = item.url;
+  title.title = rawTitle;
+  title.addEventListener('click', () => trackOpen(item));
+
+  const open = node.querySelector('.row-action--open');
+  open.href = item.url;
+  open.addEventListener('click', () => trackOpen(item));
+  return node;
+}
+
+function trackOpen(item) {
+  apiFetch(`/api/links/${encodeURIComponent(item.id)}/opened`, { method: 'POST' }).catch(() => {});
 }
 
 function renderRecent(items) {
   recentLinks.innerHTML = '';
   if (!items.length) {
-    const empty = document.createElement('div');
-    empty.className = 'empty-state';
-    empty.innerHTML = 'No links saved yet. <a href="/editor.html">Add your first link</a>.';
-    recentLinks.appendChild(empty);
+    recentLinks.appendChild(emptyState('No links saved yet.'));
     return;
   }
 
   const fragment = document.createDocumentFragment();
   for (const item of items) {
     const node = template.content.cloneNode(true);
-    node.querySelector('.link-date').textContent = item.date || 'Unknown date';
-    node.querySelector('.link-host').textContent = item.host || safeHost(item.url);
-    const dot = node.querySelector('.status-dot');
-    const statusText = node.querySelector('.status-text');
-    applyStatusStyles(dot, statusText, item.status);
-    const title = node.querySelector('.recent-row__title');
-    const rawTitle = item.title || item.url;
-    title.textContent = rawTitle;
-    title.href = item.url;
-    title.title = rawTitle;
+    fillLinkRow(node, item);
+    const edit = node.querySelector('.row-action--edit');
+    edit.textContent = 'Edit';
+    edit.href = `/editor.html?id=${encodeURIComponent(item.id)}`;
     fragment.appendChild(node);
   }
   recentLinks.appendChild(fragment);
+}
+
+function renderReview(items) {
+  reviewLinks.innerHTML = '';
+  reviewBadge.classList.toggle('hidden', items.length === 0);
+  reviewBadge.textContent = String(items.length);
+  if (!items.length) {
+    reviewLinks.appendChild(emptyState('Nothing ready for review.'));
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  for (const item of items) {
+    const node = template.content.cloneNode(true);
+    fillLinkRow(node, item);
+    if (isDue(item)) node.querySelector('.status-text').textContent = 'due';
+    const decide = node.querySelector('.row-action--edit');
+    decide.textContent = 'Decide';
+    decide.href = '/browse.html?review=1';
+    fragment.appendChild(node);
+  }
+  reviewLinks.appendChild(fragment);
 }
 
 async function fetchTitleMetadata(rawUrl) {
@@ -60,31 +103,31 @@ async function fetchTitleMetadata(rawUrl) {
 }
 
 function renderStats(stats) {
-  const grid = document.getElementById('stats-grid');
-  if (!grid) return;
-  const items = [
-    { label: 'Total',    value: stats.total    },
-    { label: 'Unread',   value: stats.unread   },
-    { label: 'Useful',   value: stats.useful   },
-  ];
-  grid.innerHTML = items.map(({ label, value }) =>
-    `<div class="stat-tile"><span>${label}</span><strong>${value}</strong></div>`
-  ).join('');
-}
-
-async function loadStats() {
-  try {
-    const res = await apiFetch('/api/stats');
-    if (!res.ok) return;
-    renderStats(await res.json());
-  } catch {}
+  const revisit = stats.revisit || {};
+  if (revisit.buildingBaseline || revisit.current?.rate == null) {
+    revisitSummary.textContent = 'Building baseline';
+  } else {
+    const change = revisit.percentagePointChange;
+    const comparison = change == null ? '' : `, ${change >= 0 ? '+' : ''}${change} pp vs previous`;
+    const target = revisit.targetRate == null ? '' : `, target ${revisit.targetRate}%`;
+    revisitSummary.textContent = `${revisit.current.rate}% meaningfully revisited${comparison}${target}`;
+  }
+  librarySummary.textContent = `${stats.total || 0} active links, ${stats.unread || 0} unread, ${stats.useful || 0} useful`;
 }
 
 async function loadHome() {
-  const res = await apiFetch('/api/links?limit=5&sort=updatedAt&order=desc');
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Failed to load links');
-  updateSummary(data.links || []);
+  apiFetch('/api/stats').then(async res => {
+    if (res.ok) renderStats(await res.json());
+  }).catch(() => {});
+
+  const [reviewRes, recentRes] = await Promise.all([
+    apiFetch('/api/links/review'),
+    apiFetch('/api/links?limit=5&sort=createdAt&order=desc'),
+  ]);
+  const [review, recent] = await Promise.all([reviewRes.json(), recentRes.json()]);
+  if (!reviewRes.ok || !recentRes.ok) throw new Error('Failed to load home');
+  renderReview(review.links || []);
+  renderRecent(recent.links || []);
 }
 
 async function saveQuickAdd(rawUrl) {
@@ -165,4 +208,3 @@ if (window.LinkNest.initPullToRefresh) {
 }
 
 loadHome().catch(console.error);
-loadStats().catch(() => {});
