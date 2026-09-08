@@ -249,7 +249,13 @@ function buildRow(item) {
       await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}`, { method: 'DELETE' });
       window.LinkNest.showToast('Moved to archive', 'success');
       closeAllMenus();
-      await fetchPage(1);
+      const group = rowArticle.closest('.date-group');
+      rowArticle.remove();
+      if (!group.querySelector('.library-row')) group.remove();
+      state.links = state.links.filter(link => link.id !== item.id);
+      state.total = Math.max(0, state.total - 1);
+      totalCount.textContent = String(state.total);
+      visibleCount.textContent = String(state.links.length);
     } catch (err) {
       window.LinkNest.showToast(err.message);
     }
