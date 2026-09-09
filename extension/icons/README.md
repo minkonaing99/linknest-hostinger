@@ -6,10 +6,10 @@ Place PNG icons here:
 - `icon-48.png`  — 48x48px
 - `icon-128.png` — 128x128px
 
-Generate from `public/img/logo-mark.svg` using ImageMagick:
+Generate from `public/img/logo-source.png` using ImageMagick:
 
 ```bash
-magick public/img/logo-mark.svg -resize 16x16   extension/icons/icon-16.png
-magick public/img/logo-mark.svg -resize 48x48   extension/icons/icon-48.png
-magick public/img/logo-mark.svg -resize 128x128 extension/icons/icon-128.png
+magick public/img/logo-source.png -filter Lanczos -resize 16x16 -strip extension/icons/icon-16.png
+magick public/img/logo-source.png -filter Lanczos -resize 48x48 -strip extension/icons/icon-48.png
+magick public/img/logo-source.png -filter Lanczos -resize 128x128 -strip extension/icons/icon-128.png
 ```
