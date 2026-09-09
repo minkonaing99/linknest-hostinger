@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS links (
   id         VARCHAR(36)  PRIMARY KEY,
   url        TEXT         NOT NULL,
-  title      TEXT         NOT NULL DEFAULT '',
+  title      VARCHAR(300) NOT NULL DEFAULT '',
   host       VARCHAR(255) NOT NULL DEFAULT '',
   status     VARCHAR(20)  NOT NULL DEFAULT 'saved',
   tags       JSON         NOT NULL,
