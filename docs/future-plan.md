@@ -88,6 +88,70 @@ revisit metric without a full event-history system.
 4. Homepage changes.
 5. iPhone Shortcut setup documentation.
 
+## Later Improvements
+
+### Faster Review Controls
+
+- Add keyboard controls to the review queue:
+  - Left Arrow: archive.
+  - Right Arrow: mark useful.
+  - Up Arrow: snooze.
+  - `N`: add or edit the note.
+  - `O`: open the link.
+- Add equivalent swipe gestures on touch devices:
+  - Swipe left: archive.
+  - Swipe right: mark useful.
+  - Swipe up: snooze.
+- Keep visible buttons available for accessibility and discoverability.
+
+### Review Progress
+
+- Show the current position and queue size, such as `2 of 5`.
+- Show a completion screen after all five links receive a decision.
+- Keep each review session finite and focused.
+
+### Offline Capture Queue
+
+- Allow the PWA to accept links while offline.
+- Store pending captures locally without losing them.
+- Sync queued links automatically after connectivity returns.
+- Show clear pending, saved, and failed states.
+- Keep conflict handling compatible with duplicate detection.
+
+### Better Portable Export
+
+- Keep JSON as the complete backup format.
+- Add Markdown and CSV export options.
+- Include title, URL, note, status, and saved date.
+- Keep exported data portable to Obsidian, spreadsheets, and other tools.
+
+### Command Search
+
+- Open command search with `/` or `Cmd+K`.
+- Search saved links without navigating away from the current page.
+- Support common actions from search results, including open, add note,
+  mark useful, snooze, and archive.
+- Keep normal Browse search unchanged.
+
+### In-App Weekly Summary
+
+- Add one homepage card showing:
+  - links saved;
+  - links reviewed;
+  - useful decisions;
+  - revisit percentage; and
+  - the oldest unresolved link.
+- Do not add email, push, or browser notifications.
+
+### Duplicate Merge
+
+- When a duplicate is found, offer these explicit choices:
+  - open the existing link;
+  - merge the new note into the existing link;
+  - restore the archived copy; or
+  - save a separate copy.
+- Never merge or overwrite data without user confirmation.
+
 ## Explicitly Deferred
 
 - AI summaries and automatic tagging.
