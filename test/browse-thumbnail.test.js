@@ -12,6 +12,8 @@ const css = fs.readFileSync(path.join(__dirname, '../public/css/styles.css'), 'u
 it('renders safe YouTube thumbnails in Browse with text-only fallback', () => {
   assert.match(html, /class="link-thumbnail hidden"/);
   assert.match(html, /loading="lazy"/);
+  assert.match(html, /decoding="async"/);
+  assert.match(html, /fetchpriority="low"/);
   assert.match(html, /referrerpolicy="no-referrer"/);
   assert.match(script, /item\.thumbnailUrl/);
   assert.match(script, /addEventListener\('error'/);
@@ -35,6 +37,7 @@ it('uses a compact YouTube media list on mobile and tablet only', () => {
   assert.match(css, /body\.is-youtube-view \.link-thumbnail[\s\S]*aspect-ratio: 16 \/ 9/);
   assert.match(css, /body\.is-youtube-view \.library-row__title[\s\S]*-webkit-line-clamp: 2/);
   assert.match(css, /body\.is-youtube-view \.library-row__status[\s\S]*display: none/);
+  assert.match(css, /content-visibility: auto/);
 });
 
 it('keeps Favorite inside the three-dot menu', () => {

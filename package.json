@@ -4,6 +4,9 @@
   "private": true,
   "description": "Minimalist local website for saving and browsing links",
   "main": "server.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node server.js",
     "test": "node --test"

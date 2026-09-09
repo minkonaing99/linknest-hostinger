@@ -690,6 +690,8 @@ textarea.field {
   border: 1px solid rgba(60, 60, 67, 0.08);
   border-radius: 14px;
   transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 78px;
 }
 .library-row.has-thumbnail {
   grid-template-columns: 12px 144px minmax(0, 1fr) auto;
