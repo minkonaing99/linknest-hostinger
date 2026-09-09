@@ -44,6 +44,10 @@ it('keeps Favorite inside the three-dot menu', () => {
   assert.doesNotMatch(html, /class="pin-toggle"/);
   assert.match(html, /class="row-menu__item favorite-button"/);
   assert.match(script, /favoriteButton\.textContent = item\.pinned \? 'Remove from Favorites' : 'Add to Favorites'/);
+  const togglePinned = script.match(/async function togglePinned[\s\S]*?\n}/)[0];
+  assert.doesNotMatch(togglePinned, /fetchPage/);
+  assert.match(togglePinned, /item\.pinned = nextPinned/);
+  assert.match(togglePinned, /JSON\.stringify\(\{ pinned: nextPinned \}\)/);
 });
 
 it('lets an open row menu paint above neighboring rows', () => {

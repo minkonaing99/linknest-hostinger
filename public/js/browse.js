@@ -53,16 +53,17 @@ function groupLabel(dateString) {
 }
 
 async function togglePinned(item) {
+  const nextPinned = !item.pinned;
   const res = await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...item, pinned: !item.pinned }),
+    body: JSON.stringify({ pinned: nextPinned }),
   });
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.error || 'Failed to update pin state');
   }
-  await fetchPage(1);
+  item.pinned = nextPinned;
 }
 
 async function updateLinkFields(item, fields) {
@@ -223,7 +224,12 @@ function buildRow(item) {
   favoriteButton.textContent = item.pinned ? 'Remove from Favorites' : 'Add to Favorites';
   favoriteButton.addEventListener('click', async event => {
     event.stopPropagation();
-    try { await togglePinned(item); } catch (err) { window.LinkNest.showToast(err.message); }
+    try {
+      await togglePinned(item);
+      rowArticle.classList.toggle('is-pinned', item.pinned);
+      favoriteButton.textContent = item.pinned ? 'Remove from Favorites' : 'Add to Favorites';
+      closeAllMenus();
+    } catch (err) { window.LinkNest.showToast(err.message); }
   });
 
   const thumbnail = node.querySelector('.link-thumbnail');
