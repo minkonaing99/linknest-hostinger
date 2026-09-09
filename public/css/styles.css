@@ -604,7 +604,10 @@ textarea.field {
   gap: 10px;
   padding: 12px 14px;
   border-top: 1px solid rgba(60, 60, 67, 0.08);
+  position: relative;
+  z-index: 0;
   }
+.recent-row.is-menu-open { z-index: 40; }
 .link-thumbnail {
   display: block;
   width: 144px;
@@ -699,7 +702,7 @@ textarea.field {
   box-shadow: 0 14px 28px rgba(17, 17, 17, 0.06);
   transform: translateY(-1px);
 }
-.library-row:has(.pin-toggle.is-pinned) {
+.library-row.is-pinned {
   border-color: rgba(52, 199, 89, 0.18);
   background: linear-gradient(180deg, rgba(246, 255, 249, 0.98) 0%, rgba(241, 252, 245, 0.94) 100%);
 }
@@ -718,35 +721,6 @@ textarea.field {
 .status-dot--unread { background: #c89200; }
 .status-dot--useful { background: #1c8b51; }
 .status-dot--archived { background: #776f95; }
-
-.pin-toggle {
-  border: 0;
-  background: rgba(242, 242, 247, 0.95);
-  color: #8e8e93;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-  font-size: 12px;
-  font-weight: 700;
-  width: 26px;
-  height: 26px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 140ms ease, background-color 140ms ease, transform 140ms ease;
-  border-radius: 999px;
-}
-.pin-toggle:hover {
-  color: #5d564b;
-  background: rgba(234, 234, 240, 1);
-}
-.pin-toggle:focus-visible {
-  outline: 2px solid rgba(0, 122, 255, 0.2);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-.pin-toggle.is-pinned { color: #1f8f5f; }
-.pin-toggle.is-pinned:hover { color: #18754d; }
 
 .library-row__main {
   min-width: 0;
@@ -953,6 +927,70 @@ textarea.field {
 @media (max-width: 900px) {
   .editor-secondary {
     padding: 14px;
+  }
+}
+
+@media (max-width: 1024px) {
+  body.is-youtube-view .surface--group > .list-stack--rows {
+    padding-inline: 2px;
+  }
+  body.is-youtube-view .date-group {
+    gap: 12px;
+  }
+  body.is-youtube-view .library-row {
+    grid-template-columns: minmax(0, 1fr) 32px;
+    align-items: start;
+    gap: 12px;
+    padding: 4px 6px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  body.is-youtube-view .library-row.has-thumbnail {
+    grid-template-columns: clamp(132px, 40vw, 260px) minmax(0, 1fr) 32px;
+  }
+  body.is-youtube-view .library-row:hover {
+    box-shadow: none;
+    transform: none;
+  }
+  body.is-youtube-view .library-row__status {
+    display: none;
+  }
+  body.is-youtube-view .link-thumbnail {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 10px;
+  }
+  body.is-youtube-view .library-row__main {
+    gap: 5px;
+  }
+  body.is-youtube-view .library-row__title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: clamp(15px, 2.2vw, 18px);
+    line-height: 1.25;
+  }
+  body.is-youtube-view .library-row__meta {
+    gap: 4px;
+    font-size: clamp(11px, 1.7vw, 13px);
+    line-height: 1.35;
+  }
+  body.is-youtube-view .library-row__meta .status-text,
+  body.is-youtube-view .library-row__meta span:nth-last-child(2),
+  body.is-youtube-view .library-row__notes,
+  body.is-youtube-view .library-row__tags {
+    display: none;
+  }
+  body.is-youtube-view .library-row__tail {
+    justify-content: flex-end;
+  }
+  body.is-youtube-view .row-menu__trigger {
+    width: 32px;
+    height: 40px;
+    background: transparent;
   }
 }
 

@@ -28,6 +28,13 @@ function isDue(item) {
   return item.remindAt && Date.parse(item.remindAt) <= Date.now();
 }
 
+function closeHomeMenus() {
+  document.querySelectorAll('.row-menu__popover').forEach(menu => menu.classList.add('hidden'));
+  document.querySelectorAll('.row-menu__trigger').forEach(trigger => trigger.setAttribute('aria-expanded', 'false'));
+  document.querySelectorAll('.row-menu').forEach(menu => menu.classList.remove('is-open'));
+  document.querySelectorAll('.recent-row').forEach(row => row.classList.remove('is-menu-open'));
+}
+
 function fillLinkRow(node, item) {
   node.querySelector('.link-date').textContent = item.date
     || (item.createdAt ? thailandDate(item.createdAt) : 'Unknown date');
@@ -41,10 +48,10 @@ function fillLinkRow(node, item) {
   title.title = rawTitle;
   title.addEventListener('click', () => trackOpen(item));
 
-  const pin = node.querySelector('.pin-toggle');
-  pin.textContent = item.pinned ? '★' : '☆';
-  pin.classList.toggle('is-pinned', Boolean(item.pinned));
-  pin.addEventListener('click', async () => {
+  const favoriteButton = node.querySelector('.favorite-button');
+  favoriteButton.textContent = item.pinned ? 'Remove from Favorites' : 'Add to Favorites';
+  favoriteButton.addEventListener('click', async event => {
+    event.stopPropagation();
     try {
       const res = await apiFetch(`/api/links/${encodeURIComponent(item.id)}`, {
         method: 'PUT',
@@ -52,11 +59,27 @@ function fillLinkRow(node, item) {
         body: JSON.stringify({ pinned: !item.pinned }),
       });
       if (!res.ok) throw new Error('Failed to update pin');
+      closeHomeMenus();
       await loadHome();
     } catch (error) {
       window.LinkNest.showToast(error.message);
     }
   });
+
+  const menu = node.querySelector('.row-menu');
+  const trigger = menu.querySelector('.row-menu__trigger');
+  const popover = menu.querySelector('.row-menu__popover');
+  const row = node.querySelector('.recent-row');
+  trigger.addEventListener('click', event => {
+    event.stopPropagation();
+    const willOpen = popover.classList.contains('hidden');
+    closeHomeMenus();
+    popover.classList.toggle('hidden', !willOpen);
+    trigger.setAttribute('aria-expanded', String(willOpen));
+    menu.classList.toggle('is-open', willOpen);
+    row.classList.toggle('is-menu-open', willOpen);
+  });
+  popover.addEventListener('click', event => event.stopPropagation());
   return node;
 }
 
@@ -98,6 +121,7 @@ function renderReview(items) {
     if (isDue(item)) node.querySelector('.status-text').textContent = 'due';
     const decide = node.querySelector('.home-edit-link');
     decide.setAttribute('aria-label', 'Review link');
+    decide.textContent = 'Review';
     decide.href = '/browse.html?review=1';
     fragment.appendChild(node);
   }
@@ -211,6 +235,8 @@ quickAddPaste.addEventListener('click', async () => {
     setMessage(quickAddMessage, 'Clipboard permission denied or unavailable.', 'error');
   }
 });
+
+document.addEventListener('click', closeHomeMenus);
 
 if (window.LinkNest.initPullToRefresh) {
   window.LinkNest.initPullToRefresh(() => loadHome());

@@ -49,8 +49,9 @@ describe('homepage workflow', () => {
   it('uses compact right-side row actions without an Open link', () => {
     assert.doesNotMatch(html, />Open<\/a>/);
     assert.match(html, /class="recent-row__tail"/);
-    assert.match(html, /class="pin-toggle"/);
-    assert.match(html, /class="row-menu__trigger home-edit-link"/);
+    assert.doesNotMatch(html, /class="pin-toggle"/);
+    assert.match(html, /class="row-menu__trigger"/);
+    assert.match(html, /class="row-menu__item favorite-button"/);
     assert.doesNotMatch(script, /row-action--open/);
     assert.match(script, /pinned: !item\.pinned/);
     assert.match(script, /\/opened/);

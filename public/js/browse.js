@@ -29,6 +29,8 @@ const selectToggleBtn   = document.getElementById('select-toggle-btn');
 const bulkStatusSelect  = document.getElementById('bulk-status-select');
 const tagChipsContainer = document.getElementById('tag-chips');
 
+document.body.classList.toggle('is-youtube-view', state.quickFilter === 'youtube');
+
 function safeHost(url) {
   try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return ''; }
 }
@@ -172,6 +174,7 @@ function buildRow(item) {
 
   const rowArticle = node.querySelector('.library-row');
   if (state.selected.has(item.id)) rowArticle.classList.add('is-selected');
+  rowArticle.classList.toggle('is-pinned', Boolean(item.pinned));
 
   // In select mode: whole row is a toggle; block link navigation
   rowArticle.addEventListener('click', e => {
@@ -216,10 +219,9 @@ function buildRow(item) {
     }
   });
 
-  const pinToggle = node.querySelector('.pin-toggle');
-  pinToggle.textContent = item.pinned ? '★' : '☆';
-  pinToggle.classList.toggle('is-pinned', Boolean(item.pinned));
-  pinToggle.addEventListener('click', async event => {
+  const favoriteButton = node.querySelector('.favorite-button');
+  favoriteButton.textContent = item.pinned ? 'Remove from Favorites' : 'Add to Favorites';
+  favoriteButton.addEventListener('click', async event => {
     event.stopPropagation();
     try { await togglePinned(item); } catch (err) { window.LinkNest.showToast(err.message); }
   });
@@ -494,6 +496,7 @@ document.querySelectorAll('.quick-filter-btn').forEach(btn => {
     const filter = btn.dataset.filter;
     const active = state.quickFilter === filter;
     state.quickFilter = active ? null : filter;
+    document.body.classList.toggle('is-youtube-view', state.quickFilter === 'youtube');
     document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.toggle('is-active', b.dataset.filter === state.quickFilter));
     fetchPage(1);
   });

@@ -27,3 +27,18 @@ it('keeps YouTube links in a dedicated Browse tab', () => {
   assert.match(script, /%3Fyoutube%3D1/);
   assert.doesNotMatch(script, /state\.quickFilter === 'youtube' \? 'YouTube'/);
 });
+
+it('uses a compact YouTube media list on mobile and tablet only', () => {
+  assert.match(script, /is-youtube-view/);
+  assert.match(css, /body\.is-youtube-view \.library-row \{\s+grid-template-columns: minmax\(0, 1fr\) 32px/);
+  assert.match(css, /@media \(max-width: 1024px\)[\s\S]*body\.is-youtube-view \.library-row\.has-thumbnail/);
+  assert.match(css, /body\.is-youtube-view \.link-thumbnail[\s\S]*aspect-ratio: 16 \/ 9/);
+  assert.match(css, /body\.is-youtube-view \.library-row__title[\s\S]*-webkit-line-clamp: 2/);
+  assert.match(css, /body\.is-youtube-view \.library-row__status[\s\S]*display: none/);
+});
+
+it('keeps Favorite inside the three-dot menu', () => {
+  assert.doesNotMatch(html, /class="pin-toggle"/);
+  assert.match(html, /class="row-menu__item favorite-button"/);
+  assert.match(script, /favoriteButton\.textContent = item\.pinned \? 'Remove from Favorites' : 'Add to Favorites'/);
+});
