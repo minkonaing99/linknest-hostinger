@@ -698,6 +698,7 @@ textarea.field {
 }
 .library-row.is-menu-open {
   z-index: 40;
+  content-visibility: visible;
 }
 .library-row:hover {
   border-color: rgba(0, 122, 255, 0.18);

@@ -45,3 +45,7 @@ it('keeps Favorite inside the three-dot menu', () => {
   assert.match(html, /class="row-menu__item favorite-button"/);
   assert.match(script, /favoriteButton\.textContent = item\.pinned \? 'Remove from Favorites' : 'Add to Favorites'/);
 });
+
+it('lets an open row menu paint above neighboring rows', () => {
+  assert.match(css, /\.library-row\.is-menu-open \{[^}]*content-visibility: visible;/);
+});
