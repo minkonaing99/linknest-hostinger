@@ -6,6 +6,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-000000000000
 
 const { it } = require('node:test');
 const assert = require('node:assert/strict');
+const { Readable } = require('node:stream');
 
 const linksPath = require.resolve('../../lib/links');
 require.cache[linksPath] = {
@@ -14,6 +15,11 @@ require.cache[linksPath] = {
   loaded: true,
   exports: {
     readReviewQueue: async () => [{ id: 'review-1' }],
+    findDuplicateCandidates: async () => [{
+      id: 'existing-1', url: 'https://example.com', title: 'Example',
+      similarity: 1, exact: true, archived: false,
+    }],
+    mergeLinkNote: async (id, note) => ({ id, notes: note }),
   },
 };
 
@@ -34,4 +40,42 @@ it('GET /api/links/review returns review links', async () => {
   assert.equal(handled, true);
   assert.equal(status, 200);
   assert.deepEqual(body, { links: [{ id: 'review-1' }] });
+});
+
+it('POST /api/links/:id/merge-note appends note through dedicated endpoint', async () => {
+  let status;
+  let body;
+  const res = {
+    writeHead(code) { status = code; },
+    end(value) { body = JSON.parse(value); },
+  };
+  const req = Readable.from([JSON.stringify({ note: 'New insight' })]);
+  req.method = 'POST';
+  const handled = await handle(
+    req,
+    res,
+    new URL('https://example.com/api/links/existing-1/merge-note')
+  );
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(handled, true);
+  assert.equal(status, 200);
+  assert.deepEqual(body.entry, { id: 'existing-1', notes: 'New insight' });
+});
+
+it('GET /api/links/duplicates returns actionable candidates', async () => {
+  let status;
+  let body;
+  const res = {
+    writeHead(code) { status = code; },
+    end(value) { body = JSON.parse(value); },
+  };
+  const handled = await handle(
+    { method: 'GET' },
+    res,
+    new URL('https://example.com/api/links/duplicates?url=https%3A%2F%2Fexample.com')
+  );
+  assert.equal(handled, true);
+  assert.equal(status, 200);
+  assert.equal(body.candidates[0].exact, true);
+  assert.equal(body.candidates[0].archived, false);
 });

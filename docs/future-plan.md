@@ -143,7 +143,7 @@ revisit metric without a full event-history system.
   - the oldest unresolved link.
 - Do not add email, push, or browser notifications.
 
-### Duplicate Merge
+### Duplicate Merge (Implemented 2026-09-10)
 
 - When a duplicate is found, offer these explicit choices:
   - open the existing link;

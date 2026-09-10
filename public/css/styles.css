@@ -889,6 +889,34 @@ textarea.field {
   line-height: 1.4;
   padding: 0 14px 14px;
 }
+.duplicate-panel {
+  display: grid;
+  gap: 8px;
+  color: var(--text);
+}
+.duplicate-choice {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(60, 60, 67, 0.12);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.72);
+}
+.duplicate-choice strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+.duplicate-choice__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.duplicate-choice__actions .button {
+  min-height: 32px;
+  font-size: 12px;
+}
 .login-message {
   min-height: 18px;
   text-align: center;

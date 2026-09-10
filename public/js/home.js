@@ -1,4 +1,4 @@
-const { safeHost, apiFetch, setMessage, thailandDateString: thailandDate } = window.LinkNest;
+const { safeHost, apiFetch, setMessage, findDuplicateCandidates, thailandDateString: thailandDate } = window.LinkNest;
 
 const recentLinks = document.getElementById('recent-links');
 const reviewLinks = document.getElementById('review-links');
@@ -135,6 +135,77 @@ async function fetchTitleMetadata(rawUrl) {
   return data;
 }
 
+function quickAddAction(label, onClick) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'button button--ghost button--small';
+  button.textContent = label;
+  button.addEventListener('click', onClick);
+  return button;
+}
+
+function renderQuickAddDuplicates(candidates, metadata) {
+  setMessage(quickAddMessage, 'Possible duplicate. Choose what to do.', 'error');
+  quickAddMessage.classList.add('duplicate-panel');
+  quickAddMessage.setAttribute('aria-label', 'Duplicate choices');
+  const hasExact = candidates.some(candidate => candidate.exact);
+  for (const candidate of candidates) {
+    const row = document.createElement('span');
+    row.className = 'duplicate-choice';
+    const title = document.createElement('strong');
+    title.textContent = candidate.title || candidate.url;
+    const actions = document.createElement('span');
+    actions.className = 'duplicate-choice__actions';
+    const open = document.createElement('a');
+    open.className = 'button button--ghost button--small';
+    open.textContent = 'Open existing';
+    open.href = `/editor.html?id=${encodeURIComponent(candidate.id)}`;
+    open.target = '_blank';
+    open.rel = 'noopener noreferrer';
+    actions.appendChild(open);
+    if (candidate.archived) {
+      actions.appendChild(quickAddAction('Restore', async () => {
+        try {
+          const res = await apiFetch(`/api/links/restore/${encodeURIComponent(candidate.id)}`, { method: 'POST' });
+          if (!res.ok) throw new Error((await res.json()).error || 'Restore failed');
+          setMessage(quickAddMessage, 'Link restored.', 'success');
+          await loadHome();
+        } catch (error) { setMessage(quickAddMessage, error.message, 'error'); }
+      }));
+    }
+    if (!candidate.exact && !hasExact) {
+      actions.appendChild(quickAddAction('Save separately', () => createQuickLink(metadata)));
+    }
+    row.append(title, actions);
+    quickAddMessage.appendChild(row);
+  }
+  quickAddMessage.querySelector('a, button')?.focus();
+}
+
+async function createQuickLink(metadata) {
+  const res = await apiFetch('/api/links', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      url: metadata.url,
+      title: metadata.title || metadata.url,
+      date: thailandDate(),
+      status: 'saved',
+      tags: [],
+      pinned: false,
+    }),
+  });
+  const data = await res.json();
+  if (res.status === 409) {
+    renderQuickAddDuplicates([{ id: data.id, url: data.url, title: data.url, exact: true, archived: data.archived }], metadata);
+    return;
+  }
+  if (!res.ok) throw new Error(data.error || 'Failed to save link');
+  quickAddForm.reset();
+  setMessage(quickAddMessage, 'Link saved.', 'success');
+  await loadHome();
+}
+
 function renderStats(stats) {
   const revisit = stats.revisit || {};
   if (revisit.buildingBaseline || revisit.current?.rate == null) {
@@ -175,26 +246,14 @@ async function saveQuickAdd(rawUrl) {
 
   try {
     const metadata = await fetchTitleMetadata(rawUrl);
+    const draft = { ...metadata, url: metadata.url || rawUrl };
+    const candidates = await findDuplicateCandidates(draft.url, draft.title);
+    if (candidates.length) {
+      renderQuickAddDuplicates(candidates, draft);
+      return;
+    }
     setMessage(quickAddMessage, 'Saving link...');
-
-    const res = await apiFetch('/api/links', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        url: metadata.url || rawUrl,
-        title: metadata.title || metadata.url || rawUrl,
-        date: thailandDate(),
-        status: 'saved',
-        tags: [],
-        pinned: false,
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to save link');
-
-    quickAddForm.reset();
-    setMessage(quickAddMessage, 'Link saved.', 'success');
-    await loadHome();
+    await createQuickLink(draft);
   } catch (error) {
     setMessage(quickAddMessage, error.message, 'error');
   } finally {

@@ -7,6 +7,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const html = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
+const editorHtml = fs.readFileSync(path.join(__dirname, '../public/editor.html'), 'utf8');
 const script = fs.readFileSync(path.join(__dirname, '../public/js/home.js'), 'utf8');
 const shared = fs.readFileSync(path.join(__dirname, '../public/js/shared.js'), 'utf8');
 const editor = fs.readFileSync(path.join(__dirname, '../public/js/editor.js'), 'utf8');
@@ -55,5 +56,24 @@ describe('homepage workflow', () => {
     assert.doesNotMatch(script, /row-action--open/);
     assert.match(script, /pinned: !item\.pinned/);
     assert.match(script, /\/opened/);
+  });
+
+  it('requires an explicit duplicate decision before saving', () => {
+    assert.match(shared, /api\/links\/duplicates/);
+    assert.match(editor, /Open existing/);
+    assert.match(editor, /Merge note/);
+    assert.match(editor, /Restore/);
+    assert.match(editor, /Save separately/);
+    assert.match(editor, /\/merge-note/);
+    assert.match(script, /Open existing/);
+    assert.match(script, /Restore/);
+    assert.match(script, /Save separately/);
+    assert.doesNotMatch(editor, /innerHTML/);
+    assert.match(html, /id="quick-add-message"[^>]*role="status"[^>]*aria-live="polite"[^>]*tabindex="-1"/);
+    assert.match(editorHtml, /id="form-message"[^>]*role="status"[^>]*aria-live="polite"[^>]*tabindex="-1"/);
+    assert.match(editor, /aria-label', 'Duplicate choices'/);
+    assert.match(script, /aria-label', 'Duplicate choices'/);
+    assert.match(editor, /querySelector\('a, button'\)\?\.focus\(\)/);
+    assert.match(script, /querySelector\('a, button'\)\?\.focus\(\)/);
   });
 });

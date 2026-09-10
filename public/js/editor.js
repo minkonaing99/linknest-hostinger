@@ -1,4 +1,6 @@
-const { getLinks, setMessage, parseTags, queryParam, apiFetch, thailandDateString: thailandDate } = window.LinkNest;
+const { getLinks, setMessage, parseTags, queryParam, apiFetch, findDuplicateCandidates, thailandDateString: thailandDate } = window.LinkNest;
+
+let allowDuplicateOnce = false;
 
 const els = {
   form: document.getElementById('link-form'),
@@ -60,6 +62,72 @@ async function fetchTitleMetadata(rawUrl) {
   return data;
 }
 
+function duplicateAction(label, onClick) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'button button--ghost button--small';
+  button.textContent = label;
+  button.addEventListener('click', onClick);
+  return button;
+}
+
+async function mergeCandidateNote(candidate, note) {
+  const updateRes = await apiFetch(`/api/links/${encodeURIComponent(candidate.id)}/merge-note`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ note }),
+  });
+  const updateData = await updateRes.json();
+  if (!updateRes.ok) throw new Error(updateData.error || 'Could not merge note');
+}
+
+function renderDuplicateChoices(candidates, draft) {
+  setMessage(els.message, 'Possible duplicate. Choose what to do.', 'error');
+  els.message.classList.add('duplicate-panel');
+  els.message.setAttribute('aria-label', 'Duplicate choices');
+  const hasExact = candidates.some(candidate => candidate.exact);
+  for (const candidate of candidates) {
+    const row = document.createElement('span');
+    row.className = 'duplicate-choice';
+    const title = document.createElement('strong');
+    title.textContent = candidate.title || candidate.url;
+    const actions = document.createElement('span');
+    actions.className = 'duplicate-choice__actions';
+    const open = document.createElement('a');
+    open.className = 'button button--ghost button--small';
+    open.textContent = 'Open existing';
+    open.href = `/editor.html?id=${encodeURIComponent(candidate.id)}`;
+    open.target = '_blank';
+    open.rel = 'noopener noreferrer';
+    actions.appendChild(open);
+    if (candidate.archived) {
+      actions.appendChild(duplicateAction('Restore', async () => {
+        try {
+          const res = await apiFetch(`/api/links/restore/${encodeURIComponent(candidate.id)}`, { method: 'POST' });
+          if (!res.ok) throw new Error((await res.json()).error || 'Restore failed');
+          setMessage(els.message, 'Link restored.', 'success');
+        } catch (error) { setMessage(els.message, error.message, 'error'); }
+      }));
+    } else if (draft.notes) {
+      actions.appendChild(duplicateAction('Merge note', async () => {
+        try {
+          await mergeCandidateNote(candidate, draft.notes);
+          setMessage(els.message, 'Note merged into existing link.', 'success');
+        } catch (error) { setMessage(els.message, error.message, 'error'); }
+      }));
+    }
+    if (!candidate.exact && !hasExact) {
+      actions.appendChild(duplicateAction('Save separately', () => {
+        allowDuplicateOnce = true;
+        els.form.requestSubmit();
+      }));
+    }
+    row.append(title, actions);
+    els.message.appendChild(row);
+  }
+  els.message.querySelector('a, button')?.focus();
+}
+
 async function loadForEdit() {
   const id = queryParam('id');
   if (!id) return;
@@ -84,12 +152,28 @@ async function loadForEdit() {
 els.form.addEventListener('submit', async event => {
   event.preventDefault();
   const editing = Boolean(els.id.value);
+  let draft = payload();
+  const skipDuplicateCheck = allowDuplicateOnce;
+  allowDuplicateOnce = false;
   setMessage(els.message, editing ? 'Saving changes...' : 'Saving...');
   try {
+    if (!editing && !skipDuplicateCheck) {
+      if (!draft.title) {
+        const metadata = await fetchTitleMetadata(draft.url);
+        draft = { ...draft, url: metadata.url || draft.url, title: metadata.title || draft.url };
+        els.url.value = draft.url;
+        els.title.value = draft.title;
+      }
+      const candidates = await findDuplicateCandidates(draft.url, draft.title);
+      if (candidates.length) {
+        renderDuplicateChoices(candidates, draft);
+        return;
+      }
+    }
     const res = await apiFetch(editing ? `/api/links/${encodeURIComponent(els.id.value)}` : '/api/links', {
       method: editing ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload()),
+      body: JSON.stringify(draft),
     });
     const data = await res.json();
     if (res.status === 409) {

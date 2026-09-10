@@ -410,6 +410,51 @@ Example duplicate response:
 }
 ```
 
+### Check duplicate candidates
+
+```http
+GET /api/links/duplicates?url=https%3A%2F%2Fexample.com&title=Example
+```
+
+The response lists exact URL matches first, followed by same-domain links with
+similar titles. Archived matches remain visible so clients can offer Restore.
+
+```json
+{
+  "candidates": [
+    {
+      "id": "existing-link-id",
+      "url": "https://example.com",
+      "title": "Example",
+      "similarity": 1,
+      "exact": true,
+      "archived": false
+    }
+  ]
+}
+```
+
+Clients must ask before merging notes or restoring a link. Exact URL duplicates
+cannot be saved separately. Similar links may be saved separately.
+
+### Merge a note into an existing link
+
+```http
+POST /api/links/:id/merge-note
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "note": "New insight"
+}
+```
+
+The note is appended atomically with a blank line separator. Empty notes and
+combined notes longer than 10,000 characters are rejected.
+
 ### Update a link
 
 ```http

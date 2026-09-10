@@ -43,6 +43,8 @@ window.LinkNest = {
     if (!target) return;
     target.textContent = text;
     target.className = `form-message ${kind}`.trim();
+    target.removeAttribute('aria-label');
+    target.setAttribute('role', kind === 'error' ? 'alert' : 'status');
   },
 
   parseTags(value) {
@@ -85,6 +87,14 @@ async function updateUnreadBadge() {
 }
 
 window.LinkNest.updateUnreadBadge = updateUnreadBadge;
+
+window.LinkNest.findDuplicateCandidates = async function(url, title) {
+  const params = new URLSearchParams({ url, title: title || url });
+  const res = await linkNestApiFetch(`/api/links/duplicates?${params}`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Could not check duplicates');
+  return data.candidates || [];
+};
 
 window.LinkNest.showToast = function(message, kind = 'error') {
   const toast = document.createElement('div');

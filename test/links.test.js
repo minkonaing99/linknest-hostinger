@@ -31,7 +31,7 @@ require.cache[titlePath] = {
 const {
   createLink, readLink, readLinks, updateLink,
   deleteLink, restoreLink, readTagCounts, bulkUpdateStatus,
-  parseBookmarksHtml, importLinks, openLink, findDuplicateCandidates, readReviewQueue,
+  parseBookmarksHtml, importLinks, openLink, findDuplicateCandidates, readReviewQueue, mergeLinkNote,
 } = require('../lib/links');
 
 // Helpers
@@ -497,6 +497,17 @@ describe('findDuplicateCandidates', () => {
     assert.deepEqual(candidates, []);
   });
 
+  it('rejects an invalid duplicate-check URL', async () => {
+    await assert.rejects(
+      () => findDuplicateCandidates('not-a-url', 'Bad URL'),
+      error => error.statusCode === 400
+    );
+    await assert.rejects(
+      () => findDuplicateCandidates('file:///etc/passwd', 'Local file'),
+      error => error.statusCode === 400
+    );
+  });
+
   it('returns candidates above similarity threshold', async () => {
     seq({
       rows: [
@@ -532,5 +543,55 @@ describe('findDuplicateCandidates', () => {
     const candidates = await findDuplicateCandidates('https://example.com/new', 'Example Page');
     assert.equal(candidates.length, 2);
     assert.ok(candidates[0].similarity >= candidates[1].similarity);
+  });
+
+  it('returns exact and archived matches before fuzzy matches', async () => {
+    seq({
+      rows: [
+        { id: 'fuzzy', url: 'https://example.com/guide', title: 'Example Guide Updated', deleted_at: null },
+        { id: 'exact', url: 'https://example.com/page', title: 'Old title', deleted_at: '2026-01-01T00:00:00.000Z' },
+      ],
+      rowCount: 2,
+    });
+    const candidates = await findDuplicateCandidates('https://example.com/page?utm_source=test', 'Example Guide');
+    assert.deepEqual(candidates[0], {
+      id: 'exact',
+      url: 'https://example.com/page',
+      title: 'Old title',
+      similarity: 1,
+      exact: true,
+      archived: true,
+    });
+    assert.equal(candidates[1].exact, false);
+    assert.equal(candidates[1].archived, false);
+  });
+
+  it('excludes the newly created link from post-save suggestions', async () => {
+    seq({ rows: [makeRow({ id: 'new-id', url: 'https://example.com/page' })], rowCount: 1 });
+    const candidates = await findDuplicateCandidates('https://example.com/page', 'Example', 'new-id');
+    assert.deepEqual(candidates, []);
+  });
+});
+
+describe('mergeLinkNote', () => {
+  it('atomically appends a note fragment', async () => {
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      if (calls.length === 1) return { rows: [], rowCount: 1 };
+      return { rows: [makeRow({ notes: ' Existing \n\nNew insight' })], rowCount: 1 };
+    };
+    const entry = await mergeLinkNote('link-id-123', 'New insight');
+    assert.match(calls[0][0], /^UPDATE links/);
+    assert.match(calls[0][0], /CONCAT/);
+    assert.doesNotMatch(calls[0][0], /TRIM/);
+    assert.equal(entry.notes, 'Existing \n\nNew insight');
+  });
+
+  it('rejects note fragments beyond the stored limit', async () => {
+    await assert.rejects(
+      () => mergeLinkNote('link-id-123', 'x'.repeat(10_001)),
+      error => error.statusCode === 400
+    );
   });
 });
