@@ -76,4 +76,11 @@ describe('homepage workflow', () => {
     assert.match(editor, /querySelector\('a, button'\)\?\.focus\(\)/);
     assert.match(script, /querySelector\('a, button'\)\?\.focus\(\)/);
   });
+
+  it('offers Markdown and CSV export plus CSV import', () => {
+    assert.match(editorHtml, /href="\/api\/links\/export\.md"/);
+    assert.match(editorHtml, /href="\/api\/links\/export\.csv"/);
+    assert.match(editorHtml, /id="csv-file"[^>]*accept="\.csv,text\/csv"/);
+    assert.match(editor, /api\/links\/import-csv/);
+  });
 });

@@ -118,12 +118,13 @@ revisit metric without a full event-history system.
 - Show clear pending, saved, and failed states.
 - Keep conflict handling compatible with duplicate detection.
 
-### Better Portable Export
+### Better Portable Export (Implemented 2026-09-11)
 
 - Keep JSON as the complete backup format.
 - Add Markdown and CSV export options.
 - Include title, URL, note, status, and saved date.
 - Keep exported data portable to Obsidian, spreadsheets, and other tools.
+- Allow CSV files using the same five columns to be imported.
 
 ### Command Search
 

@@ -24,6 +24,9 @@ const els = {
   bookmarksFile: document.getElementById('bookmarks-file'),
   bookmarksImport: document.getElementById('bookmarks-import'),
   bookmarksMessage: document.getElementById('bookmarks-message'),
+  csvFile: document.getElementById('csv-file'),
+  csvImport: document.getElementById('csv-import'),
+  csvMessage: document.getElementById('csv-message'),
 };
 
 els.date.value = thailandDate();
@@ -356,6 +359,30 @@ if (els.bookmarksImport) {
       if (els.bookmarksFile) els.bookmarksFile.value = '';
     } catch (err) {
       setMessage(els.bookmarksMessage, err.message, 'error');
+    }
+  });
+}
+
+if (els.csvImport) {
+  els.csvImport.addEventListener('click', async () => {
+    const file = els.csvFile?.files?.[0];
+    if (!file) return setMessage(els.csvMessage, 'Choose a CSV file first.', 'error');
+    setMessage(els.csvMessage, 'Importing...');
+    els.csvImport.disabled = true;
+    try {
+      const res = await apiFetch('/api/links/import-csv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ csv: await file.text() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'CSV import failed');
+      setMessage(els.csvMessage, `Imported ${data.imported} of ${data.parsed} CSV rows.`, 'success');
+      els.csvFile.value = '';
+    } catch (error) {
+      setMessage(els.csvMessage, error.message, 'error');
+    } finally {
+      els.csvImport.disabled = false;
     }
   });
 }

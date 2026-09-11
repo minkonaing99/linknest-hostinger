@@ -561,12 +561,32 @@ GET /api/links/export
 
 ### Response
 
-Returns downloadable JSON.
+Returns downloadable JSON, Markdown, or CSV from these routes:
+
+```text
+GET /api/links/export
+GET /api/links/export.md
+GET /api/links/export.csv
+```
 
 Important detail:
 
 - export includes all links, not only active ones
 - plain-text notes are included in JSON export and import
+- JSON remains the complete backup format
+- Markdown and CSV contain title, URL, notes, status, and saved date
+
+### CSV import
+
+The editor reads a selected CSV file and sends its text as JSON:
+
+```text
+POST /api/links/import-csv
+```
+
+The server validates and parses the exact `title,url,notes,status,date` format,
+then passes new links to the existing `importLinks()` path. No database schema
+change is required.
 
 ## Flow 13: Tag chip loading
 

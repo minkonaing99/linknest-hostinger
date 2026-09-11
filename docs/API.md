@@ -711,6 +711,48 @@ Notes:
 - export includes all links, including soft-deleted ones
 - response is sent as `application/json`
 
+### Export portable Markdown or CSV
+
+```http
+GET /api/links/export.md
+GET /api/links/export.csv
+```
+
+Both exports include all links. CSV uses this exact header:
+
+```csv
+title,url,notes,status,date
+```
+
+CSV follows RFC 4180 quoting and uses UTF-8 with a BOM. To prevent spreadsheet
+formula execution, exported titles and notes beginning with `=`, `+`, `-`, or
+`@` receive a leading apostrophe. CSV import reverses this protection.
+
+### Import links from CSV
+
+```http
+POST /api/links/import-csv
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "csv": "title,url,notes,status,date\r\nExample,https://example.com,Review,saved,2026-09-11"
+}
+```
+
+Rules:
+
+- header order must be exactly `title,url,notes,status,date`
+- maximum import size is 5,000 data rows
+- URLs must use HTTP or HTTPS
+- status must be `saved`, `unread`, `useful`, or `archived`
+- date must use `YYYY-MM-DD`
+- duplicates and invalid database entries are skipped by the existing importer
+- JSON remains the complete backup because CSV excludes tags, reminders, pin state, and timestamps
+
 ### Import links from JSON payload
 
 ```http
