@@ -709,6 +709,25 @@ textarea.field {
   border-color: rgba(52, 199, 89, 0.18);
   background: linear-gradient(180deg, rgba(246, 255, 249, 0.98) 0%, rgba(241, 252, 245, 0.94) 100%);
 }
+body.is-review-view .library-row {
+  touch-action: pan-y pinch-zoom;
+}
+body.is-review-view .library-row__status {
+  touch-action: none;
+}
+body.is-review-view .library-row.is-swiping {
+  transform: translateX(var(--swipe-x, 0));
+  transition: none;
+}
+@media (any-pointer: coarse) {
+  body.is-review-view .library-row {
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+  }
+  body.is-review-view .library-row__status {
+    min-height: 44px;
+    align-self: stretch;
+  }
+}
 .library-row__status {
   display: flex;
   justify-content: center;
@@ -1489,6 +1508,10 @@ body.is-selecting .library-row__tags {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.is-review-view .library-row { transition: none; }
 }
 
 /* ── Toast notifications ────────────────────────────────── */
