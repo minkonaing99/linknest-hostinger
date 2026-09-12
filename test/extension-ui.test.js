@@ -13,6 +13,15 @@ test('extension popup uses rounded grouped iOS-style controls', () => {
   assert.match(html, /:focus-visible/);
 });
 
+test('extension popup captures an optional plain-text note', () => {
+  const html = readExtensionFile('popup.html');
+  const script = readExtensionFile('popup.js');
+  assert.match(html, /<textarea[^>]+id="notes"[^>]+maxlength="10000"/);
+  assert.match(html, /placeholder="Note \(optional\)"/);
+  assert.match(script, /document\.getElementById\('notes'\)/);
+  assert.match(script, /JSON\.stringify\(\{ url, title, tags, notes \}\)/);
+});
+
 test('extension API settings use a rounded settings group', () => {
   const html = readExtensionFile('settings.html');
   assert.match(html, /class="settings-panel"/);

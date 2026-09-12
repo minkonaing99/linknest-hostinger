@@ -3,6 +3,7 @@
 const urlInput      = document.getElementById('url');
 const titleInput    = document.getElementById('title');
 const tagsInput     = document.getElementById('tags');
+const notesInput    = document.getElementById('notes');
 const saveButton    = document.getElementById('save');
 const statusDiv     = document.getElementById('status');
 const mainDiv       = document.getElementById('main');
@@ -42,6 +43,7 @@ chrome.storage.local.get(['serverUrl', 'apiToken'], async ({ serverUrl, apiToken
     const url   = urlInput.value.trim();
     const title = titleInput.value.trim();
     const tags  = parseTags(tagsInput.value);
+    const notes = notesInput.value.trim();
 
     if (!url) { showStatus('err', 'URL is required.'); return; }
 
@@ -55,7 +57,7 @@ chrome.storage.local.get(['serverUrl', 'apiToken'], async ({ serverUrl, apiToken
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiToken}`,
         },
-        body: JSON.stringify({ url, title, tags }),
+        body: JSON.stringify({ url, title, tags, notes }),
       });
 
       const data = await res.json();

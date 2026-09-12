@@ -43,6 +43,7 @@
         transition: border-color 180ms ease-out, box-shadow 180ms ease-out, background 180ms ease-out;
       }
       .field[readonly] { color: oklch(48% .012 155); }
+      textarea.field { min-height: 76px; resize: vertical; }
       .field:focus { background: oklch(99% .006 155); border-color: oklch(54% .13 155); box-shadow: 0 0 0 3px oklch(68% .12 155 / .18); }
       .button {
         width: 100%;
@@ -87,6 +88,7 @@
         <input id="url" class="field" type="url" placeholder="URL" aria-label="URL" readonly />
         <input id="title" class="field" type="text" placeholder="Title" aria-label="Title" />
         <input id="tags" class="field" type="text" placeholder="Tags (comma-separated)" aria-label="Tags" />
+        <textarea id="notes" class="field" maxlength="10000" rows="3" placeholder="Note (optional)" aria-label="Note (optional)"></textarea>
         <button id="save" class="button">Save Link</button>
         <div id="status" class="status" role="status" aria-live="polite"></div>
       </div>

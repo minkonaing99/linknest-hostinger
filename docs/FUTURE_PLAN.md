@@ -29,6 +29,38 @@ See [FEATURES.md](FEATURES.md) for shipped capabilities.
 
 These need evidence from real use before implementation.
 
+### Revisit Useful Links
+
+- Add a separate queue for links previously marked useful.
+- Keep this queue separate from the unresolved five-link review queue.
+- Resurface useful links after a 30-day or 90-day interval.
+- Choose the default interval during implementation after checking real usage.
+- Ask for one decision: Still useful, Add note, or Archive.
+- Do not count opening alone as completing the repeat review.
+- Avoid scoring, spaced-repetition complexity, and notifications.
+- If recurring completion needs persistent tracking, add a dedicated
+  `lastUsefulReviewedAt` field through `docs/change-db.sql`.
+
+### Link Age Warning
+
+- Identify unresolved saved or unread links older than 90 days using their
+  existing creation date.
+- Show a quiet warning with Review now, Archive, and Keep actions.
+- Keep does not mark the link meaningful or change its status.
+- Do not add urgency scoring, notifications, or configurable thresholds.
+- Reuse existing fields and require no database change.
+
+### Manual Related Links
+
+- Add an `Add related link` action to the editor.
+- Search and select existing links rather than entering another raw URL.
+- Show two or three related links below the note, with access to the full list.
+- Allow removing a relationship without deleting either link.
+- Treat relationships as symmetric and reject self-links and duplicate pairs.
+- Do not add automatic suggestions, relationship types, graph views, or AI.
+- Store relationships in a minimal join table added through
+  `docs/change-db.sql` when implementation begins.
+
 ### Improved Import
 
 - Preview an import before saving.
