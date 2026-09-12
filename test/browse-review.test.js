@@ -41,3 +41,23 @@ it('supports accessible inline notes during review', () => {
   assert.match(script, /reviewNoteInput\.focus\(\)/);
   assert.match(script, /event\.key === 'Escape'/);
 });
+
+it('supports focused review keyboard shortcuts without intercepting typing', () => {
+  assert.match(script, /linkList\.setAttribute\('aria-keyshortcuts', 'ArrowLeft ArrowRight ArrowUp N O'\)/);
+  assert.match(script, /linkList\.tabIndex = reviewing \? 0 : -1/);
+  assert.match(script, /function handleReviewShortcut\(event\)/);
+  assert.match(script, /state\.quickFilter !== 'review' \|\| event\.repeat/);
+  assert.match(script, /INPUT\|TEXTAREA\|SELECT/);
+  assert.match(script, /ArrowLeft: '\.delete-button'/);
+  assert.match(script, /ArrowRight: '\.mark-useful-button'/);
+  assert.match(script, /ArrowUp: '\.snooze-week-button'/);
+  assert.match(script, /n: '\.edit-link'/);
+  assert.match(script, /o: '\.library-row__title'/);
+  assert.match(script, /event\.preventDefault\(\);[\s\S]{0,80}control\.click\(\)/);
+  assert.match(script, /event\.target\.closest\('\.library-row'\) \|\| linkList\.querySelector\('\.library-row'\)/);
+  assert.match(script, /row\.getAttribute\('aria-busy'\) === 'true'/);
+  assert.match(script, /function beginRowAction\(row\)/);
+  assert.match(script, /function endRowAction\(row\)/);
+  assert.match(script, /linkList\.addEventListener\('keydown', handleReviewShortcut\)/);
+  assert.match(script, /if \(requestedFilter === 'review'\) linkList\.focus\(\{ preventScroll: true \}\)/);
+});

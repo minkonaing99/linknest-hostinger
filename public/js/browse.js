@@ -37,6 +37,16 @@ document.body.classList.toggle('is-review-view', state.quickFilter === 'review')
 function updateReviewProgress() {
   const session = state.reviewSession;
   const reviewing = state.quickFilter === 'review';
+  linkList.tabIndex = reviewing ? 0 : -1;
+  linkList.toggleAttribute('role', reviewing);
+  linkList.toggleAttribute('aria-label', reviewing);
+  if (reviewing) {
+    linkList.setAttribute('role', 'region');
+    linkList.setAttribute('aria-label', 'Review queue');
+    linkList.setAttribute('aria-keyshortcuts', 'ArrowLeft ArrowRight ArrowUp N O');
+  } else {
+    linkList.removeAttribute('aria-keyshortcuts');
+  }
   reviewProgress.classList.toggle('hidden', !reviewing || !session?.total);
   libraryCounts.classList.toggle('hidden', reviewing);
   if (!reviewing || !session?.total) return;
@@ -79,6 +89,36 @@ function hasMeaningfulRevisit(entry) {
   return Number.isFinite(createdAt)
     && Number.isFinite(meaningfulAt)
     && meaningfulAt - createdAt >= 24 * 60 * 60 * 1000;
+}
+
+function beginRowAction(row) {
+  if (row.getAttribute('aria-busy') === 'true') return false;
+  row.setAttribute('aria-busy', 'true');
+  return true;
+}
+
+function endRowAction(row) {
+  row.removeAttribute('aria-busy');
+}
+
+function handleReviewShortcut(event) {
+  if (state.quickFilter !== 'review' || event.repeat) return;
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName) || event.target.isContentEditable) return;
+  const shortcuts = {
+    ArrowLeft: '.delete-button',
+    ArrowRight: '.mark-useful-button',
+    ArrowUp: '.snooze-week-button',
+    n: '.edit-link',
+    o: '.library-row__title',
+  };
+  const row = event.target.closest('.library-row') || linkList.querySelector('.library-row');
+  if (!row || row.getAttribute('aria-busy') === 'true') return;
+  const selector = shortcuts[event.key.length === 1 ? event.key.toLowerCase() : event.key];
+  const control = selector && row.querySelector(selector);
+  if (!control || control.classList.contains('hidden')) return;
+  event.preventDefault();
+  control.click();
 }
 
 function safeHost(url) {
@@ -294,7 +334,7 @@ function buildRow(item) {
   statusDot.title = 'Click to change status';
   statusDot.addEventListener('click', async event => {
     event.stopPropagation();
-    if (state.selectMode) return;
+    if (state.selectMode || !beginRowAction(rowArticle)) return;
     const idx = STATUS_CYCLE.indexOf(currentStatus);
     const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
     statusDot.classList.add('status-dot--transitioning');
@@ -313,6 +353,7 @@ function buildRow(item) {
       window.LinkNest.showToast(err.message);
     } finally {
       statusDot.classList.remove('status-dot--transitioning');
+      endRowAction(rowArticle);
     }
   });
 
@@ -384,36 +425,43 @@ function buildRow(item) {
   usefulButton.classList.toggle('hidden', item.status === 'useful');
   usefulButton.addEventListener('click', async event => {
     event.stopPropagation();
+    if (!beginRowAction(rowArticle)) return;
     try {
       await updateLinkFields(item, { status: 'useful' });
       resolveReviewItem(item.id);
     }
     catch (err) { window.LinkNest.showToast(err.message); }
+    finally { endRowAction(rowArticle); }
   });
 
   node.querySelector('.snooze-week-button').addEventListener('click', async event => {
     event.stopPropagation();
+    if (!beginRowAction(rowArticle)) return;
     const remindAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     try {
       await updateLinkFields(item, { remindAt });
       window.LinkNest.showToast('Snoozed. Add a note, mark useful, or archive to finish review.', 'success');
     }
     catch (err) { window.LinkNest.showToast(err.message); }
+    finally { endRowAction(rowArticle); }
   });
 
   node.querySelector('.row-menu__date').addEventListener('change', async event => {
     event.stopPropagation();
     if (!event.target.value) return;
+    if (!beginRowAction(rowArticle)) return;
     const remindAt = new Date(`${event.target.value}T00:00:00`).toISOString();
     try {
       await updateLinkFields(item, { remindAt });
       window.LinkNest.showToast('Snoozed. Add a note, mark useful, or archive to finish review.', 'success');
     }
     catch (err) { window.LinkNest.showToast(err.message); }
+    finally { endRowAction(rowArticle); }
   });
 
   node.querySelector('.delete-button').addEventListener('click', async event => {
     event.stopPropagation();
+    if (!beginRowAction(rowArticle)) return;
     try {
       await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}`, { method: 'DELETE' });
       window.LinkNest.showToast('Moved to archive', 'success');
@@ -431,6 +479,8 @@ function buildRow(item) {
       visibleCount.textContent = String(state.links.length);
     } catch (err) {
       window.LinkNest.showToast(err.message);
+    } finally {
+      endRowAction(rowArticle);
     }
   });
 
@@ -558,6 +608,7 @@ async function fetchPage(page, append = false) {
     state.total = Number.isFinite(data.total) ? data.total : newLinks.length;
     updateReviewProgress();
     render(newLinks, append);
+    if (requestedFilter === 'review') linkList.focus({ preventScroll: true });
   } catch (err) {
     if (requestId !== state.requestId || requestedFilter !== state.quickFilter) return;
     console.error(err);
@@ -573,6 +624,7 @@ function debounce(fn, delay) {
 }
 
 document.addEventListener('click', closeAllMenus);
+linkList.addEventListener('keydown', handleReviewShortcut);
 searchInput.addEventListener('input', debounce(() => {
   if (tagChipsContainer) {
     tagChipsContainer.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('is-active'));
