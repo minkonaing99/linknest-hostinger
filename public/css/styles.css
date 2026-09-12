@@ -765,6 +765,30 @@ textarea.field {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
+.review-note-panel {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+.review-note-panel.hidden { display: none; }
+.review-note-actions {
+  display: flex;
+  gap: 8px;
+}
+.review-complete {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  text-align: center;
+}
+.review-complete h3,
+.review-complete p { margin: 0; }
+body.is-review-view #select-toggle-btn,
+body.is-review-view #tag-chips,
+body.is-review-view #scroll-sentinel,
+body.is-review-view #search,
+body.is-review-view .filter-grid { display: none; }
 .library-row__tags { margin-top: 1px; }
 .library-row__tail {
   display: flex;

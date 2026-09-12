@@ -315,6 +315,13 @@ least 14 days old, have no future reminder, and have no meaningful action.
 Editing a note, marking useful, or soft-archiving sets `firstMeaningfulAt` once.
 Opening or snoozing leaves it unchanged.
 
+Review mode freezes the initial queue for the current page session and shows the
+current position out of the original queue size. Adding or changing a note,
+marking useful, or archiving removes that item from the session. Opening,
+snoozing, and favoriting do not advance progress. When every item has a
+meaningful decision, Browse shows the review completion state. Refreshing starts
+a new session from the current database queue.
+
 ### Database activity
 
 - fetches matching `links`

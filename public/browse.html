@@ -63,7 +63,8 @@
           <div class="section-header">
             <div class="section-header__left">
               <h2 class="section-title">Library</h2>
-              <p class="section-copy"><span id="visible-count">0</span> loaded of <span id="total-count">0</span> total</p>
+              <p class="section-copy" id="library-counts"><span id="visible-count">0</span> loaded of <span id="total-count">0</span> total</p>
+              <p id="review-progress" class="section-copy hidden" role="status" aria-live="polite"></p>
             </div>
             <div class="browse-actions">
               <button type="button" id="select-toggle-btn" class="button button--ghost">Select</button>
@@ -110,6 +111,16 @@
             <span class="status-text"></span>
           </div>
           <p class="library-row__notes hidden"></p>
+          <div class="review-note-panel hidden">
+            <label class="field-group">
+              <span>Review note</span>
+              <textarea class="field field--textarea review-note-input" rows="3" maxlength="10000"></textarea>
+            </label>
+            <div class="review-note-actions">
+              <button type="button" class="button button--small review-note-save">Save note</button>
+              <button type="button" class="button button--ghost button--small review-note-cancel">Cancel</button>
+            </div>
+          </div>
           <div class="library-row__tags tag-row hidden"></div>
         </div>
         <div class="library-row__tail">

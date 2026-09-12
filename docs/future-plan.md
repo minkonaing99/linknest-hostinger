@@ -104,7 +104,7 @@ revisit metric without a full event-history system.
   - Swipe up: snooze.
 - Keep visible buttons available for accessibility and discoverability.
 
-### Review Progress
+### Review Progress (Implemented 2026-09-12)
 
 - Show the current position and queue size, such as `2 of 5`.
 - Show a completion screen after all five links receive a decision.
