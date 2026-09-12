@@ -1,10 +1,13 @@
 const LIMIT = 50;
 const SWIPE_THRESHOLD = 64;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const AGE_WARNING_DAYS = 90;
 const STATUS_CYCLE = ['saved', 'unread', 'useful'];
 
 const initialReview = new URLSearchParams(window.location.search).get('review') === '1';
 const initialYoutube = new URLSearchParams(window.location.search).get('youtube') === '1';
-const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false, requestId: 0, selectMode: false, selected: new Set(), quickFilter: initialReview ? 'review' : (initialYoutube ? 'youtube' : null), tagFilter: null, reviewSession: null };
+const initialAge = new URLSearchParams(window.location.search).get('age') === '1';
+const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false, requestId: 0, selectMode: false, selected: new Set(), quickFilter: initialReview ? 'review' : (initialYoutube ? 'youtube' : (initialAge ? 'age' : null)), tagFilter: null, reviewSession: null };
 
 const SORT_MAP = {
   recent:       { sort: 'updatedAt', order: 'desc' },
@@ -430,7 +433,7 @@ function setupReviewNote(node, item, editLink) {
     editLink.focus();
   };
   editLink.addEventListener('click', event => {
-    if (state.quickFilter !== 'review') return;
+    if (state.quickFilter !== 'review' && state.quickFilter !== 'age') return;
     event.preventDefault();
     closeAllMenus();
     reviewNoteInput.value = item.notes || '';
@@ -455,6 +458,29 @@ function setupReviewNote(node, item, editLink) {
     } catch (err) {
       window.LinkNest.showToast(err.message);
       save.disabled = false;
+    }
+  });
+}
+
+function setupAgeWarning(node, item, row, editLink, deleteButton) {
+  if (state.quickFilter !== 'age') return;
+  const warning = node.querySelector('.age-warning');
+  const ageReviewButton = node.querySelector('.age-review-button');
+  const ageArchiveButton = node.querySelector('.age-archive-button');
+  const ageKeepButton = node.querySelector('.age-keep-button');
+  warning.classList.remove('hidden');
+  ageReviewButton.addEventListener('click', () => editLink.click());
+  ageArchiveButton.addEventListener('click', () => deleteButton.click());
+  ageKeepButton.addEventListener('click', async () => {
+    if (!beginRowAction(row)) return;
+    const remindAt = new Date(Date.now() + AGE_WARNING_DAYS * DAY_MS).toISOString();
+    try {
+      await updateLinkFields(item, { remindAt });
+      window.LinkNest.showToast('Kept for 90 days', 'success');
+    } catch (error) {
+      window.LinkNest.showToast(error.message);
+    } finally {
+      endRowAction(row);
     }
   });
 }
@@ -636,11 +662,16 @@ function buildRow(item) {
     finally { endRowAction(rowArticle); }
   });
 
-  node.querySelector('.delete-button').addEventListener('click', async event => {
+  const deleteButton = node.querySelector('.delete-button');
+  deleteButton.addEventListener('click', async event => {
     event.stopPropagation();
     if (!beginRowAction(rowArticle)) return;
     try {
-      await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}`, { method: 'DELETE' });
+      const response = await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}`, { method: 'DELETE' });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Could not archive link');
+      }
       window.LinkNest.showToast('Moved to archive', 'success');
       closeAllMenus();
       if (state.quickFilter === 'review') {
@@ -660,6 +691,8 @@ function buildRow(item) {
       endRowAction(rowArticle);
     }
   });
+
+  setupAgeWarning(node, item, rowArticle, editLink, deleteButton);
 
   const menu    = node.querySelector('.row-menu');
   const trigger = menu.querySelector('.row-menu__trigger');
@@ -689,7 +722,9 @@ function render(items, append = false) {
     if (!items.length) {
       const empty = document.createElement('div');
       empty.className = 'empty-state';
-      empty.textContent = state.quickFilter === 'review' ? 'Nothing ready for review.' : 'No links match your current filters.';
+      empty.textContent = state.quickFilter === 'review'
+        ? 'Nothing ready for review.'
+        : (state.quickFilter === 'age' ? 'No unresolved links older than 90 days.' : 'No links match your current filters.');
       linkList.appendChild(empty);
       return;
     }
@@ -741,8 +776,13 @@ function buildApiParams(page, quickFilter = state.quickFilter) {
   if (quickFilter === 'remind') {
     params.set('remindBefore', new Date().toISOString());
   }
+  if (quickFilter === 'age') {
+    params.set('ageBefore', new Date(Date.now() - AGE_WARNING_DAYS * DAY_MS).toISOString());
+    params.set('sort', 'createdAt');
+    params.set('order', 'asc');
+  }
   if (quickFilter === 'youtube') params.set('youtube', 'only');
-  else params.set('youtube', 'exclude');
+  else if (quickFilter !== 'age') params.set('youtube', 'exclude');
 
   return params;
 }

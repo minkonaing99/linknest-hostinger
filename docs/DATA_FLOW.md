@@ -218,6 +218,21 @@ a fixed `i.ytimg.com` URL. No thumbnail value is stored or accepted from clients
 Browse shows the image when available. A failed image request returns the row to
 its text-only layout. Home remains text-only.
 
+## Flow 3B: Review links older than 90 days
+
+Browse sends `GET /api/links` with an `ageBefore` ISO cutoff. The listing query
+returns only active saved or unread links that are old enough, have no meaningful
+revisit after their first 24 hours, and have no future reminder.
+
+Each returned row offers three decisions:
+
+- Review now opens the existing inline note editor.
+- Archive uses the existing soft-delete endpoint.
+- Keep for 90 days sets `remindAt` 90 days ahead through the existing update
+  endpoint, without changing status or meaningful-revisit measurement.
+
+No age-warning state is stored separately.
+
 ## Flow 4: Add or edit link from the editor page
 
 ### Create flow

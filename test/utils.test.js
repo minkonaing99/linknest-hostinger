@@ -568,4 +568,23 @@ describe('parseLinkListQuery', () => {
     const q = parseLinkListQuery(p({ neverOpened: 'true' }));
     assert.ok(q.whereClause.includes('opened_count = 0'));
   });
+
+  it('filters unresolved links old enough for an age warning', () => {
+    const cutoff = '2026-06-15T00:00:00.000Z';
+    const q = parseLinkListQuery(p({ ageBefore: cutoff }));
+    assert.ok(q.whereClause.includes("status IN ('saved', 'unread')"));
+    assert.ok(q.whereClause.includes('created_at <= ?'));
+    assert.ok(q.whereClause.includes('first_meaningful_at IS NULL'));
+    assert.ok(q.whereClause.includes('DATE_ADD(created_at, INTERVAL 1 DAY)'));
+    assert.ok(q.whereClause.includes('remind_at IS NULL OR remind_at <= NOW()'));
+    assert.ok(q.params.includes(cutoff));
+    assert.equal(q.ageBefore, cutoff);
+  });
+
+  it('rejects an invalid age warning cutoff', () => {
+    assert.throws(() => parseLinkListQuery(p({ ageBefore: 'not-a-date' })), err => {
+      assert.equal(err.statusCode, 400);
+      return true;
+    });
+  });
 });

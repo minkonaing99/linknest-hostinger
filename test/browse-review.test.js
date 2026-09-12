@@ -96,3 +96,22 @@ it('supports touch and pen review swipes while preserving page scroll', () => {
   assert.match(css, /body\.is-review-view \.library-row__status \{[^}]*touch-action: none/);
   assert.match(css, /prefers-reduced-motion: reduce/);
 });
+
+it('shows actionable warnings for unresolved links older than 90 days', () => {
+  assert.match(html, /data-filter="age">Older than 90 days/);
+  assert.match(html, /class="age-warning hidden"/);
+  assert.match(html, /class="[^"]*age-review-button[^"]*"/);
+  assert.match(html, /class="[^"]*age-archive-button[^"]*"/);
+  assert.match(html, /class="[^"]*age-keep-button[^"]*"/);
+  assert.match(script, /AGE_WARNING_DAYS = 90/);
+  assert.match(script, /params\.set\('ageBefore'/);
+  assert.match(script, /params\.set\('sort', 'createdAt'\)/);
+  assert.match(script, /params\.set\('order', 'asc'\)/);
+  assert.match(script, /const remindAt = new Date\(Date\.now\(\) \+ AGE_WARNING_DAYS \* DAY_MS\)\.toISOString\(\)/);
+  assert.match(script, /updateLinkFields\(item, \{ remindAt \}\)/);
+  assert.match(html, /Keep for 90 days/);
+  assert.match(script, /ageArchiveButton[\s\S]{0,160}deleteButton\.click\(\)/);
+  assert.match(script, /deleteButton\.addEventListener\('click'[\s\S]{0,500}const response = await window\.LinkNest\.apiFetch[\s\S]{0,220}if \(!response\.ok\)/);
+  assert.match(script, /else if \(quickFilter !== 'age'\) params\.set\('youtube', 'exclude'\)/);
+  assert.match(css, /\.age-warning/);
+});
