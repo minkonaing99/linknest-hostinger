@@ -92,7 +92,7 @@ revisit metric without a full event-history system.
 
 ### Faster Review Controls
 
-- Add keyboard controls to the review queue:
+- Keyboard controls added 2026-09-12:
   - Left Arrow: archive.
   - Right Arrow: mark useful.
   - Up Arrow: snooze.
