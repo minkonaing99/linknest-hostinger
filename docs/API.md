@@ -232,6 +232,7 @@ A link document returned by the API looks like this:
   "openedCount": 0,
   "remindAt": null,
   "firstMeaningfulAt": null,
+  "firstUsefulAt": null,
   "thumbnailUrl": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
 }
 ```
@@ -249,6 +250,7 @@ A link document returned by the API looks like this:
 - `openedCount` increments by 1 on each open call
 - `remindAt` is a nullable ISO datetime for user-set reminders
 - `firstMeaningfulAt` records the first note change, useful status, or soft archive
+- `firstUsefulAt` records the first transition to useful made at least 24 hours after capture
 - `thumbnailUrl` is derived for supported YouTube videos and is otherwise `null`
 - clients cannot set arbitrary thumbnail URLs
 
@@ -647,6 +649,21 @@ Success response:
     "percentagePointChange": 15,
     "targetRate": 45,
     "buildingBaseline": false
+  },
+  "weekly": {
+    "windowDays": 7,
+    "timeZone": "Asia/Bangkok",
+    "start": "2026-09-05T17:00:00.000Z",
+    "end": "2026-09-12T17:00:00.000Z",
+    "saved": 6,
+    "reviewed": 3,
+    "usefulDecisions": 2,
+    "revisitPercentage": 40,
+    "oldestUnresolved": {
+      "id": "42891bc9-d756-49db-9538-0717596e766c",
+      "title": "Example Article",
+      "createdAt": "2026-01-02T03:04:05.000Z"
+    }
   }
 }
 ```
@@ -658,6 +675,11 @@ Notes:
 - revisit cohorts include soft-archived links and exclude links under 14 days old
 - rates are whole percentages; unavailable rates, changes, and targets are `null`
 - the target is 20 percentage points above the previous cohort, capped at 100
+- `weekly` covers today and the previous six Thailand calendar days
+- `weekly.reviewed` counts first meaningful revisits recorded during that window
+- `weekly.usefulDecisions` counts first transitions to useful during that window
+- `weekly.revisitPercentage` reuses the fair 30-day eligible-cohort rate; new weekly saves are not yet eligible
+- `weekly.oldestUnresolved` is the oldest active, non-YouTube review candidate at least 14 days old, or `null`
 
 ## Title metadata
 

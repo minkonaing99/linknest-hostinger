@@ -134,7 +134,7 @@ revisit metric without a full event-history system.
   mark useful, snooze, and archive.
 - Keep normal Browse search unchanged.
 
-### In-App Weekly Summary
+### In-App Weekly Summary (Implemented 2026-09-12)
 
 - Add one homepage card showing:
   - links saved;

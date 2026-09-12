@@ -73,15 +73,20 @@
           <div id="recent-links" class="recent-list"></div>
         </section>
 
-        <section class="surface surface--soft surface--group insight-section" aria-labelledby="revisit-heading">
+        <section id="weekly-summary" class="surface surface--soft surface--group insight-section" aria-labelledby="weekly-heading">
           <div class="section-header section-header--compact">
             <div>
-              <h2 class="section-title" id="revisit-heading">Revisit progress</h2>
-              <p class="section-copy">Meaningful decisions after 24 hours.</p>
+              <h2 class="section-title" id="weekly-heading">This week</h2>
+              <p class="section-copy">Today and the previous six days.</p>
             </div>
           </div>
-          <div id="revisit-summary" class="revisit-summary" aria-live="polite"></div>
-          <p id="library-summary" class="library-summary"></p>
+          <dl class="weekly-metrics" aria-live="polite">
+            <div><dt>Saved</dt><dd id="weekly-saved">0</dd></div>
+            <div><dt>Reviewed</dt><dd id="weekly-reviewed">0</dd></div>
+            <div><dt>Useful</dt><dd id="weekly-useful">0</dd></div>
+            <div><dt>Revisit rate</dt><dd id="weekly-revisit">Building baseline</dd></div>
+          </dl>
+          <p class="weekly-oldest">Oldest unresolved: <a id="weekly-oldest" href="/browse.html?review=1">None</a></p>
         </section>
       </main>
     </div>

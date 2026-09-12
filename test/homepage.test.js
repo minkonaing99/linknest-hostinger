@@ -17,7 +17,7 @@ describe('homepage workflow', () => {
   it('orders review, recent links, then secondary measurement', () => {
     const review = html.indexOf('id="review-links"');
     const recent = html.indexOf('id="recent-links"');
-    const measurement = html.indexOf('id="revisit-summary"');
+    const measurement = html.indexOf('id="weekly-summary"');
 
     assert.ok(review > 0);
     assert.ok(recent > review);
@@ -33,6 +33,20 @@ describe('homepage workflow', () => {
     assert.match(script, /api\/links\/\$\{encodeURIComponent\(item\.id\)\}\/opened/);
     assert.match(script, /editor\.html\?id=\$\{encodeURIComponent\(item\.id\)\}/);
     assert.match(script, /Building baseline/);
+  });
+
+  it('shows the in-app weekly summary', () => {
+    assert.match(html, /id="weekly-summary"/);
+    assert.match(html, /id="weekly-saved"/);
+    assert.match(html, /id="weekly-reviewed"/);
+    assert.match(html, /id="weekly-useful"/);
+    assert.match(html, /id="weekly-revisit"/);
+    assert.match(html, /id="weekly-oldest"/);
+    assert.match(script, /function renderWeeklySummary\(weekly\)/);
+    assert.match(script, /weekly\.oldestUnresolved/);
+    assert.doesNotMatch(script, /weeklySummary\.innerHTML/);
+    assert.match(script, /updateHomeUnreadBadge\(stats\.unread\)/);
+    assert.match(shared, /document\.body\.dataset\.page !== 'home'/);
   });
 
   it('uses Thailand calendar dates for saving and grouping', () => {

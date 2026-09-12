@@ -8,14 +8,20 @@ const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 
 let queryCall;
+let queryCalls = [];
 let queryRow = {};
+let oldestRow = null;
 const dbPath = require.resolve('../../lib/db');
 require.cache[dbPath] = {
   id: dbPath, filename: dbPath, loaded: true,
   exports: {
     query: async (...args) => {
       queryCall = args;
-      return { rows: [queryRow], rowCount: 1 };
+      queryCalls.push(args);
+      const rows = args[0].includes('ORDER BY created_at ASC')
+        ? (oldestRow ? [oldestRow] : [])
+        : [queryRow];
+      return { rows, rowCount: rows.length };
     },
   },
 };
@@ -39,6 +45,8 @@ function response() {
 
 describe('GET /api/stats revisit measurement', () => {
   it('returns fair 30-day cohorts and percentage-point target', async () => {
+    queryCalls = [];
+    oldestRow = null;
     queryRow = {
       total: 12, unread: 3, saved: 4, useful: 2, archived: 1,
       current_eligible: 10, current_meaningful: 4,
@@ -58,9 +66,9 @@ describe('GET /api/stats revisit measurement', () => {
       targetRate: 45,
       buildingBaseline: false,
     });
-    assert.ok(queryCall[0].includes('first_meaningful_at >= DATE_ADD(created_at, INTERVAL 1 DAY)'));
-    assert.ok(queryCall[0].includes('created_at >= ? AND created_at < ?'));
-    assert.deepEqual(queryCall[1].map(value => value.toISOString()), [
+    assert.ok(queryCalls[0][0].includes('first_meaningful_at >= DATE_ADD(created_at, INTERVAL 1 DAY)'));
+    assert.ok(queryCalls[0][0].includes('created_at >= ? AND created_at < ?'));
+    assert.deepEqual(queryCalls[0][1].slice(0, 8).map(value => value.toISOString()), [
       '2026-07-27T00:00:00.000Z', '2026-08-26T00:00:00.000Z',
       '2026-07-27T00:00:00.000Z', '2026-08-26T00:00:00.000Z',
       '2026-06-27T00:00:00.000Z', '2026-07-27T00:00:00.000Z',
@@ -69,6 +77,8 @@ describe('GET /api/stats revisit measurement', () => {
   });
 
   it('reports baseline building until previous cohort exists', async () => {
+    queryCalls = [];
+    oldestRow = null;
     queryRow = { current_eligible: 2, current_meaningful: 0 };
     const res = response();
 
@@ -79,5 +89,44 @@ describe('GET /api/stats revisit measurement', () => {
     assert.equal(res.body.revisit.percentagePointChange, null);
     assert.equal(res.body.revisit.targetRate, null);
     assert.equal(res.body.revisit.buildingBaseline, true);
+  });
+
+  it('returns a seven-day Bangkok summary and oldest unresolved link', async () => {
+    queryCalls = [];
+    queryRow = {
+      current_eligible: 10, current_meaningful: 4,
+      previous_eligible: 8, previous_meaningful: 2,
+      weekly_saved: 6, weekly_reviewed: 3, weekly_useful: 2,
+    };
+    oldestRow = {
+      id: 'old-1', title: 'Oldest unresolved',
+      created_at: '2026-01-02T03:04:05.000Z',
+    };
+    const res = response();
+
+    await handleStats({}, res, new Date('2026-09-12T05:00:00.000Z'));
+
+    assert.deepEqual(res.body.weekly, {
+      windowDays: 7,
+      timeZone: 'Asia/Bangkok',
+      start: '2026-09-05T17:00:00.000Z',
+      end: '2026-09-12T17:00:00.000Z',
+      saved: 6,
+      reviewed: 3,
+      usefulDecisions: 2,
+      revisitPercentage: 40,
+      oldestUnresolved: {
+        id: 'old-1', title: 'Oldest unresolved',
+        createdAt: '2026-01-02T03:04:05.000Z',
+      },
+    });
+    assert.deepEqual(queryCalls[0][1].slice(8).map(value => value.toISOString()), [
+      '2026-09-05T17:00:00.000Z', '2026-09-12T17:00:00.000Z',
+      '2026-09-05T17:00:00.000Z', '2026-09-12T17:00:00.000Z',
+      '2026-09-05T17:00:00.000Z', '2026-09-12T17:00:00.000Z',
+    ]);
+    assert.ok(queryCalls[1][0].includes("status IN ('saved', 'unread')"));
+    assert.ok(queryCalls[1][0].includes('first_meaningful_at < DATE_ADD(created_at, INTERVAL 1 DAY)'));
+    assert.ok(queryCalls[0][0].includes('first_useful_at >= ? AND first_useful_at < ?'));
   });
 });

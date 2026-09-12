@@ -54,6 +54,7 @@ function makeRow(overrides = {}) {
     remind_at: null,
     notes: '',
     first_meaningful_at: null,
+    first_useful_at: null,
     ...overrides,
   };
 }
@@ -304,6 +305,7 @@ describe('updateLink', () => {
       await updateLink('link-id-123', body);
       const update = calls.find(([sql]) => sql.includes('UPDATE links'));
       assert.equal(update[1].at(-3), expected);
+      if (body.status === 'useful') assert.ok(update[0].includes('first_useful_at'));
     }
   });
 
@@ -320,6 +322,21 @@ describe('updateLink', () => {
     const update = calls.find(([sql]) => sql.includes('UPDATE links'));
     assert.equal(update[1].at(-3), 0);
     assert.equal(entry.firstMeaningfulAt, null);
+  });
+
+  it('does not count a useful decision during the first 24 hours', async () => {
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      if (calls.length === 1) {
+        return { rows: [makeRow({ created_at: new Date().toISOString() })], rowCount: 1 };
+      }
+      return { rows: [], rowCount: 1 };
+    };
+    const entry = await updateLink('link-id-123', { status: 'useful' });
+    const update = calls.find(([sql]) => sql.includes('UPDATE links'));
+    assert.equal(update[1].at(-5), 0);
+    assert.equal(entry.firstUsefulAt, null);
   });
 
   it('replaces an early timestamp on a later qualifying action', async () => {
@@ -450,6 +467,8 @@ describe('bulkUpdateStatus', () => {
     assert.equal(result.updated, 3);
     assert.ok(calls[0][0].includes('created_at <= DATE_SUB(?, INTERVAL 1 DAY)'));
     assert.ok(calls[0][0].includes('first_meaningful_at < DATE_ADD(created_at, INTERVAL 1 DAY)'));
+    assert.ok(calls[0][0].includes('first_useful_at'));
+    assert.ok(calls[0][0].includes('created_at <= DATE_SUB(?, INTERVAL 1 DAY)'));
   });
 
   it('throws 400 for empty ids array', async () => {
