@@ -113,6 +113,230 @@ window.LinkNest.showToast = function(message, kind = 'error') {
   }, 3000);
 };
 
+let commandState = {
+  items: [], selected: 0, requestId: 0, controller: null, timer: null, busy: false,
+};
+
+function commandSelectedItem() {
+  return commandState.items[commandState.selected] || null;
+}
+
+function setCommandBusy(busy) {
+  commandState = { ...commandState, busy };
+  document.querySelectorAll('.command-actions button, .command-note button')
+    .forEach(button => { button.disabled = busy; });
+}
+
+function selectCommandResult(index) {
+  if (!commandState.items.length) return;
+  const selected = Math.max(0, Math.min(index, commandState.items.length - 1));
+  toggleCommandNote(false);
+  commandState = { ...commandState, selected };
+  document.querySelectorAll('.command-result').forEach((result, resultIndex) => {
+    const active = resultIndex === selected;
+    result.classList.toggle('is-active', active);
+    result.setAttribute('aria-selected', String(active));
+  });
+  const input = document.getElementById('command-search-input');
+  input.setAttribute('aria-activedescendant', `command-result-${selected}`);
+  document.querySelector('.command-actions').hidden = false;
+}
+
+function renderCommandResults(message = '') {
+  const results = document.getElementById('command-results');
+  const status = document.getElementById('command-status');
+  results.textContent = '';
+  status.textContent = message;
+  commandState.items.forEach((item, index) => {
+    const option = document.createElement('button');
+    option.type = 'button';
+    option.id = `command-result-${index}`;
+    option.className = 'command-result';
+    option.tabIndex = -1;
+    option.setAttribute('role', 'option');
+    option.addEventListener('click', () => selectCommandResult(index));
+    const title = document.createElement('strong');
+    title.textContent = item.title || item.url;
+    const host = document.createElement('span');
+    host.textContent = window.LinkNest.safeHost(item.url);
+    option.append(title, host);
+    results.appendChild(option);
+  });
+  document.getElementById('command-search-input')
+    .setAttribute('aria-expanded', String(commandState.items.length > 0));
+  document.querySelector('.command-actions').hidden = !commandState.items.length;
+  if (commandState.items.length) {
+    selectCommandResult(0);
+  } else {
+    document.getElementById('command-search-input').removeAttribute('aria-activedescendant');
+  }
+}
+
+async function searchCommandLinks() {
+  const input = document.getElementById('command-search-input');
+  const query = input.value.trim();
+  commandState.controller?.abort();
+  if (!query) {
+    commandState = { ...commandState, items: [], controller: null };
+    renderCommandResults('Type to search saved links.');
+    return;
+  }
+  const controller = new AbortController();
+  const requestId = commandState.requestId + 1;
+  commandState = { ...commandState, controller, requestId };
+  renderCommandResults('Searching...');
+  const params = new URLSearchParams({ q: query, limit: '10', sort: 'updatedAt', order: 'desc' });
+  try {
+    const response = await linkNestApiFetch(`/api/links?${params}`, { signal: controller.signal });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Search failed');
+    if (requestId !== commandState.requestId) return;
+    commandState = { ...commandState, items: data.links || [], selected: 0 };
+    renderCommandResults(commandState.items.length ? '' : 'No matching links.');
+  } catch (error) {
+    if (requestId !== commandState.requestId) return;
+    if (error.name !== 'AbortError') renderCommandResults('Could not search links.');
+  }
+}
+
+function queueCommandSearch() {
+  clearTimeout(commandState.timer);
+  const timer = setTimeout(searchCommandLinks, 275);
+  commandState = { ...commandState, timer };
+}
+
+async function updateCommandItem(body, successMessage, remove = false) {
+  const item = commandSelectedItem();
+  if (!item || commandState.busy) return;
+  setCommandBusy(true);
+  try {
+    const response = await linkNestApiFetch(`/api/links/${encodeURIComponent(item.id)}`, {
+      method: remove ? 'DELETE' : 'PUT',
+      headers: remove ? undefined : { 'Content-Type': 'application/json' },
+      body: remove ? undefined : JSON.stringify(body),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Action failed');
+    const items = remove
+      ? commandState.items.filter(link => link.id !== item.id)
+      : commandState.items.map(link => link.id === item.id ? (data.entry || { ...link, ...body }) : link);
+    commandState = { ...commandState, items, selected: Math.min(commandState.selected, items.length - 1) };
+    renderCommandResults(items.length ? '' : 'No matching links.');
+    window.LinkNest.showToast(successMessage, 'success');
+    updateUnreadBadge();
+    return true;
+  } catch (error) {
+    window.LinkNest.showToast(error.message);
+    return false;
+  } finally {
+    setCommandBusy(false);
+  }
+}
+
+async function openCommandItem() {
+  const item = commandSelectedItem();
+  if (!item) return;
+  window.open(item.url, '_blank', 'noopener,noreferrer');
+  try { await linkNestApiFetch(`/api/links/${encodeURIComponent(item.id)}/opened`, { method: 'POST' }); } catch {}
+}
+
+function toggleCommandNote(show) {
+  const panel = document.querySelector('.command-note');
+  const note = document.getElementById('command-note-input');
+  panel.hidden = !show;
+  if (show) {
+    note.value = commandSelectedItem()?.notes || '';
+    note.focus();
+  }
+}
+
+function buildCommandDialog() {
+  const dialog = document.createElement('dialog');
+  dialog.className = 'command-dialog';
+  dialog.setAttribute('aria-labelledby', 'command-heading');
+  const heading = document.createElement('h2');
+  heading.id = 'command-heading';
+  heading.textContent = 'Search links';
+  const close = document.createElement('button');
+  close.type = 'button'; close.className = 'command-close'; close.textContent = 'Close';
+  const header = document.createElement('div');
+  header.className = 'command-header'; header.append(heading, close);
+  const input = document.createElement('input');
+  input.id = 'command-search-input'; input.className = 'field command-input';
+  input.type = 'search'; input.maxLength = 200; input.placeholder = 'Search saved links';
+  input.setAttribute('role', 'combobox'); input.setAttribute('aria-autocomplete', 'list');
+  input.setAttribute('aria-controls', 'command-results'); input.setAttribute('aria-expanded', 'false');
+  const status = document.createElement('p');
+  status.id = 'command-status'; status.className = 'command-status';
+  status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
+  const results = document.createElement('div');
+  results.id = 'command-results'; results.className = 'command-results'; results.setAttribute('role', 'listbox');
+  const actions = buildCommandActions();
+  dialog.append(header, input, status, results, actions.toolbar, actions.notePanel);
+  close.addEventListener('click', () => dialog.close());
+  dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+  input.addEventListener('input', queueCommandSearch);
+  input.addEventListener('keydown', handleCommandInputKey);
+  document.body.appendChild(dialog);
+  return dialog;
+}
+
+function buildCommandActions() {
+  const toolbar = document.createElement('div');
+  toolbar.className = 'command-actions'; toolbar.hidden = true;
+  const actions = [
+    ['Open', openCommandItem], ['Add note', () => toggleCommandNote(true)],
+    ['Useful', () => updateCommandItem({ status: 'useful' }, 'Marked useful')],
+    ['Snooze', () => updateCommandItem({ remindAt: new Date(Date.now() + 604800000).toISOString() }, 'Snoozed one week')],
+    ['Archive', () => updateCommandItem({}, 'Archived', true)],
+  ];
+  actions.forEach(([label, handler]) => {
+    const button = document.createElement('button');
+    button.type = 'button'; button.className = 'button button--ghost button--small';
+    button.textContent = label; button.addEventListener('click', handler); toolbar.appendChild(button);
+  });
+  const notePanel = document.createElement('div');
+  notePanel.className = 'command-note'; notePanel.hidden = true;
+  const note = document.createElement('textarea');
+  note.id = 'command-note-input'; note.className = 'field'; note.maxLength = 10000; note.rows = 4;
+  note.placeholder = 'Add a note';
+  note.setAttribute('aria-label', 'Note');
+  const save = document.createElement('button');
+  save.type = 'button'; save.className = 'button button--primary button--small'; save.textContent = 'Save note';
+  const cancel = document.createElement('button');
+  cancel.type = 'button'; cancel.className = 'button button--ghost button--small'; cancel.textContent = 'Cancel';
+  save.addEventListener('click', async () => {
+    const saved = await updateCommandItem({ notes: note.value.trim() }, 'Note saved');
+    if (saved) toggleCommandNote(false);
+  });
+  cancel.addEventListener('click', () => toggleCommandNote(false));
+  note.addEventListener('keydown', event => {
+    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); toggleCommandNote(false); }
+  });
+  notePanel.append(note, save, cancel);
+  return { toolbar, notePanel };
+}
+
+function handleCommandInputKey(event) {
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault();
+    selectCommandResult(commandState.selected + (event.key === 'ArrowDown' ? 1 : -1));
+  }
+  if (event.key === 'Enter' && commandSelectedItem()) {
+    event.preventDefault(); openCommandItem();
+  }
+}
+
+function setupCommandSearch(logoutButton) {
+  if (document.body.dataset.page === 'login' || !logoutButton) return;
+  const dialog = buildCommandDialog();
+  const open = document.createElement('button');
+  open.type = 'button'; open.className = 'button button--ghost button--small command-open-button';
+  open.textContent = 'Search'; open.setAttribute('aria-keyshortcuts', '/ Meta+K Control+K');
+  open.addEventListener('click', () => { dialog.showModal(); document.getElementById('command-search-input').focus(); });
+  logoutButton.before(open);
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   const logoutButton = document.getElementById('logout-button');
   if (logoutButton) {
@@ -122,6 +346,7 @@ window.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
+  setupCommandSearch(logoutButton);
   if (document.body.dataset.page !== 'home') updateUnreadBadge();
 });
 
@@ -131,20 +356,16 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Keyboard shortcuts: "/" to focus search, Escape to clear it
-document.addEventListener('keydown', e => {
-  const inInput = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
-  if (e.key === '/' && !inInput && !e.metaKey && !e.ctrlKey) {
-    const search = document.getElementById('search');
-    if (search) { e.preventDefault(); search.focus(); }
-  }
-  if (e.key === 'Escape') {
-    const search = document.getElementById('search');
-    if (search && document.activeElement === search) {
-      search.value = '';
-      search.blur();
-      search.dispatchEvent(new Event('input'));
-    }
+document.addEventListener('keydown', event => {
+  const inInput = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '')
+    || document.activeElement?.isContentEditable;
+  const commandKey = event.key.toLowerCase() === 'k' && (event.metaKey || event.ctrlKey);
+  if ((event.key === '/' && !inInput && !event.metaKey && !event.ctrlKey) || commandKey) {
+    const dialog = document.querySelector('.command-dialog');
+    if (!dialog) return;
+    event.preventDefault();
+    if (!dialog.open) dialog.showModal();
+    document.getElementById('command-search-input').focus();
   }
 });
 
