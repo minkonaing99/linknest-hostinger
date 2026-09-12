@@ -153,6 +153,13 @@ revisit metric without a full event-history system.
   - save a separate copy.
 - Never merge or overwrite data without user confirmation.
 
+### YouTube Open Decisions (Implemented 2026-09-12)
+
+- Ask before opening a video from the YouTube tab.
+- Offer open, open and archive, share, and cancel.
+- Use native sharing when available and copy the link as fallback.
+- Archive without reloading the page.
+
 ## Explicitly Deferred
 
 - AI summaries and automatic tagging.
