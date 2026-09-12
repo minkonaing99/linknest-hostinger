@@ -663,10 +663,14 @@ The same query measures meaningful revisits in two fair 30-day cohorts:
 
 Soft-archived links remain in these cohorts. Hard-deleted links cannot be measured.
 
+It also calculates a rolling seven-day summary aligned to Thailand calendar
+midnight: links saved, first meaningful reviews, and first useful decisions. A
+second query finds the oldest active non-YouTube review candidate.
+
 ### Browser result
 
 - unread badge updates in navigation
-- home dashboard stats can render from the same endpoint
+- the home page renders the weekly summary from the same endpoint
 - clients receive current rate, previous rate, percentage-point change, target, and baseline state
 
 ## Flow 15: Link health check

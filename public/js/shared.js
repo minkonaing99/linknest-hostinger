@@ -67,26 +67,31 @@ window.LinkNest = {
   },
 };
 
-async function updateUnreadBadge() {
+function renderUnreadBadge(count) {
   const badge = document.getElementById('unread-badge');
   if (!badge) return;
+  const safeCount = Number(count) || 0;
+  if (safeCount > 0) {
+    badge.textContent = safeCount > 99 ? '99+' : String(safeCount);
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+async function updateUnreadBadge() {
   try {
     const res = await linkNestApiFetch('/api/stats');
     if (!res.ok) return;
     const data = await res.json();
-    const count = data.unread || 0;
-    if (count > 0) {
-      badge.textContent = count > 99 ? '99+' : String(count);
-      badge.classList.remove('hidden');
-    } else {
-      badge.classList.add('hidden');
-    }
+    renderUnreadBadge(data.unread);
   } catch {
     // silently ignore — badge is non-critical
   }
 }
 
 window.LinkNest.updateUnreadBadge = updateUnreadBadge;
+window.LinkNest.renderUnreadBadge = renderUnreadBadge;
 
 window.LinkNest.findDuplicateCandidates = async function(url, title) {
   const params = new URLSearchParams({ url, title: title || url });
@@ -117,7 +122,7 @@ window.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
-  updateUnreadBadge();
+  if (document.body.dataset.page !== 'home') updateUnreadBadge();
 });
 
 if ('serviceWorker' in navigator) {

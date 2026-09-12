@@ -1,10 +1,13 @@
-const { safeHost, apiFetch, setMessage, findDuplicateCandidates, thailandDateString: thailandDate } = window.LinkNest;
+const { safeHost, apiFetch, setMessage, findDuplicateCandidates, renderUnreadBadge: updateHomeUnreadBadge, thailandDateString: thailandDate } = window.LinkNest;
 
 const recentLinks = document.getElementById('recent-links');
 const reviewLinks = document.getElementById('review-links');
 const reviewBadge = document.getElementById('review-badge');
-const revisitSummary = document.getElementById('revisit-summary');
-const librarySummary = document.getElementById('library-summary');
+const weeklySaved = document.getElementById('weekly-saved');
+const weeklyReviewed = document.getElementById('weekly-reviewed');
+const weeklyUseful = document.getElementById('weekly-useful');
+const weeklyRevisit = document.getElementById('weekly-revisit');
+const weeklyOldest = document.getElementById('weekly-oldest');
 const template = document.getElementById('link-template');
 const quickAddForm = document.getElementById('quick-add-form');
 const quickAddUrl = document.getElementById('quick-add-url');
@@ -206,22 +209,28 @@ async function createQuickLink(metadata) {
   await loadHome();
 }
 
-function renderStats(stats) {
-  const revisit = stats.revisit || {};
-  if (revisit.buildingBaseline || revisit.current?.rate == null) {
-    revisitSummary.textContent = 'Building baseline';
-  } else {
-    const change = revisit.percentagePointChange;
-    const comparison = change == null ? '' : `, ${change >= 0 ? '+' : ''}${change} pp vs previous`;
-    const target = revisit.targetRate == null ? '' : `, target ${revisit.targetRate}%`;
-    revisitSummary.textContent = `${revisit.current.rate}% meaningfully revisited${comparison}${target}`;
+function renderWeeklySummary(weekly) {
+  weeklySaved.textContent = String(weekly.saved || 0);
+  weeklyReviewed.textContent = String(weekly.reviewed || 0);
+  weeklyUseful.textContent = String(weekly.usefulDecisions || 0);
+  weeklyRevisit.textContent = weekly.revisitPercentage == null
+    ? 'Building baseline'
+    : `${weekly.revisitPercentage}%`;
+  if (!weekly.oldestUnresolved) {
+    weeklyOldest.textContent = 'None';
+    weeklyOldest.href = '/browse.html?review=1';
+    return;
   }
-  librarySummary.textContent = `${stats.total || 0} active links, ${stats.unread || 0} unread, ${stats.useful || 0} useful`;
+  weeklyOldest.textContent = weekly.oldestUnresolved.title;
+  weeklyOldest.href = `/editor.html?id=${encodeURIComponent(weekly.oldestUnresolved.id)}`;
 }
 
 async function loadHome() {
   apiFetch('/api/stats').then(async res => {
-    if (res.ok) renderStats(await res.json());
+    if (!res.ok) return;
+    const stats = await res.json();
+    renderWeeklySummary(stats.weekly || {});
+    updateHomeUnreadBadge(stats.unread);
   }).catch(() => {});
 
   const [reviewRes, recentRes] = await Promise.all([
