@@ -698,6 +698,13 @@ The online event provides the cross-browser sync path. Supporting browsers also
 register Background Sync, which asks an open client to process the queue. Browser
 storage is best-effort and does not replace server backups.
 
+## YouTube Open Decisions
+
+YouTube-tab title and thumbnail clicks open one reusable native dialog. Opening
+records activity. Open and archive launches the video first, then soft-deletes
+the link and removes its row without a page reload. Share uses the device share
+sheet when available and copies the URL otherwise.
+
 ## Flow 15: Link health check
 
 ### User action

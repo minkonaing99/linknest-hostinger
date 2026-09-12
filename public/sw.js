@@ -1,4 +1,4 @@
-const CACHE = 'linknest-v20';
+const CACHE = 'linknest-v21';
 
 // Public assets only — protected pages are cached at runtime after login
 const PRECACHE = [

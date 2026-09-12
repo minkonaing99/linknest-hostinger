@@ -31,6 +31,7 @@ const bulkStatusSelect  = document.getElementById('bulk-status-select');
 const tagChipsContainer = document.getElementById('tag-chips');
 const reviewProgress    = document.getElementById('review-progress');
 const libraryCounts     = document.getElementById('library-counts');
+let youtubeActionState = { item: null, row: null, invoker: null, dialog: null };
 
 document.body.classList.toggle('is-youtube-view', state.quickFilter === 'youtube');
 document.body.classList.toggle('is-review-view', state.quickFilter === 'review');
@@ -100,6 +101,108 @@ function beginRowAction(row) {
 
 function endRowAction(row) {
   row.removeAttribute('aria-busy');
+}
+
+function trackYoutubeOpen(item) {
+  return window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}/opened`, { method: 'POST' }).catch(() => null);
+}
+
+function openYoutubeVideo(item) {
+  window.open(item.url, '_blank', 'noopener,noreferrer');
+  return trackYoutubeOpen(item);
+}
+
+function removeYoutubeRow(row, id) {
+  const group = row.closest('.date-group');
+  row.remove();
+  if (group && !group.querySelector('.library-row')) group.remove();
+  state.links = state.links.filter(link => link.id !== id);
+  state.total = Math.max(0, state.total - 1);
+  totalCount.textContent = String(state.total);
+  visibleCount.textContent = String(state.links.length);
+}
+
+async function shareYoutubeLink() {
+  const { item, dialog } = youtubeActionState;
+  if (!item) return;
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: item.title || item.url, url: item.url });
+      dialog.close();
+      return;
+    }
+  } catch (error) {
+    if (error.name === 'AbortError') return;
+  }
+  try {
+    await navigator.clipboard.writeText(item.url);
+    window.LinkNest.showToast('Link copied', 'success');
+    dialog.close();
+  } catch {
+    window.LinkNest.showToast('Could not share link');
+  }
+}
+
+async function openAndArchiveYoutube() {
+  const { item, row, dialog } = youtubeActionState;
+  if (!item || !row || dialog.dataset.busy === 'true') return;
+  const tracked = openYoutubeVideo(item);
+  dialog.dataset.busy = 'true';
+  dialog.querySelectorAll('button').forEach(button => { button.disabled = true; });
+  try {
+    await tracked;
+    const response = await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Could not archive link');
+    removeYoutubeRow(row, item.id);
+    youtubeActionState = { ...youtubeActionState, invoker: linkList };
+    dialog.close();
+    window.LinkNest.showToast('Opened and archived', 'success');
+    window.LinkNest.updateUnreadBadge();
+  } catch (error) {
+    window.LinkNest.showToast(error.message);
+  } finally {
+    dialog.dataset.busy = 'false';
+    dialog.querySelectorAll('button').forEach(button => { button.disabled = false; });
+  }
+}
+
+function youtubeActionButton(label, className, handler) {
+  const button = document.createElement('button');
+  button.type = 'button'; button.className = className; button.textContent = label;
+  button.addEventListener('click', handler);
+  return button;
+}
+
+function buildYoutubeActionSheet() {
+  const dialog = document.createElement('dialog');
+  dialog.id = 'youtube-action-sheet'; dialog.className = 'youtube-action-sheet';
+  dialog.setAttribute('aria-labelledby', 'youtube-action-title');
+  const title = document.createElement('h2');
+  title.id = 'youtube-action-title'; title.textContent = 'Watch this video?';
+  const videoTitle = document.createElement('p'); videoTitle.className = 'youtube-action-sheet__title';
+  const open = youtubeActionButton('Open video', 'button youtube-action-sheet__primary', () => {
+    openYoutubeVideo(youtubeActionState.item); dialog.close();
+  });
+  const archive = youtubeActionButton('Open and archive', 'button youtube-action-sheet__danger', openAndArchiveYoutube);
+  const share = youtubeActionButton('Share', 'button button--ghost', shareYoutubeLink);
+  const cancel = youtubeActionButton('Cancel', 'button button--ghost', () => dialog.close());
+  const actions = document.createElement('div'); actions.className = 'youtube-action-sheet__actions';
+  actions.append(open, archive, share, cancel); dialog.append(title, videoTitle, actions);
+  dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+  dialog.addEventListener('close', () => {
+    youtubeActionState.invoker?.focus();
+    youtubeActionState = { item: null, row: null, invoker: null, dialog };
+  });
+  document.body.appendChild(dialog);
+  return dialog;
+}
+
+function showYoutubeActionSheet(item, row, invoker) {
+  const dialog = youtubeActionState.dialog || buildYoutubeActionSheet();
+  youtubeActionState = { item: { ...item }, row, invoker, dialog };
+  dialog.querySelector('.youtube-action-sheet__title').textContent = item.title || item.url;
+  dialog.showModal();
+  dialog.querySelector('button').focus();
 }
 
 function handleReviewShortcut(event) {
@@ -430,6 +533,19 @@ function buildRow(item) {
       thumbnail.classList.add('hidden');
       rowArticle.classList.remove('has-thumbnail');
     }, { once: true });
+    if (state.quickFilter === 'youtube') {
+      thumbnail.tabIndex = 0;
+      thumbnail.setAttribute('role', 'button');
+      thumbnail.setAttribute('aria-haspopup', 'dialog');
+      thumbnail.setAttribute('aria-controls', 'youtube-action-sheet');
+      thumbnail.setAttribute('aria-label', `Open options for ${item.title || item.url}`);
+      thumbnail.addEventListener('click', () => showYoutubeActionSheet(item, rowArticle, thumbnail));
+      thumbnail.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault(); showYoutubeActionSheet(item, rowArticle, thumbnail);
+        }
+      });
+    }
   }
 
   const titleEl = node.querySelector('.library-row__title');
@@ -437,9 +553,18 @@ function buildRow(item) {
   titleEl.textContent = rawTitle;
   titleEl.href = item.url;
   titleEl.title = rawTitle;
-  titleEl.addEventListener('click', () => {
+  titleEl.addEventListener('click', event => {
+    if (state.quickFilter === 'youtube') {
+      event.preventDefault();
+      showYoutubeActionSheet(item, rowArticle, titleEl);
+      return;
+    }
     window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}/opened`, { method: 'POST' }).catch(() => {});
   });
+  if (state.quickFilter === 'youtube') {
+    titleEl.setAttribute('aria-haspopup', 'dialog');
+    titleEl.setAttribute('aria-controls', 'youtube-action-sheet');
+  }
 
   const notesEl = node.querySelector('.library-row__notes');
   if (item.notes) {

@@ -18,6 +18,22 @@ it('shows finite review progress and completion state', () => {
   assert.match(script, /You made a decision on all/);
 });
 
+it('asks for a YouTube decision before opening a video', () => {
+  assert.match(script, /document\.createElement\('dialog'\)/);
+  assert.match(script, /Open video/);
+  assert.match(script, /Open and archive/);
+  assert.match(script, /Share/);
+  assert.match(script, /state\.quickFilter === 'youtube'/);
+  assert.match(script, /navigator\.share/);
+  assert.match(script, /navigator\.clipboard\.writeText/);
+  assert.match(script, /state\.links = state\.links\.filter/);
+  assert.match(script, /const tracked = openYoutubeVideo\(item\)[\s\S]{0,180}await tracked[\s\S]{0,180}method: 'DELETE'/);
+  assert.match(script, /aria-haspopup', 'dialog'/);
+  assert.match(script, /error\.name === 'AbortError'[\s\S]{0,180}navigator\.clipboard\.writeText/);
+  assert.match(css, /\.youtube-action-sheet::backdrop/);
+  assert.match(css, /@media \(max-width: 1024px\)[\s\S]*\.youtube-action-sheet/);
+});
+
 it('advances only after meaningful review decisions', () => {
   assert.match(script, /resolveReviewItem\(item\.id\)/);
   assert.match(script, /Note unchanged/);
