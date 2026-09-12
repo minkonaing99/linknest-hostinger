@@ -1669,3 +1669,17 @@ body.is-selecting .library-row__tags {
   }
   .command-results { max-height: 45vh; }
 }
+
+.offline-capture-list { display: grid; gap: 8px; margin-top: 12px; }
+.offline-capture-row {
+  display: flex; align-items: center; gap: 8px; padding: 10px 0;
+  border-top: 1px solid var(--separator);
+}
+.offline-capture-row > div { display: grid; gap: 3px; min-width: 0; margin-right: auto; }
+.offline-capture-row strong,
+.offline-capture-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.offline-capture-row span { color: var(--secondary-label); font-size: 12px; text-transform: capitalize; }
+@media (max-width: 600px) {
+  .offline-capture-row { flex-wrap: wrap; }
+  .offline-capture-row > div { flex: 1 0 100%; }
+}

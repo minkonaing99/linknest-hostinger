@@ -44,6 +44,10 @@ function payload() {
   };
 }
 
+function shouldQueueOffline(error) {
+  return !navigator.onLine || error instanceof TypeError || /offline|network|fetch/i.test(error.message);
+}
+
 function parseBatchLines(text) {
   return text
     .split(/\r?\n/)
@@ -160,6 +164,13 @@ els.form.addEventListener('submit', async event => {
   allowDuplicateOnce = false;
   setMessage(els.message, editing ? 'Saving changes...' : 'Saving...');
   try {
+    if (!editing && !navigator.onLine) {
+      await window.LinkNestOffline.queueCapture(draft);
+      els.form.reset();
+      els.date.value = thailandDate();
+      setMessage(els.message, 'Pending - saves when online.', 'success');
+      return;
+    }
     if (!editing && !skipDuplicateCheck) {
       if (!draft.title) {
         const metadata = await fetchTitleMetadata(draft.url);
@@ -209,7 +220,12 @@ els.form.addEventListener('submit', async event => {
     const destination = returnTo === '/browse.html?review=1' ? returnTo : '/browse.html';
     setTimeout(() => { window.location.href = destination; }, 600);
   } catch (error) {
-    setMessage(els.message, error.message, 'error');
+    if (!editing && shouldQueueOffline(error)) {
+      await window.LinkNestOffline.queueCapture(draft);
+      setMessage(els.message, 'Pending - saves when online.', 'success');
+    } else {
+      setMessage(els.message, error.message, 'error');
+    }
   }
 });
 
@@ -330,6 +346,21 @@ async function loadFromShareParams() {
   }
 }
 
+async function loadOfflineDraft() {
+  const offlineId = queryParam('offlineId');
+  if (!offlineId || !window.LinkNestOffline) return;
+  const item = (await window.LinkNestOffline.listCaptures()).find(record => record.id === offlineId);
+  if (!item) return;
+  els.url.value = item.url;
+  els.title.value = item.title || '';
+  els.date.value = item.date || thailandDate();
+  els.status.value = item.status || 'saved';
+  els.tags.value = (item.tags || []).join(', ');
+  els.notes.value = item.notes || '';
+  els.remindAt.value = item.remindAt ? item.remindAt.slice(0, 10) : '';
+  setMessage(els.message, 'Offline capture loaded. Save or resolve duplicate, then dismiss queued copy.');
+}
+
 const importExportToggle = document.getElementById('import-export-toggle');
 const importExportBody   = document.getElementById('import-export-body');
 if (importExportToggle && importExportBody) {
@@ -389,3 +420,4 @@ if (els.csvImport) {
 
 loadForEdit().catch(console.error);
 loadFromShareParams().catch(console.error);
+loadOfflineDraft().catch(console.error);

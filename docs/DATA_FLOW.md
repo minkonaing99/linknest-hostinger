@@ -687,6 +687,17 @@ The selected result supports open, note, useful, one-week snooze, and archive
 through existing link endpoints. These actions update copied client state and
 refresh the unread badge without reloading the page.
 
+## Offline Capture Queue
+
+New captures that lose network access are validated and stored in the browser's
+IndexedDB. Home shows pending, saved, and failed captures. The queue syncs
+sequentially when connectivity returns. Duplicate candidates stay failed until
+the user reviews them; the client never silently creates another copy.
+
+The online event provides the cross-browser sync path. Supporting browsers also
+register Background Sync, which asks an open client to process the queue. Browser
+storage is best-effort and does not replace server backups.
+
 ## Flow 15: Link health check
 
 ### User action

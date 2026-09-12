@@ -110,7 +110,7 @@ revisit metric without a full event-history system.
 - Show a completion screen after all five links receive a decision.
 - Keep each review session finite and focused.
 
-### Offline Capture Queue
+### Offline Capture Queue (Implemented 2026-09-12)
 
 - Allow the PWA to accept links while offline.
 - Store pending captures locally without losing them.
