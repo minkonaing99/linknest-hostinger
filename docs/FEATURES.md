@@ -76,6 +76,7 @@ that has not shipped.
 - Cache the application shell and show an offline page.
 - Support safe-area insets, phone layouts, tablet layouts, and reduced motion.
 - Save the current browser tab through the browser extension.
+- Capture an optional plain-text note from the extension popup.
 - Configure extension server URL and write-scoped API token.
 
 ### Authentication, API, and Quality
