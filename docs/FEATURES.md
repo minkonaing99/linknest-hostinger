@@ -1,96 +1,107 @@
-# Features To Add
+# Feature Status
 
-Pending work organized by priority. See ROADMAP.md for full context and reasoning.
+Current Link Nest capabilities. See [FUTURE_PLAN.md](FUTURE_PLAN.md) for work
+that has not shipped.
 
 ## Done
 
-### Backend tests (completed 2026-06-01)
-- Auth session flow (`test/auth.test.js`)
-- Token and refresh flow (`test/auth.test.js`)
-- SSRF protection (`test/utils.ssrf.test.js`)
-- Route-level auth tests (`test/routes/auth.test.js`)
-- URL normalization, link sanitization, duplicate handling, query parsing (`test/utils.test.js`, `test/links.test.js`)
-- 153 tests, 0 failures
+### Link Library
 
-### Better duplicate detection (in progress)
-- Normalize tracking params: done (`normalizeUrl`)
-- Normalize trailing slashes: done (`normalizeUrl`)
-- Protocol normalization (http→https): pending
-- Mobile/desktop host variants: pending
-- Fuzzy duplicate suggestions by host + similar title: pending
-- Merge/review UI for flagged duplicates: pending
+- Capture a link using only its URL and fetch its title on the server.
+- Edit title, URL, status, tags, reminder, and plain-text notes.
+- Search titles, URLs, tags, and notes.
+- Filter and sort the library.
+- Mark links unread, saved, useful, favorite, archived, or deleted.
+- Restore archived links.
+- Normalize safe HTTP and HTTPS variants, mobile and AMP hosts, trailing
+  slashes, query order, and common tracking parameters.
+- Show favicons and YouTube thumbnails when available.
+- Keep YouTube links in a dedicated tab outside the normal Browse list.
 
-### Scoped API tokens (completed 2026-06-01)
-See `docs/IMPLEMENTATION_PLAN.md` Phase 3.
+### Review Workflow
 
-### Browser extension (completed 2026-06-01)
-See `docs/IMPLEMENTATION_PLAN.md` Phase 4.
+- Build a five-link queue from due reminders and oldest eligible links.
+- Require a meaningful decision before removing a link from the queue.
+- Add or edit a note, mark useful, snooze, archive, or open during review.
+- Snooze for one week or until a custom date.
+- Show review position, such as `2 of 5`, and a completion screen.
+- Support keyboard controls: Left archives, Right marks useful, Up snoozes,
+  `N` edits the note, and `O` opens the link.
+- Support touch and pen gestures: left archives, right marks useful, and up from
+  the status handle snoozes.
+- Keep visible controls available for accessibility and discovery.
 
----
+### Meaningful Revisit Measurement
 
-## P0 - Highest value next
+- Record the first meaningful action in `firstMeaningfulAt`.
+- Count note changes, useful decisions, and soft archives as meaningful.
+- Do not count opening or snoozing as meaningful.
+- Measure eligible links only after they become at least 14 days old.
+- Build a 30-day baseline before comparing revisit performance.
+- Show a homepage weekly summary with saved, reviewed, useful, revisit rate,
+  and oldest unresolved values.
 
-### Notes on links
-- Add `notes` field to the link model
-- Show notes textarea in editor page
-- Show note preview in browse rows
-- Include notes in search
-- Include notes in export and import
+### Capture and Duplicate Handling
 
-### Saved views
-- Store persistent filter presets (status, tag, query, sort)
-- Add UI for saving and loading views
-- Examples: "Unread articles", "Security links", "Videos to watch"
+- Quick-add links from the homepage.
+- Show five recent links for capture confirmation and correction.
+- Detect exact and possible duplicates using canonical URLs, hosts, and similar
+  titles.
+- Offer Open existing, Merge note, Restore archived, and Save separately.
+- Never merge, restore, or overwrite without user confirmation.
+- Queue captures in IndexedDB while offline and sync when connectivity returns.
+- Show pending, saved, failed, and duplicate-resolution states.
 
-### Better duplicate detection
-(moved to in-progress above)
+### Search and Portability
 
-## P1 - Strong next phase
+- Open command search with `/`, `Cmd+K`, or `Ctrl+K`.
+- Search links and run common actions without leaving the current page.
+- Export the complete library as JSON.
+- Export portable Markdown and CSV files.
+- Import JSON and CSV files.
+- Include title, URL, note, status, and saved date in portable exports.
 
-### Richer metadata capture
-- Description
-- Favicon
-- Site name
-- Thumbnail when available
-- Detected content type (article, video, tweet, docs)
+### YouTube Workflow
 
-### Backend tests
-(completed — moved to Done above)
+- Show YouTube videos in a dedicated responsive media list.
+- Preserve 16:9 thumbnails and show when each video was saved.
+- Ask before opening a video.
+- Offer Open, Open and archive, Share, and Cancel.
+- Use native sharing when available and copy the URL as fallback.
+- Archive without refreshing the page.
 
-## P2 - Valuable later
+### PWA and Browser Extension
 
-### Collections or folders
-- Complement tags with stronger named groupings
-- Examples: backend, security, startup ideas, design references
+- Install Link Nest as a standalone PWA.
+- Cache the application shell and show an offline page.
+- Support safe-area insets, phone layouts, tablet layouts, and reduced motion.
+- Save the current browser tab through the browser extension.
+- Configure extension server URL and write-scoped API token.
 
-### Activity history
-Track per-link events:
-- Created
-- Updated
-- Restored
-- Opened
-- Status changed
+### Authentication, API, and Quality
 
-### Improved import
-- Async background import with progress feedback
-- Preview before committing import
-- Duplicate summary after import
-- JSON round-trip import without manual shaping
+- Authenticate the private single-user web application with sessions.
+- Create scoped API tokens for shortcuts, extensions, and scripts.
+- Validate and normalize external URLs.
+- Protect server-side metadata fetching against SSRF.
+- Document REST endpoints in [API.md](API.md).
+- Test authentication, links, review, command search, offline capture, homepage,
+  export, duplicate handling, and YouTube behavior.
 
-### Scoped API tokens
-(moved to in-progress above)
+## Next
 
-## P3 - Optional later
+- Complete the iPhone Shortcut setup guide described in
+  [FUTURE_PLAN.md](FUTURE_PLAN.md).
 
-### Browser extension
-(moved to in-progress above)
+## Deferred
 
-### AI-assisted tagging and summarization
-Auto-suggest tags, generate summaries. Only useful after notes exist manually.
-
-### Multi-user support
-Shared libraries, roles, permissions. Low priority unless collaboration becomes a real goal.
-
-## Recommended starting point
-
-**Notes on links** - biggest jump in usefulness, small scope, improves search and revisit quality.
+- AI summaries and automatic tagging.
+- Collections and folders.
+- Rich-text notes.
+- External notifications.
+- Native iOS application.
+- Collaboration and multi-user support.
+- Gamification and recommendation scoring.
+- Richer metadata beyond current support.
+- Saved views.
+- Import preview, background progress, and detailed duplicate summaries.
