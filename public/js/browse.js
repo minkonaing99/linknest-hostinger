@@ -3,7 +3,7 @@ const STATUS_CYCLE = ['saved', 'unread', 'useful'];
 
 const initialReview = new URLSearchParams(window.location.search).get('review') === '1';
 const initialYoutube = new URLSearchParams(window.location.search).get('youtube') === '1';
-const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false, selectMode: false, selected: new Set(), quickFilter: initialReview ? 'review' : (initialYoutube ? 'youtube' : null), tagFilter: null };
+const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false, requestId: 0, selectMode: false, selected: new Set(), quickFilter: initialReview ? 'review' : (initialYoutube ? 'youtube' : null), tagFilter: null, reviewSession: null };
 
 const SORT_MAP = {
   recent:       { sort: 'updatedAt', order: 'desc' },
@@ -28,8 +28,58 @@ const bulkCancelBtn     = document.getElementById('bulk-cancel-btn');
 const selectToggleBtn   = document.getElementById('select-toggle-btn');
 const bulkStatusSelect  = document.getElementById('bulk-status-select');
 const tagChipsContainer = document.getElementById('tag-chips');
+const reviewProgress    = document.getElementById('review-progress');
+const libraryCounts     = document.getElementById('library-counts');
 
 document.body.classList.toggle('is-youtube-view', state.quickFilter === 'youtube');
+document.body.classList.toggle('is-review-view', state.quickFilter === 'review');
+
+function updateReviewProgress() {
+  const session = state.reviewSession;
+  const reviewing = state.quickFilter === 'review';
+  reviewProgress.classList.toggle('hidden', !reviewing || !session?.total);
+  libraryCounts.classList.toggle('hidden', reviewing);
+  if (!reviewing || !session?.total) return;
+  const current = Math.min(session.resolved.size + 1, session.total);
+  reviewProgress.textContent = `Review ${current} of ${session.total}`;
+}
+
+function renderReviewComplete() {
+  linkList.textContent = '';
+  const complete = document.createElement('div');
+  complete.className = 'review-complete';
+  complete.tabIndex = -1;
+  const heading = document.createElement('h3');
+  heading.textContent = 'Review complete';
+  const copy = document.createElement('p');
+  copy.textContent = `You made a decision on all ${state.reviewSession.total} links.`;
+  const back = document.createElement('a');
+  back.className = 'button button--ghost';
+  back.href = '/browse.html';
+  back.textContent = 'Back to library';
+  complete.append(heading, copy, back);
+  linkList.appendChild(complete);
+  complete.focus();
+}
+
+function resolveReviewItem(id) {
+  if (state.quickFilter !== 'review' || !state.reviewSession) return;
+  const resolved = new Set([...state.reviewSession.resolved, id]);
+  state.reviewSession = { ...state.reviewSession, resolved };
+  state.links = state.links.filter(link => link.id !== id);
+  state.total = state.links.length;
+  updateReviewProgress();
+  if (resolved.size === state.reviewSession.total) renderReviewComplete();
+  else render(state.links);
+}
+
+function hasMeaningfulRevisit(entry) {
+  const createdAt = Date.parse(entry?.createdAt);
+  const meaningfulAt = Date.parse(entry?.firstMeaningfulAt);
+  return Number.isFinite(createdAt)
+    && Number.isFinite(meaningfulAt)
+    && meaningfulAt - createdAt >= 24 * 60 * 60 * 1000;
+}
 
 function safeHost(url) {
   try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return ''; }
@@ -74,8 +124,14 @@ async function updateLinkFields(item, fields) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || 'Failed to update link');
-  await fetchPage(1);
+  if (state.quickFilter === 'review') {
+    const updated = data.entry || { ...item, ...fields };
+    state.links = state.links.map(link => link.id === item.id ? updated : link);
+  } else {
+    await fetchPage(1);
+  }
   window.LinkNest.updateUnreadBadge();
+  return data.entry;
 }
 
 function closeAllMenus() {
@@ -170,6 +226,45 @@ async function loadTagChips() {
   }
 }
 
+function setupReviewNote(node, item, editLink) {
+  const panel = node.querySelector('.review-note-panel');
+  const reviewNoteInput = node.querySelector('.review-note-input');
+  const save = node.querySelector('.review-note-save');
+  const cancel = node.querySelector('.review-note-cancel');
+  const close = () => {
+    panel.classList.add('hidden');
+    editLink.focus();
+  };
+  editLink.addEventListener('click', event => {
+    if (state.quickFilter !== 'review') return;
+    event.preventDefault();
+    closeAllMenus();
+    reviewNoteInput.value = item.notes || '';
+    panel.classList.remove('hidden');
+    reviewNoteInput.focus();
+  });
+  cancel.addEventListener('click', close);
+  reviewNoteInput.addEventListener('keydown', event => {
+    if (event.key === 'Escape') close();
+  });
+  save.addEventListener('click', async () => {
+    const notes = reviewNoteInput.value.trim();
+    if (notes === String(item.notes || '').trim()) return window.LinkNest.showToast('Note unchanged');
+    save.disabled = true;
+    try {
+      const updated = await updateLinkFields(item, { notes });
+      if (hasMeaningfulRevisit(updated)) resolveReviewItem(item.id);
+      else {
+        panel.classList.add('hidden');
+        window.LinkNest.showToast('This note is saved, but it is too early to count as reviewed');
+      }
+    } catch (err) {
+      window.LinkNest.showToast(err.message);
+      save.disabled = false;
+    }
+  });
+}
+
 function buildRow(item) {
   const node = template.content.cloneNode(true);
 
@@ -193,14 +288,14 @@ function buildRow(item) {
 
   const statusDot = node.querySelector('.status-dot');
   const statusText = node.querySelector('.status-text');
+  let currentStatus = item.status || 'saved';
   applyStatusStyles(statusDot, statusText, item.status);
 
   statusDot.title = 'Click to change status';
   statusDot.addEventListener('click', async event => {
     event.stopPropagation();
     if (state.selectMode) return;
-    const current = item.status || 'saved';
-    const idx = STATUS_CYCLE.indexOf(current);
+    const idx = STATUS_CYCLE.indexOf(currentStatus);
     const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
     statusDot.classList.add('status-dot--transitioning');
     try {
@@ -210,9 +305,10 @@ function buildRow(item) {
         body: JSON.stringify({ ...item, status: next }),
       });
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Failed'); }
-      item.status = next;
+      currentStatus = next;
       applyStatusStyles(statusDot, statusText, next);
       window.LinkNest.updateUnreadBadge();
+      if (state.quickFilter === 'review' && next === 'useful') resolveReviewItem(item.id);
     } catch (err) {
       window.LinkNest.showToast(err.message);
     } finally {
@@ -282,18 +378,26 @@ function buildRow(item) {
   editLink.href = `/editor.html?id=${encodeURIComponent(item.id)}${returnTo}#notes`;
   editLink.textContent = item.notes ? 'Edit note' : 'Add note';
 
+  setupReviewNote(node, item, editLink);
+
   const usefulButton = node.querySelector('.mark-useful-button');
   usefulButton.classList.toggle('hidden', item.status === 'useful');
   usefulButton.addEventListener('click', async event => {
     event.stopPropagation();
-    try { await updateLinkFields(item, { status: 'useful' }); }
+    try {
+      await updateLinkFields(item, { status: 'useful' });
+      resolveReviewItem(item.id);
+    }
     catch (err) { window.LinkNest.showToast(err.message); }
   });
 
   node.querySelector('.snooze-week-button').addEventListener('click', async event => {
     event.stopPropagation();
     const remindAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    try { await updateLinkFields(item, { remindAt }); }
+    try {
+      await updateLinkFields(item, { remindAt });
+      window.LinkNest.showToast('Snoozed. Add a note, mark useful, or archive to finish review.', 'success');
+    }
     catch (err) { window.LinkNest.showToast(err.message); }
   });
 
@@ -301,7 +405,10 @@ function buildRow(item) {
     event.stopPropagation();
     if (!event.target.value) return;
     const remindAt = new Date(`${event.target.value}T00:00:00`).toISOString();
-    try { await updateLinkFields(item, { remindAt }); }
+    try {
+      await updateLinkFields(item, { remindAt });
+      window.LinkNest.showToast('Snoozed. Add a note, mark useful, or archive to finish review.', 'success');
+    }
     catch (err) { window.LinkNest.showToast(err.message); }
   });
 
@@ -312,7 +419,7 @@ function buildRow(item) {
       window.LinkNest.showToast('Moved to archive', 'success');
       closeAllMenus();
       if (state.quickFilter === 'review') {
-        await fetchPage(1);
+        resolveReviewItem(item.id);
         return;
       }
       const group = rowArticle.closest('.date-group');
@@ -355,7 +462,7 @@ function render(items, append = false) {
     if (!items.length) {
       const empty = document.createElement('div');
       empty.className = 'empty-state';
-      empty.textContent = 'No links match your current filters.';
+      empty.textContent = state.quickFilter === 'review' ? 'Nothing ready for review.' : 'No links match your current filters.';
       linkList.appendChild(empty);
       return;
     }
@@ -393,7 +500,7 @@ function render(items, append = false) {
   }
 }
 
-function buildApiParams(page) {
+function buildApiParams(page, quickFilter = state.quickFilter) {
   const params = new URLSearchParams({ page, limit: LIMIT });
   const q = searchInput.value.trim();
   const status = statusFilter.value;
@@ -404,10 +511,10 @@ function buildApiParams(page) {
   params.set('sort', sort);
   params.set('order', order);
 
-  if (state.quickFilter === 'remind') {
+  if (quickFilter === 'remind') {
     params.set('remindBefore', new Date().toISOString());
   }
-  if (state.quickFilter === 'youtube') params.set('youtube', 'only');
+  if (quickFilter === 'youtube') params.set('youtube', 'only');
   else params.set('youtube', 'exclude');
 
   return params;
@@ -423,28 +530,40 @@ function showSkeleton() {
 }
 
 async function fetchPage(page, append = false) {
-  if (state.loading) return;
+  if (append && state.loading) return;
+  if (state.quickFilter === 'review' && state.reviewSession) {
+    render(state.links);
+    return;
+  }
+  const requestedFilter = state.quickFilter;
+  const requestId = ++state.requestId;
   state.loading = true;
   if (!append) showSkeleton();
 
   try {
-    const url = state.quickFilter === 'review'
+    const url = requestedFilter === 'review'
       ? '/api/links/review'
-      : `/api/links?${buildApiParams(page)}`;
+      : `/api/links?${buildApiParams(page, requestedFilter)}`;
     const res = await window.LinkNest.apiFetch(url);
     const data = await res.json();
+    if (requestId !== state.requestId || requestedFilter !== state.quickFilter) return;
     if (!res.ok) throw new Error(data.error || 'Failed to load links');
     const newLinks = data.links || [];
+    if (requestedFilter === 'review' && !state.reviewSession) {
+      state.reviewSession = { total: newLinks.length, resolved: new Set() };
+    }
     state.links = append ? [...state.links, ...newLinks] : newLinks;
     state.page = data.page || 1;
     state.totalPages = data.pages || 1;
     state.total = Number.isFinite(data.total) ? data.total : newLinks.length;
+    updateReviewProgress();
     render(newLinks, append);
   } catch (err) {
+    if (requestId !== state.requestId || requestedFilter !== state.quickFilter) return;
     console.error(err);
     if (!append) linkList.innerHTML = '<div class="empty-state">Failed to load links. Please refresh.</div>';
   } finally {
-    state.loading = false;
+    if (requestId === state.requestId) state.loading = false;
   }
 }
 
@@ -502,7 +621,9 @@ document.querySelectorAll('.quick-filter-btn').forEach(btn => {
     const filter = btn.dataset.filter;
     const active = state.quickFilter === filter;
     state.quickFilter = active ? null : filter;
+    state.reviewSession = null;
     document.body.classList.toggle('is-youtube-view', state.quickFilter === 'youtube');
+    document.body.classList.toggle('is-review-view', state.quickFilter === 'review');
     document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.toggle('is-active', b.dataset.filter === state.quickFilter));
     fetchPage(1);
   });
