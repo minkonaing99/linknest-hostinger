@@ -138,6 +138,10 @@ async function fetchTitleMetadata(rawUrl) {
   return data;
 }
 
+function shouldQueueOffline(error) {
+  return !navigator.onLine || error instanceof TypeError || /offline|network|fetch/i.test(error.message);
+}
+
 function quickAddAction(label, onClick) {
   const button = document.createElement('button');
   button.type = 'button';
@@ -206,7 +210,7 @@ async function createQuickLink(metadata) {
   if (!res.ok) throw new Error(data.error || 'Failed to save link');
   quickAddForm.reset();
   setMessage(quickAddMessage, 'Link saved.', 'success');
-  await loadHome();
+  loadHome().catch(() => {});
 }
 
 function renderWeeklySummary(weekly) {
@@ -254,6 +258,12 @@ async function saveQuickAdd(rawUrl) {
   setMessage(quickAddMessage, 'Fetching title...');
 
   try {
+    if (!navigator.onLine) {
+      await window.LinkNestOffline.queueCapture({ url: rawUrl, title: '', date: thailandDate(), status: 'saved' });
+      quickAddForm.reset();
+      setMessage(quickAddMessage, 'Pending - saves when online.', 'success');
+      return;
+    }
     const metadata = await fetchTitleMetadata(rawUrl);
     const draft = { ...metadata, url: metadata.url || rawUrl };
     const candidates = await findDuplicateCandidates(draft.url, draft.title);
@@ -264,7 +274,13 @@ async function saveQuickAdd(rawUrl) {
     setMessage(quickAddMessage, 'Saving link...');
     await createQuickLink(draft);
   } catch (error) {
-    setMessage(quickAddMessage, error.message, 'error');
+    if (shouldQueueOffline(error)) {
+      await window.LinkNestOffline.queueCapture({ url: rawUrl, title: '', date: thailandDate(), status: 'saved' });
+      quickAddForm.reset();
+      setMessage(quickAddMessage, 'Pending - saves when online.', 'success');
+    } else {
+      setMessage(quickAddMessage, error.message, 'error');
+    }
   } finally {
     quickAddUrl.disabled = false;
     quickAddPaste.disabled = false;

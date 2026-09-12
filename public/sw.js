@@ -1,4 +1,4 @@
-const CACHE = 'linknest-v19';
+const CACHE = 'linknest-v20';
 
 // Public assets only — protected pages are cached at runtime after login
 const PRECACHE = [
@@ -6,6 +6,7 @@ const PRECACHE = [
   '/offline.html',
   '/css/styles.css',
   '/js/shared.js',
+  '/js/offline-queue.js',
   '/js/home.js',
   '/js/browse.js',
   '/js/editor.js',
@@ -21,6 +22,13 @@ self.addEventListener('install', event => {
     caches.open(CACHE).then(cache => cache.addAll(PRECACHE))
   );
   self.skipWaiting();
+});
+
+self.addEventListener('sync', event => {
+  if (event.tag !== 'linknest-captures') return;
+  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
+    clients.forEach(client => client.postMessage('linknest-sync-captures'));
+  }));
 });
 
 self.addEventListener('activate', event => {
