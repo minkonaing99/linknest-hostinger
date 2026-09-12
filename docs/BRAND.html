@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Link Nest Brand and Product Design System</title>
+  <style>
+    :root {
+      --bg: #f2f2f7;
+      --surface: rgba(255,255,255,.86);
+      --surface-muted: rgba(255,255,255,.68);
+      --border: rgba(60,60,67,.18);
+      --text: #111;
+      --muted: #6e6e73;
+      --accent: #007aff;
+      --accent-soft: rgba(0,122,255,.14);
+      --success: #1f9c55;
+      --warning: #b7791f;
+      --danger: #d64045;
+      --radius: 20px;
+      --shadow: 0 12px 30px rgba(17,17,17,.07);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--text);
+      background: radial-gradient(circle at top left,rgba(0,122,255,.08),transparent 20%),linear-gradient(180deg,#f8f8fb,#eff1f6);
+      font-family: -apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI",sans-serif;
+      line-height: 1.45;
+    }
+    a { color: var(--accent); text-underline-offset: 3px; }
+    a:focus-visible, button:focus-visible, input:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 3px;
+    }
+    .shell { width: min(980px,calc(100% - 24px)); margin: 18px auto 48px; }
+    .masthead, .surface {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+    }
+    .masthead { padding: clamp(20px,5vw,48px); overflow: hidden; }
+    .identity { display: flex; align-items: center; gap: 12px; margin-bottom: 36px; }
+    .identity img { width: 40px; height: 40px; }
+    .kicker { font-size: 14px; font-weight: 700; letter-spacing: -.02em; }
+    h1 { max-width: 650px; margin: 0; font-size: clamp(42px,8vw,78px); line-height: .98; letter-spacing: -.055em; }
+    .lead { max-width: 660px; margin: 20px 0 0; color: var(--muted); font-size: clamp(16px,2vw,20px); }
+    .system-note { margin: 26px 0 0; padding-top: 18px; border-top: 1px solid rgba(60,60,67,.12); font-size: 13px; color: var(--muted); }
+    .layout { display: grid; grid-template-columns: 180px minmax(0,1fr); gap: 18px; margin-top: 18px; align-items: start; }
+    nav { position: sticky; top: 18px; padding: 12px; }
+    nav a { display: block; padding: 8px 10px; border-radius: 10px; color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 600; }
+    nav a:hover { color: var(--text); background: rgba(118,118,128,.1); }
+    main { display: grid; gap: 18px; }
+    section { padding: clamp(18px,4vw,30px); }
+    h2 { margin: 0 0 8px; font-size: 26px; line-height: 1.05; letter-spacing: -.035em; }
+    h3 { margin: 24px 0 10px; font-size: 16px; }
+    p { margin: 8px 0; }
+    .muted { color: var(--muted); }
+    .north-star { margin-top: 20px; padding: 18px; border-radius: 18px; background: var(--surface-muted); }
+    .north-star strong { display: block; font-size: 22px; letter-spacing: -.025em; }
+    .logo-grid, .swatches, .type-grid, .component-grid, .rules { display: grid; gap: 12px; }
+    .logo-grid { grid-template-columns: repeat(2,minmax(0,1fr)); margin-top: 16px; }
+    .logo-card { min-height: 180px; display: grid; place-items: center; padding: 20px; border: 1px solid rgba(60,60,67,.12); border-radius: 18px; background: rgba(255,255,255,.65); text-align: center; }
+    .logo-card img { display: block; margin: 0 auto 12px; }
+    .logo-card .mark { width: 64px; height: 64px; }
+    .logo-card .tile { width: 96px; height: 96px; border-radius: 22px; }
+    .logo-card small { color: var(--muted); }
+    .swatches { grid-template-columns: repeat(3,minmax(0,1fr)); margin-top: 16px; }
+    .swatch { overflow: hidden; border: 1px solid rgba(60,60,67,.12); border-radius: 14px; background: white; }
+    .swatch__color { height: 70px; background: var(--swatch); }
+    .swatch__label { padding: 10px; }
+    .swatch strong, .swatch code { display: block; font-size: 12px; }
+    .swatch code { margin-top: 3px; color: var(--muted); }
+    .type-grid { margin-top: 18px; }
+    .type-row { display: grid; grid-template-columns: 120px minmax(0,1fr); gap: 16px; align-items: baseline; padding: 14px 0; border-top: 1px solid rgba(60,60,67,.1); }
+    .type-row:first-child { border-top: 0; }
+    .type-label { color: var(--muted); font-size: 12px; }
+    .type-page { font-size: 32px; font-weight: 700; line-height: 1.05; letter-spacing: -.04em; }
+    .type-section { font-size: 18px; font-weight: 700; letter-spacing: -.02em; }
+    .type-row-title { font-size: 14px; font-weight: 600; line-height: 1.3; }
+    .type-meta { color: var(--muted); font-size: 11px; }
+    .component-grid { grid-template-columns: repeat(2,minmax(0,1fr)); margin-top: 16px; }
+    .specimen { padding: 18px; border: 1px solid rgba(60,60,67,.12); border-radius: 18px; background: var(--surface-muted); }
+    .specimen-title { margin: 0 0 14px; color: var(--muted); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .button { min-height: 40px; padding: 0 12px; border: 1px solid rgba(0,122,255,.92); border-radius: 13px; color: white; background: linear-gradient(180deg,#1790ff,#007aff); box-shadow: 0 10px 22px rgba(0,122,255,.18); font: inherit; font-weight: 600; cursor: pointer; }
+    .button--ghost { color: var(--text); border-color: rgba(60,60,67,.14); background: rgba(255,255,255,.72); box-shadow: none; }
+    .button--danger { color: var(--danger); border-color: rgba(214,64,69,.25); }
+    .field { width: 100%; min-height: 40px; padding: 0 12px; border: 1px solid var(--border); border-radius: 13px; color: var(--text); background: rgba(255,255,255,.96); font: inherit; }
+    .field:focus { outline: 0; border-color: rgba(0,122,255,.54); box-shadow: 0 0 0 4px var(--accent-soft); }
+    .segmented { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; padding: 4px; border: 1px solid rgba(60,60,67,.1); border-radius: 15px; background: rgba(118,118,128,.12); }
+    .segment { min-height: 32px; display: grid; place-items: center; border-radius: 11px; color: var(--muted); font-size: 14px; font-weight: 600; }
+    .segment.active { color: var(--text); background: rgba(255,255,255,.92); box-shadow: 0 1px 3px rgba(17,17,17,.08),0 6px 14px rgba(17,17,17,.04); }
+    .list-row { display: grid; grid-template-columns: 12px minmax(0,1fr) auto; gap: 10px; align-items: center; padding: 12px; border: 1px solid rgba(60,60,67,.08); border-radius: 14px; background: linear-gradient(180deg,rgba(255,255,255,.97),rgba(250,251,255,.93)); }
+    .dot { width: 7px; height: 7px; border-radius: 999px; background: #c89200; }
+    .row-title { display: -webkit-box; overflow: hidden; font-size: 14px; font-weight: 600; line-height: 1.3; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+    .row-meta { margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .more { border: 0; background: transparent; color: var(--muted); font-size: 22px; }
+    .status-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .status { display: inline-flex; align-items: center; gap: 7px; padding: 7px 10px; border-radius: 999px; background: rgba(118,118,128,.09); font-size: 12px; }
+    .status .dot { width: 7px; height: 7px; border-radius: 999px; background: var(--state); }
+    .dialog-demo { max-width: 360px; margin: auto; padding: 18px; border-radius: 20px; background: rgba(255,255,255,.96); box-shadow: 0 24px 80px rgba(0,0,0,.18); }
+    .dialog-demo h3 { margin: 0; font-size: 20px; }
+    .dialog-demo p { overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+    .dialog-demo .button-row { display: grid; }
+    .extension-demo { background: oklch(96% .012 155); }
+    .extension-panel { padding: 16px; border: 1px solid oklch(89% .018 155); border-radius: 18px; background: oklch(99% .006 155); box-shadow: 0 10px 28px oklch(30% .025 155/.1); }
+    .extension-button { width: 100%; min-height: 44px; border: 0; border-radius: 13px; color: oklch(99% .006 155); background: oklch(54% .13 155); font: inherit; font-weight: 600; }
+    .rules { grid-template-columns: repeat(2,minmax(0,1fr)); margin-top: 16px; }
+    .rule { padding: 18px; border-radius: 18px; }
+    .rule--do { background: rgba(31,156,85,.08); }
+    .rule--dont { background: rgba(214,64,69,.07); }
+    .rule h3 { margin-top: 0; }
+    ul { margin: 0; padding-left: 20px; }
+    li + li { margin-top: 7px; }
+    footer { padding: 22px 4px 0; color: var(--muted); font-size: 12px; }
+    @media (max-width: 760px) {
+      .layout { grid-template-columns: 1fr; }
+      nav { position: static; display: flex; overflow-x: auto; }
+      nav a { white-space: nowrap; }
+      .swatches { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .component-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 480px) {
+      .shell { width: min(100% - 12px,980px); margin-top: 10px; }
+      .logo-grid, .rules { grid-template-columns: 1fr; }
+      .swatches { grid-template-columns: 1fr 1fr; }
+      .type-row { grid-template-columns: 1fr; gap: 6px; }
+      h1 { font-size: 42px; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    @media print { body { background: white; } nav { display: none; } .layout { grid-template-columns: 1fr; } .surface,.masthead { box-shadow: none; backdrop-filter: none; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="masthead">
+      <div class="identity"><img src="../public/img/logo-mark.png" alt=""><span class="kicker">Link Nest</span></div>
+      <h1>The Quiet Inbox</h1>
+      <p class="lead">A calm, private place to capture links and return for a useful decision.</p>
+      <p class="system-note">Visual reference for future product work. <a href="BRAND.md">BRAND.md</a> is normative. <a href="PRODUCT.md">PRODUCT.md</a> defines product intent.</p>
+    </header>
+
+    <div class="layout">
+      <nav class="surface" aria-label="Guide sections">
+        <a href="#identity">Identity</a><a href="#color">Color</a><a href="#type">Typography</a><a href="#components">Components</a><a href="#extension">Extension</a><a href="#rules">Guardrails</a>
+      </nav>
+      <main>
+        <section class="surface" id="identity">
+          <h2>Identity</h2>
+          <p class="muted">Calm. Focused. Familiar. Lightweight. Personal.</p>
+          <div class="north-star"><strong>The Quiet Inbox</strong><span>Decisions before metrics. Useful context before collection size.</span></div>
+          <div class="logo-grid">
+            <figure class="logo-card"><div><img class="mark" src="../public/img/logo-mark.png" alt="Link Nest mark"><strong>Product mark</strong><br><small>Transparent, 28 or 40 px in web UI</small></div></figure>
+            <figure class="logo-card"><div><img class="tile" src="../public/img/apple-touch-icon.png" alt="Link Nest app icon"><strong>App icon</strong><br><small>Cream tile only for OS and extension contexts</small></div></figure>
+          </div>
+        </section>
+
+        <section class="surface" id="color">
+          <h2>Color</h2><p class="muted">System blue drives web actions. Green belongs to mark, extension, and semantic success.</p>
+          <div class="swatches">
+            <div class="swatch" style="--swatch:#f2f2f7"><div class="swatch__color"></div><div class="swatch__label"><strong>Canvas</strong><code>#F2F2F7</code></div></div>
+            <div class="swatch" style="--swatch:#111111"><div class="swatch__color"></div><div class="swatch__label"><strong>Text</strong><code>#111111</code></div></div>
+            <div class="swatch" style="--swatch:#6e6e73"><div class="swatch__color"></div><div class="swatch__label"><strong>Muted</strong><code>#6E6E73</code></div></div>
+            <div class="swatch" style="--swatch:#007aff"><div class="swatch__color"></div><div class="swatch__label"><strong>Accent</strong><code>#007AFF</code></div></div>
+            <div class="swatch" style="--swatch:#1f9c55"><div class="swatch__color"></div><div class="swatch__label"><strong>Success</strong><code>#1F9C55</code></div></div>
+            <div class="swatch" style="--swatch:#d64045"><div class="swatch__color"></div><div class="swatch__label"><strong>Danger</strong><code>#D64045</code></div></div>
+          </div>
+        </section>
+
+        <section class="surface" id="type">
+          <h2>Typography</h2><p class="muted">Native system type only. Sentence case. Short, direct action labels.</p>
+          <div class="type-grid">
+            <div class="type-row"><span class="type-label">Page title, 32/700</span><span class="type-page">Review what matters</span></div>
+            <div class="type-row"><span class="type-label">Section, 18/700</span><span class="type-section">Review queue</span></div>
+            <div class="type-row"><span class="type-label">Row, 14/600</span><span class="type-row-title">Designing calm software for short, focused sessions</span></div>
+            <div class="type-row"><span class="type-label">Metadata, 11/400</span><span class="type-meta">Saved today - unread</span></div>
+          </div>
+        </section>
+
+        <section class="surface" id="components">
+          <h2>Components</h2><p class="muted">Rounded hierarchy, restrained depth, familiar controls, visible state.</p>
+          <div class="component-grid">
+            <div class="specimen"><p class="specimen-title">Actions</p><div class="button-row"><button class="button">Add link</button><button class="button button--ghost">Open</button><button class="button button--ghost button--danger">Archive</button></div></div>
+            <div class="specimen"><p class="specimen-title">Field</p><input class="field" type="url" value="https://example.com/article" aria-label="Example URL"></div>
+            <div class="specimen"><p class="specimen-title">Segmented navigation</p><div class="segmented"><span class="segment active">Home</span><span class="segment">Browse</span><span class="segment">Add Link</span></div></div>
+            <div class="specimen"><p class="specimen-title">Library row</p><div class="list-row"><span class="dot" aria-hidden="true">&nbsp;</span><div><span class="row-title">A useful article waiting for a decision</span><div class="row-meta">Saved yesterday - unread</div></div><button class="more" aria-label="More actions">...</button></div></div>
+            <div class="specimen"><p class="specimen-title">Status</p><div class="status-list"><span class="status" style="--state:#c89200"><span class="dot" aria-hidden="true">&nbsp;</span>Unread</span><span class="status" style="--state:#1f9c55"><span class="dot" aria-hidden="true">&nbsp;</span>Useful</span><span class="status" style="--state:#b8b0a2"><span class="dot" aria-hidden="true">&nbsp;</span>Saved</span></div></div>
+            <div class="specimen"><p class="specimen-title">Decision sheet</p><div class="dialog-demo"><h3>Watch this video?</h3><p>Designing a calmer reading workflow</p><div class="button-row"><button class="button">Open</button><button class="button button--ghost">Copy link</button><button class="button button--ghost button--danger">Archive</button></div></div></div>
+          </div>
+        </section>
+
+        <section class="surface" id="extension">
+          <h2>Extension</h2><p class="muted">Related green palette, same native type, 44 px controls, compact capture flow.</p>
+          <div class="specimen extension-demo"><div class="extension-panel"><div class="identity"><img src="../extension/icons/icon-48.png" width="28" height="28" alt=""><strong>Save to Link Nest</strong></div><input class="field" value="Page title" aria-label="Example title"><div style="height:10px"></div><button class="extension-button">Save Link</button></div></div>
+        </section>
+
+        <section class="surface" id="rules">
+          <h2>Guardrails</h2>
+          <div class="rules">
+            <div class="rule rule--do"><h3>Do</h3><ul><li>Put next useful decision first.</li><li>Reuse shipped tokens and components.</li><li>Keep capture and correction close.</li><li>Show focus, status text, and safe touch targets.</li></ul></div>
+            <div class="rule rule--dont"><h3>Don't</h3><ul><li>Build a statistics-first dashboard.</li><li>Add streaks, points, hype, or guilt.</li><li>Make AI or folder trees the center.</li><li>Add one-off colors, shadows, or breakpoints.</li></ul></div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <footer>Link Nest brand reference. Update only after shipped design changes.</footer>
+  </div>
+</body>
+</html>
