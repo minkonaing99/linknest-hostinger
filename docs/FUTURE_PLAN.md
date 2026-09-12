@@ -41,15 +41,6 @@ These need evidence from real use before implementation.
 - If recurring completion needs persistent tracking, add a dedicated
   `lastUsefulReviewedAt` field through `docs/change-db.sql`.
 
-### Link Age Warning
-
-- Identify unresolved saved or unread links older than 90 days using their
-  existing creation date.
-- Show a quiet warning with Review now, Archive, and Keep actions.
-- Keep does not mark the link meaningful or change its status.
-- Do not add urgency scoring, notifications, or configurable thresholds.
-- Reuse existing fields and require no database change.
-
 ### Manual Related Links
 
 - Add an `Add related link` action to the editor.

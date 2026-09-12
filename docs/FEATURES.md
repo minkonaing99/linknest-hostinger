@@ -30,6 +30,8 @@ that has not shipped.
 - Support touch and pen gestures: left archives, right marks useful, and up from
   the status handle snoozes.
 - Keep visible controls available for accessibility and discovery.
+- Filter unresolved links older than 90 days and review, archive, or keep them
+  for another 90 days without changing their meaningful status.
 
 ### Meaningful Revisit Measurement
 

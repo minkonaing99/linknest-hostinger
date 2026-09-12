@@ -811,6 +811,39 @@ body.is-review-view .library-row.is-swiping {
   display: flex;
   gap: 8px;
 }
+.age-warning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(183, 121, 31, 0.09);
+  color: #765018;
+  font-size: 12px;
+}
+.age-warning__text { font-weight: 600; }
+.age-warning__actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.age-warning__action {
+  min-height: 32px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+.age-warning__action--danger { color: var(--danger); }
+.age-warning__action:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (any-pointer: coarse) {
+  .age-warning__action { min-height: 44px; }
+}
+@media (max-width: 600px) {
+  .age-warning { align-items: stretch; flex-direction: column; }
+}
 .review-complete {
   display: grid;
   justify-items: center;

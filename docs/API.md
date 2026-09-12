@@ -280,6 +280,7 @@ Supported query params:
 - `includeDeleted` = `true|false`
 - `remindBefore` = ISO datetime — returns links where `remindAt` is set and `remindAt <= remindBefore`
 - `staleBefore` = ISO datetime — returns links not opened since this time (or never opened and created before it)
+- `ageBefore` = ISO datetime - returns active saved or unread links created on or before the cutoff, without a meaningful revisit or future reminder
 - `neverOpened` = `true|false` — returns links where `openedCount = 0`
 - `youtube` = `only|exclude` — includes only YouTube links or removes them from results
 
