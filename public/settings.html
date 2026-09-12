@@ -24,26 +24,30 @@
           </div>
           <button type="button" class="button button--ghost button--small button--logout" id="logout-button">Logout</button>
         </div>
-        <nav class="segmented-nav" aria-label="Primary">
+        <nav class="segmented-nav settings-nav" aria-label="Settings navigation">
           <a class="segmented-nav__item" href="/">Home</a>
-          <a class="segmented-nav__item" href="/browse.html">Browse</a>
-          <a class="segmented-nav__item" href="/editor.html">Add Link</a>
           <a class="segmented-nav__item is-active" href="/settings.html">Settings</a>
         </nav>
       </header>
 
       <main class="page-stack page-stack--airy">
-        <section class="surface surface--soft surface--group">
+        <section class="surface surface--soft settings-section">
           <h2 class="surface-title">API Tokens</h2>
-          <p class="surface-description">Create long-lived tokens for iOS shortcuts, browser extensions, and scripts. A token is shown only once — save it immediately.</p>
+          <p class="surface-description">Create long-lived tokens for iOS shortcuts, browser extensions, and scripts. Each token is shown once, so save it immediately.</p>
 
           <form id="create-token-form" class="token-form">
             <div class="field-row">
-              <input id="token-name" class="field" type="text" placeholder="Token name (e.g. iOS Shortcut)" maxlength="100" required />
-              <select id="token-scope" class="field field--select">
-                <option value="write">Read + Write</option>
-                <option value="read">Read only</option>
-              </select>
+              <label class="field-group">
+                <span>Token name</span>
+                <input id="token-name" class="field" type="text" placeholder="iOS Shortcut" maxlength="100" required />
+              </label>
+              <label class="field-group">
+                <span>Access</span>
+                <select id="token-scope" class="field field--select">
+                  <option value="write">Read + Write</option>
+                  <option value="read">Read only</option>
+                </select>
+              </label>
               <button type="submit" class="button button--primary button--small">Create</button>
             </div>
           </form>
@@ -57,7 +61,7 @@
           </div>
         </section>
 
-        <section class="surface surface--soft surface--group">
+        <section class="surface surface--soft settings-section">
           <h2 class="surface-title">Active Tokens</h2>
           <div id="token-list" class="token-list">
             <p class="empty-state" id="token-empty">No tokens yet.</p>
