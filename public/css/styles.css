@@ -1706,7 +1706,7 @@ body.is-selecting .library-row__tags {
 .youtube-action-sheet__actions { display: grid; gap: 8px; }
 .youtube-action-sheet__actions .button { min-height: 44px; }
 .youtube-action-sheet__primary { background: var(--accent); color: white; }
-.youtube-action-sheet__danger { background: var(--danger); color: white; }
+.youtube-action-sheet__danger { border: 0; background: var(--danger); color: white; }
 body.is-youtube-view .link-thumbnail[role="button"]:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
