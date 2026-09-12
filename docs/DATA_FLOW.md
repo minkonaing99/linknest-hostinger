@@ -673,6 +673,20 @@ second query finds the oldest active non-YouTube review candidate.
 - the home page renders the weekly summary from the same endpoint
 - clients receive current rate, previous rate, percentage-point change, target, and baseline state
 
+## Command Search
+
+Authenticated pages create one native modal search dialog from `shared.js`.
+Pressing `/`, `Cmd+K`, or `Ctrl+K` opens it without changing pages. A visible
+Search button provides the same entry point on touch devices.
+
+Queries use the existing `GET /api/links` endpoint with a 10-result limit.
+Debouncing and request cancellation prevent stale results from replacing newer
+ones. Result text is inserted with `textContent`.
+
+The selected result supports open, note, useful, one-week snooze, and archive
+through existing link endpoints. These actions update copied client state and
+refresh the unread badge without reloading the page.
+
 ## Flow 15: Link health check
 
 ### User action

@@ -126,7 +126,7 @@ revisit metric without a full event-history system.
 - Keep exported data portable to Obsidian, spreadsheets, and other tools.
 - Allow CSV files using the same five columns to be imported.
 
-### Command Search
+### Command Search (Implemented 2026-09-12)
 
 - Open command search with `/` or `Cmd+K`.
 - Search saved links without navigating away from the current page.
