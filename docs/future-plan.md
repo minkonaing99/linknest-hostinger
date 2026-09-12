@@ -98,10 +98,10 @@ revisit metric without a full event-history system.
   - Up Arrow: snooze.
   - `N`: add or edit the note.
   - `O`: open the link.
-- Add equivalent swipe gestures on touch devices:
+- Touch and pen swipe gestures added 2026-09-12:
   - Swipe left: archive.
   - Swipe right: mark useful.
-  - Swipe up: snooze.
+  - Swipe up from the status handle: snooze.
 - Keep visible buttons available for accessibility and discoverability.
 
 ### Review Progress (Implemented 2026-09-12)

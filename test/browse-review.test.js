@@ -7,6 +7,7 @@ const path = require('node:path');
 
 const html = fs.readFileSync(path.join(__dirname, '../public/browse.html'), 'utf8');
 const script = fs.readFileSync(path.join(__dirname, '../public/js/browse.js'), 'utf8');
+const css = fs.readFileSync(path.join(__dirname, '../public/css/styles.css'), 'utf8');
 
 it('shows finite review progress and completion state', () => {
   assert.match(html, /id="review-progress"[^>]*role="status"[^>]*aria-live="polite"/);
@@ -60,4 +61,22 @@ it('supports focused review keyboard shortcuts without intercepting typing', () 
   assert.match(script, /function endRowAction\(row\)/);
   assert.match(script, /linkList\.addEventListener\('keydown', handleReviewShortcut\)/);
   assert.match(script, /if \(requestedFilter === 'review'\) linkList\.focus\(\{ preventScroll: true \}\)/);
+});
+
+it('supports touch and pen review swipes while preserving page scroll', () => {
+  assert.match(script, /function setupReviewSwipe\(row\)/);
+  assert.match(script, /event\.pointerType !== 'touch' && event\.pointerType !== 'pen'/);
+  assert.match(script, /a, button, input, textarea, select, label, \[contenteditable\]/);
+  assert.match(script, /row\.setPointerCapture\(event\.pointerId\)/);
+  assert.match(script, /SWIPE_THRESHOLD = 64/);
+  assert.match(script, /dx <= -SWIPE_THRESHOLD[\s\S]{0,120}'\.delete-button'/);
+  assert.match(script, /dx >= SWIPE_THRESHOLD[\s\S]{0,120}'\.mark-useful-button'/);
+  assert.match(script, /gesture\.verticalHandle && dy <= -SWIPE_THRESHOLD[\s\S]{0,120}'\.snooze-week-button'/);
+  assert.match(script, /\.row-menu, \.review-note-panel/);
+  assert.match(script, /pointercancel/);
+  assert.match(script, /setupReviewSwipe\(rowArticle\)/);
+  assert.match(css, /body\.is-review-view \.library-row \{[^}]*touch-action: pan-y/);
+  assert.match(css, /body\.is-review-view \.library-row\.is-swiping/);
+  assert.match(css, /body\.is-review-view \.library-row__status \{[^}]*touch-action: none/);
+  assert.match(css, /prefers-reduced-motion: reduce/);
 });

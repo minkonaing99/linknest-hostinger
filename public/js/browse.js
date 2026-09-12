@@ -1,4 +1,5 @@
 const LIMIT = 50;
+const SWIPE_THRESHOLD = 64;
 const STATUS_CYCLE = ['saved', 'unread', 'useful'];
 
 const initialReview = new URLSearchParams(window.location.search).get('review') === '1';
@@ -119,6 +120,56 @@ function handleReviewShortcut(event) {
   if (!control || control.classList.contains('hidden')) return;
   event.preventDefault();
   control.click();
+}
+
+function setupReviewSwipe(row) {
+  let gesture = null;
+  let suppressClick = false;
+  const reset = () => {
+    gesture = null;
+    row.classList.remove('is-swiping');
+    row.style.removeProperty('--swipe-x');
+  };
+  row.addEventListener('pointerdown', event => {
+    if (state.quickFilter !== 'review' || !event.isPrimary) return;
+    if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return;
+    if (row.getAttribute('aria-busy') === 'true') return;
+    if (event.target.closest('a, button, input, textarea, select, label, [contenteditable], .row-menu, .review-note-panel')) return;
+    const verticalHandle = Boolean(event.target.closest('.library-row__status'));
+    gesture = { id: event.pointerId, x: event.clientX, y: event.clientY, verticalHandle };
+    row.setPointerCapture(event.pointerId);
+  });
+  row.addEventListener('pointermove', event => {
+    if (!gesture || event.pointerId !== gesture.id) return;
+    const dx = event.clientX - gesture.x;
+    const dy = event.clientY - gesture.y;
+    gesture = { ...gesture, dx, dy };
+    if (Math.abs(dx) < 10 || Math.abs(dx) <= Math.abs(dy) * 1.25) return;
+    row.classList.add('is-swiping');
+    row.style.setProperty('--swipe-x', `${Math.max(-96, Math.min(96, dx))}px`);
+  });
+  row.addEventListener('pointerup', event => {
+    if (!gesture || event.pointerId !== gesture.id) return;
+    const dx = event.clientX - gesture.x;
+    const dy = event.clientY - gesture.y;
+    let selector = null;
+    if (dx <= -SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.25) selector = '.delete-button';
+    else if (dx >= SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.25) selector = '.mark-useful-button';
+    else if (gesture.verticalHandle && dy <= -SWIPE_THRESHOLD && Math.abs(dy) > Math.abs(dx) * 1.25) selector = '.snooze-week-button';
+    reset();
+    if (!selector || row.getAttribute('aria-busy') === 'true') return;
+    suppressClick = true;
+    window.setTimeout(() => { suppressClick = false; }, 400);
+    row.querySelector(selector)?.click();
+  });
+  row.addEventListener('pointercancel', reset);
+  row.addEventListener('lostpointercapture', reset);
+  row.addEventListener('click', event => {
+    if (!suppressClick || event.detail === 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+    suppressClick = false;
+  }, true);
 }
 
 function safeHost(url) {
@@ -309,6 +360,7 @@ function buildRow(item) {
   const node = template.content.cloneNode(true);
 
   const rowArticle = node.querySelector('.library-row');
+  setupReviewSwipe(rowArticle);
   if (state.selected.has(item.id)) rowArticle.classList.add('is-selected');
   rowArticle.classList.toggle('is-pinned', Boolean(item.pinned));
 
