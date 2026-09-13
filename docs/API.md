@@ -377,6 +377,9 @@ Opening alone does not complete it. Notes are limited to 10,000 characters.
 
 ## Link write operations
 
+For a share-sheet capture workflow using a long-lived write token, see the
+[iPhone Shortcut setup guide](IPHONE_SHORTCUT.md).
+
 ### Create a link
 
 ```http
