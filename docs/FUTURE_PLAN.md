@@ -17,13 +17,8 @@ See [FEATURES.md](FEATURES.md) for shipped capabilities.
 
 ## Next
 
-### iPhone Shortcut Setup Guide
-
-- Document accepting a URL from the iOS share sheet.
-- Document sending it to the authenticated Link Nest API.
-- Use the server-fetched title without a second metadata form.
-- Show a small native success or failure notification.
-- Explain API-token creation without exposing token values in screenshots.
+No feature is currently committed for implementation. Promote work from
+Possible Later Improvements only after observed use proves the need.
 
 ## Possible Later Improvements
 

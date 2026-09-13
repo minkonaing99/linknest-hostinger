@@ -83,6 +83,8 @@ that has not shipped.
 - Save the current browser tab through the browser extension.
 - Capture an optional plain-text note from the extension popup.
 - Configure extension server URL and write-scoped API token.
+- Save shared URLs from iPhone or iPad using the documented
+  [Shortcuts setup](IPHONE_SHORTCUT.md).
 
 ### Authentication, API, and Quality
 
@@ -96,8 +98,7 @@ that has not shipped.
 
 ## Next
 
-- Complete the iPhone Shortcut setup guide described in
-  [FUTURE_PLAN.md](FUTURE_PLAN.md).
+- No feature is currently committed for implementation.
 
 ## Deferred
 

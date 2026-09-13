@@ -138,7 +138,9 @@ Main API groups:
 - title fetching
 - import and export
 
-Full API details are documented in [docs/API.md](./docs/API.md).
+Full API details are documented in [docs/API.md](./docs/API.md). To capture links
+from the iOS share sheet, follow the
+[iPhone Shortcut setup guide](./docs/IPHONE_SHORTCUT.md).
 
 ## Product Direction
 
