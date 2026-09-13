@@ -40,6 +40,16 @@ CREATE TABLE IF NOT EXISTS links (
   INDEX idx_links_first_useful_at (first_useful_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS link_relationships (
+  link_id_a VARCHAR(36) NOT NULL,
+  link_id_b VARCHAR(36) NOT NULL,
+  created_at DATETIME(3) NOT NULL,
+  PRIMARY KEY (link_id_a, link_id_b),
+  CONSTRAINT chk_link_relationship_order CHECK (link_id_a < link_id_b),
+  CONSTRAINT fk_link_relationship_a FOREIGN KEY (link_id_a) REFERENCES links (id) ON DELETE CASCADE,
+  CONSTRAINT fk_link_relationship_b FOREIGN KEY (link_id_b) REFERENCES links (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS sessions (
   token      VARCHAR(64)  PRIMARY KEY,
   user_id    VARCHAR(36)  NOT NULL,

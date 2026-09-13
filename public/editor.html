@@ -88,6 +88,26 @@
                 <span>Notes</span>
                 <textarea id="notes" class="field field--textarea editor-field" rows="5" maxlength="10000" placeholder="Why is this useful?"></textarea>
               </label>
+
+              <section id="related-links" class="related-links" aria-labelledby="related-heading" hidden>
+                <div class="related-links__header">
+                  <div>
+                    <h3 id="related-heading">Related links</h3>
+                    <p>Connect existing links.</p>
+                  </div>
+                  <button type="button" id="related-add-toggle" class="button button--ghost button--small" aria-controls="related-search-panel" aria-expanded="false">Add related link</button>
+                </div>
+                <div id="related-search-panel" class="related-search" hidden>
+                  <label class="field-group">
+                    <span>Search saved links</span>
+                    <input type="search" id="related-search" class="field editor-field" autocomplete="off" placeholder="Search title, URL, tag, or note" />
+                  </label>
+                  <div id="related-search-results" class="related-search__results"></div>
+                </div>
+                <div id="related-list" class="related-list"></div>
+                <button type="button" id="related-view-all" class="button button--ghost button--small" aria-controls="related-list" aria-expanded="false" hidden>View all</button>
+                <p id="related-status" class="form-message" role="status" aria-live="polite"></p>
+              </section>
             </div>
 
             <div class="form-stack form-stack--tight editor-submit-row">
@@ -132,5 +152,6 @@
     <script src="/js/shared.js"></script>
     <script src="/js/offline-queue.js"></script>
     <script src="/js/editor.js"></script>
+    <script src="/js/editor-related.js"></script>
   </body>
 </html>

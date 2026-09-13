@@ -484,6 +484,18 @@ Request body:
 The note is appended atomically with a blank line separator. Empty notes and
 combined notes longer than 10,000 characters are rejected.
 
+### Related links
+
+```http
+GET /api/links/:id/related
+POST /api/links/:id/related
+DELETE /api/links/:id/related/:relatedId
+```
+
+POST accepts `{ "relatedId": "link-id" }`. Relationships are symmetric.
+Self-links and missing links return `400` or `404`; duplicate pairs return
+`409`. DELETE removes only the relationship and returns `{ "removed": true }`.
+
 ### Update a link
 
 ```http
