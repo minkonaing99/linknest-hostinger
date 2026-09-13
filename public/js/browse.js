@@ -212,6 +212,7 @@ function showYoutubeActionSheet(item, row, invoker) {
   const dialog = youtubeActionState.dialog || buildYoutubeActionSheet();
   youtubeActionState = { item: { ...item }, row, invoker, dialog };
   dialog.querySelector('.youtube-action-sheet__title').textContent = item.title || item.url;
+  dialog.querySelector('.youtube-action-sheet__danger').classList.toggle('hidden', Boolean(item.pinned));
   dialog.showModal();
   dialog.querySelector('button').focus();
 }

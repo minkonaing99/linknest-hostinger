@@ -22,6 +22,7 @@ it('asks for a YouTube decision before opening a video', () => {
   assert.match(script, /document\.createElement\('dialog'\)/);
   assert.match(script, /Open video/);
   assert.match(script, /Open and archive/);
+  assert.match(script, /youtube-action-sheet__danger'\)\.classList\.toggle\('hidden', Boolean\(item\.pinned\)\)/);
   assert.match(script, /Share/);
   assert.match(script, /state\.quickFilter === 'youtube'/);
   assert.match(script, /navigator\.share/);
