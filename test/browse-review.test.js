@@ -115,3 +115,17 @@ it('shows actionable warnings for unresolved links older than 90 days', () => {
   assert.match(script, /else if \(quickFilter !== 'age'\) params\.set\('youtube', 'exclude'\)/);
   assert.match(css, /\.age-warning/);
 });
+
+it('supports a separate 30-day useful revisit queue', () => {
+  assert.match(html, /data-filter="useful-review">Useful revisit/);
+  assert.match(html, /class="useful-review-prompt age-warning hidden"/);
+  assert.match(html, /class="[^\"]*useful-review-confirm[^\"]*">Still useful/);
+  assert.match(html, /class="[^\"]*useful-review-note[^\"]*">Add note/);
+  assert.match(html, /class="[^\"]*useful-review-archive[^\"]*">Archive/);
+  assert.match(script, /\/api\/links\/useful-review/);
+  assert.match(script, /\/api\/links\/\$\{encodeURIComponent\(item\.id\)\}\/useful-review/);
+  assert.match(script, /await markUsefulReviewed\(item, \{ notes \}\);[\s\S]{0,100}resolveUsefulItem\(item\.id\)/);
+  assert.doesNotMatch(script, /updateLinkFields\(item, \{ notes \}\)[\s\S]{0,180}markUsefulReviewed/);
+  assert.match(script, /state\.quickFilter === 'useful-review'/);
+  assert.match(script, /Nothing due for useful review/);
+});

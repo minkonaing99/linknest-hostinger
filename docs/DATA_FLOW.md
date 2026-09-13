@@ -337,6 +337,14 @@ snoozing, and favoriting do not advance progress. When every item has a
 meaningful decision, Browse shows the review completion state. Refreshing starts
 a new session from the current database queue.
 
+### Useful revisit queue
+
+Browse requests `GET /api/links/useful-review`. The server returns up to five
+active useful links whose save, first useful, or latest useful review date is at
+least 30 days old.
+Still useful and a changed note call `POST /api/links/:id/useful-review`.
+Archive uses the existing soft-delete flow. Opening does not complete this review.
+
 ### Database activity
 
 - fetches matching `links`

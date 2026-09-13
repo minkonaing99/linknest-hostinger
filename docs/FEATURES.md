@@ -32,6 +32,7 @@ that has not shipped.
 - Keep visible controls available for accessibility and discovery.
 - Filter unresolved links older than 90 days and review, archive, or keep them
   for another 90 days without changing their meaningful status.
+- Revisit useful links after 30 days and decide Still useful, Add note, or Archive.
 
 ### Meaningful Revisit Measurement
 

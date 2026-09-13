@@ -29,18 +29,6 @@ See [FEATURES.md](FEATURES.md) for shipped capabilities.
 
 These need evidence from real use before implementation.
 
-### Revisit Useful Links
-
-- Add a separate queue for links previously marked useful.
-- Keep this queue separate from the unresolved five-link review queue.
-- Resurface useful links after a 30-day or 90-day interval.
-- Choose the default interval during implementation after checking real usage.
-- Ask for one decision: Still useful, Add note, or Archive.
-- Do not count opening alone as completing the repeat review.
-- Avoid scoring, spaced-repetition complexity, and notifications.
-- If recurring completion needs persistent tracking, add a dedicated
-  `lastUsefulReviewedAt` field through `docs/change-db.sql`.
-
 ### Manual Related Links
 
 - Add an `Add related link` action to the editor.

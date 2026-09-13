@@ -31,7 +31,8 @@ require.cache[titlePath] = {
 const {
   createLink, readLink, readLinks, updateLink,
   deleteLink, restoreLink, readTagCounts, bulkUpdateStatus,
-  parseBookmarksHtml, importLinks, openLink, findDuplicateCandidates, readReviewQueue, mergeLinkNote,
+  parseBookmarksHtml, importLinks, openLink, findDuplicateCandidates, readReviewQueue,
+  readUsefulReviewQueue, markUsefulReviewed, mergeLinkNote,
 } = require('../lib/links');
 
 // Helpers
@@ -55,6 +56,7 @@ function makeRow(overrides = {}) {
     notes: '',
     first_meaningful_at: null,
     first_useful_at: null,
+    last_useful_reviewed_at: null,
     ...overrides,
   };
 }
@@ -193,6 +195,62 @@ describe('readReviewQueue', () => {
     assert.ok(sql.includes('LIMIT 5'));
     assert.equal(params[0].toISOString(), '2026-06-15T00:00:00.000Z');
     assert.equal(params[1].toISOString(), '2026-06-01T00:00:00.000Z');
+  });
+});
+
+describe('useful review queue', () => {
+  it('returns useful links due after 30 days', async () => {
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      return { rows: [makeRow({ status: 'useful', first_useful_at: '2026-05-01T00:00:00.000Z' })], rowCount: 1 };
+    };
+    const links = await readUsefulReviewQueue(new Date('2026-06-15T00:00:00.000Z'));
+    const [sql, params] = calls[0];
+    assert.equal(links[0].status, 'useful');
+    assert.ok(sql.includes("status = 'useful'"));
+    assert.ok(!sql.includes('first_useful_at IS NOT NULL'));
+    assert.ok(sql.includes('COALESCE(last_useful_reviewed_at, first_useful_at, created_at) <= ?'));
+    assert.ok(sql.includes('LIMIT 5'));
+    assert.equal(params[0].toISOString(), '2026-05-16T00:00:00.000Z');
+  });
+
+  it('records a completed useful review', async () => {
+    seq(
+      { rows: [makeRow({ status: 'useful' })], rowCount: 1 },
+      { rows: [], rowCount: 1 },
+    );
+    const entry = await markUsefulReviewed('link-id-123', {}, new Date('2026-06-15T00:00:00.000Z'));
+    assert.equal(entry.lastUsefulReviewedAt, '2026-06-15T00:00:00.000Z');
+  });
+
+  it('atomically saves a changed note and completes the review', async () => {
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      return calls.length === 1
+        ? { rows: [makeRow({ status: 'useful', notes: 'Old note' })], rowCount: 1 }
+        : { rows: [], rowCount: 1 };
+    };
+    const entry = await markUsefulReviewed(
+      'link-id-123',
+      { notes: 'New note' },
+      new Date('2026-06-15T00:00:00.000Z')
+    );
+    assert.equal(entry.notes, 'New note');
+    assert.match(calls[1][0], /SET notes=\?, last_useful_reviewed_at=\?, updated_at=\?/);
+  });
+
+  it('rejects unchanged and oversized useful-review notes', async () => {
+    seq({ rows: [makeRow({ status: 'useful', notes: 'Same note' })], rowCount: 1 });
+    await assert.rejects(
+      () => markUsefulReviewed('link-id-123', { notes: 'Same note' }),
+      error => error.statusCode === 400 && error.message === 'Note unchanged'
+    );
+    await assert.rejects(
+      () => markUsefulReviewed('link-id-123', { notes: 'x'.repeat(10001) }),
+      error => error.statusCode === 400
+    );
   });
 });
 

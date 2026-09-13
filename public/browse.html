@@ -54,6 +54,7 @@
             <div class="quick-filter-row">
               <button type="button" class="button button--ghost button--small quick-filter-btn" data-filter="remind">Due to revisit</button>
               <button type="button" class="button button--ghost button--small quick-filter-btn" data-filter="review">Review queue</button>
+              <button type="button" class="button button--ghost button--small quick-filter-btn" data-filter="useful-review">Useful revisit</button>
               <button type="button" class="button button--ghost button--small quick-filter-btn" data-filter="age">Older than 90 days</button>
               <button type="button" class="button button--ghost button--small quick-filter-btn" data-filter="youtube">YouTube</button>
             </div>
@@ -118,6 +119,14 @@
               <button type="button" class="age-review-button age-warning__action">Review now</button>
               <button type="button" class="age-archive-button age-warning__action age-warning__action--danger">Archive</button>
               <button type="button" class="age-keep-button age-warning__action">Keep for 90 days</button>
+            </div>
+          </div>
+          <div class="useful-review-prompt age-warning hidden">
+            <span class="age-warning__text">Useful 30 days ago. Keep it?</span>
+            <div class="age-warning__actions">
+              <button type="button" class="useful-review-confirm age-warning__action">Still useful</button>
+              <button type="button" class="useful-review-note age-warning__action">Add note</button>
+              <button type="button" class="useful-review-archive age-warning__action age-warning__action--danger">Archive</button>
             </div>
           </div>
           <div class="review-note-panel hidden">

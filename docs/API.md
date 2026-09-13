@@ -233,6 +233,7 @@ A link document returned by the API looks like this:
   "remindAt": null,
   "firstMeaningfulAt": null,
   "firstUsefulAt": null,
+  "lastUsefulReviewedAt": null,
   "thumbnailUrl": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
 }
 ```
@@ -251,6 +252,7 @@ A link document returned by the API looks like this:
 - `remindAt` is a nullable ISO datetime for user-set reminders
 - `firstMeaningfulAt` records the first note change, useful status, or soft archive
 - `firstUsefulAt` records the first transition to useful made at least 24 hours after capture
+- `lastUsefulReviewedAt` records completion of the latest useful-link revisit
 - `thumbnailUrl` is derived for supported YouTube videos and is otherwise `null`
 - clients cannot set arbitrary thumbnail URLs
 
@@ -348,6 +350,30 @@ days old. A future reminder suppresses an otherwise eligible link until due.
 
 Opening and snoozing do not count as meaningful actions. Changing a note,
 marking useful, or soft-archiving sets `firstMeaningfulAt` once.
+
+### Useful revisit queue
+
+```http
+GET /api/links/useful-review
+```
+
+Returns up to five useful links whose save, first useful, or latest useful review
+date is at least 30 days old.
+
+```http
+POST /api/links/:id/useful-review
+```
+
+Records a completed useful-link revisit. Send no body for Still useful, or send
+the changed note atomically with completion:
+
+```json
+{
+  "notes": "Updated plain-text note"
+}
+```
+
+Opening alone does not complete it. Notes are limited to 10,000 characters.
 
 ## Link write operations
 
