@@ -29,17 +29,6 @@ See [FEATURES.md](FEATURES.md) for shipped capabilities.
 
 These need evidence from real use before implementation.
 
-### Manual Related Links
-
-- Add an `Add related link` action to the editor.
-- Search and select existing links rather than entering another raw URL.
-- Show two or three related links below the note, with access to the full list.
-- Allow removing a relationship without deleting either link.
-- Treat relationships as symmetric and reject self-links and duplicate pairs.
-- Do not add automatic suggestions, relationship types, graph views, or AI.
-- Store relationships in a minimal join table added through
-  `docs/change-db.sql` when implementation begins.
-
 ### Improved Import
 
 - Preview an import before saving.

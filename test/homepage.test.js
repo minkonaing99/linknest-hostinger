@@ -11,6 +11,7 @@ const editorHtml = fs.readFileSync(path.join(__dirname, '../public/editor.html')
 const script = fs.readFileSync(path.join(__dirname, '../public/js/home.js'), 'utf8');
 const shared = fs.readFileSync(path.join(__dirname, '../public/js/shared.js'), 'utf8');
 const editor = fs.readFileSync(path.join(__dirname, '../public/js/editor.js'), 'utf8');
+const editorRelated = fs.readFileSync(path.join(__dirname, '../public/js/editor-related.js'), 'utf8');
 const browse = fs.readFileSync(path.join(__dirname, '../public/js/browse.js'), 'utf8');
 
 describe('homepage workflow', () => {
@@ -96,5 +97,18 @@ describe('homepage workflow', () => {
     assert.match(editorHtml, /href="\/api\/links\/export\.csv"/);
     assert.match(editorHtml, /id="csv-file"[^>]*accept="\.csv,text\/csv"/);
     assert.match(editor, /api\/links\/import-csv/);
+  });
+
+  it('manages related links only while editing', () => {
+    assert.match(editorHtml, /id="related-links"[^>]*hidden/);
+    assert.match(editorHtml, /type="search"[^>]*id="related-search"/);
+    assert.match(editorHtml, /id="related-status"[^>]*role="status"[^>]*aria-live="polite"/);
+    assert.match(editorHtml, /id="related-add-toggle"[^>]*aria-controls="related-search-panel"[^>]*aria-expanded="false"/);
+    assert.match(editorRelated, /api\/links\/\$\{encodeURIComponent\(linkId\)\}\/related/);
+    assert.match(editorRelated, /limit: '10'/);
+    assert.match(editorRelated, /relatedLinks\.slice\(0, 3\)/);
+    assert.match(editorRelated, /requestId !== searchRequest/);
+    assert.doesNotMatch(editorRelated, /innerHTML/);
+    assert.doesNotMatch(editorRelated, /DELETE.*api\/links\/\$\{encodeURIComponent\(relatedId\)\}(?!\/)/);
   });
 });

@@ -271,6 +271,15 @@ PUT /api/links/:id
 - duplicate archived links offer a restore action
 - new link calendar dates use the `Asia/Bangkok` timezone
 
+### Related links
+
+On edit pages, `public/js/editor-related.js` lists symmetric relationships with
+`GET /api/links/:id/related`. Search reuses `GET /api/links?q=...&limit=10`.
+Adding sends `POST /api/links/:id/related` with `relatedId`; removing sends
+`DELETE /api/links/:id/related/:relatedId`. The server stores each pair in
+lexical ID order, rejects self-links and duplicates, and never deletes either
+link when removing a relationship.
+
 ## Flow 5: Browse library
 
 ### User action

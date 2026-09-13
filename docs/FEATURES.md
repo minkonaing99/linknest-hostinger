@@ -17,6 +17,8 @@ that has not shipped.
   slashes, query order, and common tracking parameters.
 - Show favicons and YouTube thumbnails when available.
 - Keep YouTube links in a dedicated tab outside the normal Browse list.
+- Connect existing links manually from the editor and remove relationships
+  without deleting either link.
 
 ### Review Workflow
 

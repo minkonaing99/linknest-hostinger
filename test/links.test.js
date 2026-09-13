@@ -33,6 +33,7 @@ const {
   deleteLink, restoreLink, readTagCounts, bulkUpdateStatus,
   parseBookmarksHtml, importLinks, openLink, findDuplicateCandidates, readReviewQueue,
   readUsefulReviewQueue, markUsefulReviewed, mergeLinkNote,
+  readRelatedLinks, addRelatedLink, removeRelatedLink,
 } = require('../lib/links');
 
 // Helpers
@@ -139,6 +140,59 @@ describe('readLink', () => {
       assert.equal(err.statusCode, 404);
       return true;
     });
+  });
+});
+
+describe('related links', () => {
+  it('reads active links related from either side of a symmetric pair', async () => {
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      if (calls.length === 1) return { rows: [{ id: 'link-id-123' }], rowCount: 1 };
+      return { rows: [makeRow({ id: 'related-id' })], rowCount: 1 };
+    };
+    const links = await readRelatedLinks('link-id-123');
+    assert.deepEqual(links.map(link => link.id), ['related-id']);
+    assert.match(calls[1][0], /CASE WHEN r\.link_id_a=\?/);
+    assert.match(calls[1][0], /l\.deleted_at IS NULL/);
+    assert.doesNotMatch(calls[1][0], /LIMIT/);
+  });
+
+  it('rejects related-list reads for missing or archived source links', async () => {
+    seq({ rows: [], rowCount: 0 });
+    await assert.rejects(() => readRelatedLinks('missing'), error => error.statusCode === 404);
+  });
+
+  it('stores pairs in canonical order', async () => {
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      if (calls.length === 1) return { rows: [], rowCount: 1 };
+      return { rows: [makeRow({ id: 'a-link' })], rowCount: 1 };
+    };
+    await addRelatedLink('z-link', 'a-link');
+    assert.deepEqual(calls[0][1].slice(0, 2), ['a-link', 'z-link']);
+  });
+
+  it('rejects self-links, missing links, and duplicate pairs', async () => {
+    await assert.rejects(() => addRelatedLink('same', 'same'), error => error.statusCode === 400);
+    await assert.rejects(() => addRelatedLink('one', 'x'.repeat(37)), error => error.statusCode === 400);
+    seq({ rows: [], rowCount: 0 });
+    await assert.rejects(() => addRelatedLink('one', 'missing'), error => error.statusCode === 404);
+    currentImpl = async () => { throw Object.assign(new Error('duplicate'), { code: 'ER_DUP_ENTRY' }); };
+    await assert.rejects(() => addRelatedLink('one', 'two'), error => error.statusCode === 409);
+  });
+
+  it('removes only the canonical relationship', async () => {
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      return { rows: [], rowCount: 1 };
+    };
+    await removeRelatedLink('z-link', 'a-link');
+    assert.match(calls[0][0], /DELETE FROM link_relationships/);
+    assert.deepEqual(calls[0][1], ['a-link', 'z-link']);
+    assert.doesNotMatch(calls[0][0], /DELETE FROM links/);
   });
 });
 

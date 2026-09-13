@@ -22,6 +22,9 @@ require.cache[linksPath] = {
       similarity: 1, exact: true, archived: false,
     }],
     mergeLinkNote: async (id, note) => ({ id, notes: note }),
+    readRelatedLinks: async () => [{ id: 'related-1' }],
+    addRelatedLink: async (_id, relatedId) => ({ id: relatedId }),
+    removeRelatedLink: async () => ({ removed: true }),
   },
 };
 
@@ -42,6 +45,29 @@ it('GET /api/links/review returns review links', async () => {
   assert.equal(handled, true);
   assert.equal(status, 200);
   assert.deepEqual(body, { links: [{ id: 'review-1' }] });
+});
+
+it('supports related-link collection and member routes', async () => {
+  async function request(method, pathname, payload) {
+    let status;
+    let body;
+    const res = { writeHead(code) { status = code; }, end(value) { body = JSON.parse(value); } };
+    const req = Readable.from(payload ? [JSON.stringify(payload)] : []);
+    req.method = method;
+    const handled = await handle(req, res, new URL(`https://example.com${pathname}`));
+    await new Promise(resolve => setImmediate(resolve));
+    return { handled, status, body };
+  }
+
+  const list = await request('GET', '/api/links/current/related');
+  assert.deepEqual(list, { handled: true, status: 200, body: { links: [{ id: 'related-1' }] } });
+  const add = await request('POST', '/api/links/current/related', { relatedId: 'related-2' });
+  assert.equal(add.status, 201);
+  assert.equal(add.body.link.id, 'related-2');
+  const remove = await request('DELETE', '/api/links/current/related/related-2');
+  assert.deepEqual(remove, { handled: true, status: 200, body: { removed: true } });
+  const v1 = await request('GET', '/api/v1/links/current/related');
+  assert.equal(v1.status, 200);
 });
 
 it('GET /api/links/useful-review returns due useful links', async () => {
