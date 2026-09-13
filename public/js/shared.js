@@ -347,7 +347,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   setupCommandSearch(logoutButton);
-  if (document.body.dataset.page !== 'home') updateUnreadBadge();
+  if (!['home', 'login', 'offline'].includes(document.body.dataset.page)) updateUnreadBadge();
 });
 
 if ('serviceWorker' in navigator) {

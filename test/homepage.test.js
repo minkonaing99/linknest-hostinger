@@ -48,7 +48,11 @@ describe('homepage workflow', () => {
     assert.match(script, /weekly\.oldestUnresolved/);
     assert.doesNotMatch(script, /weeklySummary\.innerHTML/);
     assert.match(script, /updateHomeUnreadBadge\(stats\.unread\)/);
-    assert.match(shared, /document\.body\.dataset\.page !== 'home'/);
+    assert.match(shared, /!\['home', 'login', 'offline'\]\.includes\(document\.body\.dataset\.page\)/);
+  });
+
+  it('does not request protected badge data from public pages', () => {
+    assert.match(shared, /!\['home', 'login', 'offline'\]\.includes\(document\.body\.dataset\.page\)/);
   });
 
   it('uses Thailand calendar dates for saving and grouping', () => {
