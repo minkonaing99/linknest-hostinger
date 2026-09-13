@@ -5,9 +5,10 @@ const AGE_WARNING_DAYS = 90;
 const STATUS_CYCLE = ['saved', 'unread', 'useful'];
 
 const initialReview = new URLSearchParams(window.location.search).get('review') === '1';
+const initialUsefulReview = new URLSearchParams(window.location.search).get('usefulReview') === '1';
 const initialYoutube = new URLSearchParams(window.location.search).get('youtube') === '1';
 const initialAge = new URLSearchParams(window.location.search).get('age') === '1';
-const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false, requestId: 0, selectMode: false, selected: new Set(), quickFilter: initialReview ? 'review' : (initialYoutube ? 'youtube' : (initialAge ? 'age' : null)), tagFilter: null, reviewSession: null };
+const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false, requestId: 0, selectMode: false, selected: new Set(), quickFilter: initialReview ? 'review' : (initialUsefulReview ? 'useful-review' : (initialYoutube ? 'youtube' : (initialAge ? 'age' : null))), tagFilter: null, reviewSession: null };
 
 const SORT_MAP = {
   recent:       { sort: 'updatedAt', order: 'desc' },
@@ -86,6 +87,13 @@ function resolveReviewItem(id) {
   updateReviewProgress();
   if (resolved.size === state.reviewSession.total) renderReviewComplete();
   else render(state.links);
+}
+
+function resolveUsefulItem(id) {
+  if (state.quickFilter !== 'useful-review') return;
+  state.links = state.links.filter(link => link.id !== id);
+  state.total = state.links.length;
+  render(state.links);
 }
 
 function hasMeaningfulRevisit(entry) {
@@ -321,7 +329,7 @@ async function updateLinkFields(item, fields) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || 'Failed to update link');
-  if (state.quickFilter === 'review') {
+  if (state.quickFilter === 'review' || state.quickFilter === 'useful-review') {
     const updated = data.entry || { ...item, ...fields };
     state.links = state.links.map(link => link.id === item.id ? updated : link);
   } else {
@@ -433,7 +441,7 @@ function setupReviewNote(node, item, editLink) {
     editLink.focus();
   };
   editLink.addEventListener('click', event => {
-    if (state.quickFilter !== 'review' && state.quickFilter !== 'age') return;
+    if (!['review', 'age', 'useful-review'].includes(state.quickFilter)) return;
     event.preventDefault();
     closeAllMenus();
     reviewNoteInput.value = item.notes || '';
@@ -449,6 +457,12 @@ function setupReviewNote(node, item, editLink) {
     if (notes === String(item.notes || '').trim()) return window.LinkNest.showToast('Note unchanged');
     save.disabled = true;
     try {
+      if (state.quickFilter === 'useful-review') {
+        await markUsefulReviewed(item, { notes });
+        resolveUsefulItem(item.id);
+        window.LinkNest.showToast('Useful link reviewed', 'success');
+        return;
+      }
       const updated = await updateLinkFields(item, { notes });
       if (hasMeaningfulRevisit(updated)) resolveReviewItem(item.id);
       else {
@@ -458,6 +472,38 @@ function setupReviewNote(node, item, editLink) {
     } catch (err) {
       window.LinkNest.showToast(err.message);
       save.disabled = false;
+    }
+  });
+}
+
+async function markUsefulReviewed(item, fields) {
+  const options = { method: 'POST' };
+  if (fields) {
+    options.headers = { 'Content-Type': 'application/json' };
+    options.body = JSON.stringify(fields);
+  }
+  const response = await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}/useful-review`, options);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || 'Could not complete useful review');
+  return data.entry;
+}
+
+function setupUsefulReview(node, item, row, editLink, deleteButton) {
+  if (state.quickFilter !== 'useful-review') return;
+  const prompt = node.querySelector('.useful-review-prompt');
+  prompt.classList.remove('hidden');
+  node.querySelector('.useful-review-note').addEventListener('click', () => editLink.click());
+  node.querySelector('.useful-review-archive').addEventListener('click', () => deleteButton.click());
+  node.querySelector('.useful-review-confirm').addEventListener('click', async () => {
+    if (!beginRowAction(row)) return;
+    try {
+      await markUsefulReviewed(item);
+      resolveUsefulItem(item.id);
+      window.LinkNest.showToast('Kept as useful', 'success');
+    } catch (error) {
+      window.LinkNest.showToast(error.message);
+    } finally {
+      endRowAction(row);
     }
   });
 }
@@ -678,6 +724,10 @@ function buildRow(item) {
         resolveReviewItem(item.id);
         return;
       }
+      if (state.quickFilter === 'useful-review') {
+        resolveUsefulItem(item.id);
+        return;
+      }
       const group = rowArticle.closest('.date-group');
       rowArticle.remove();
       if (!group.querySelector('.library-row')) group.remove();
@@ -693,6 +743,7 @@ function buildRow(item) {
   });
 
   setupAgeWarning(node, item, rowArticle, editLink, deleteButton);
+  setupUsefulReview(node, item, rowArticle, editLink, deleteButton);
 
   const menu    = node.querySelector('.row-menu');
   const trigger = menu.querySelector('.row-menu__trigger');
@@ -724,7 +775,9 @@ function render(items, append = false) {
       empty.className = 'empty-state';
       empty.textContent = state.quickFilter === 'review'
         ? 'Nothing ready for review.'
-        : (state.quickFilter === 'age' ? 'No unresolved links older than 90 days.' : 'No links match your current filters.');
+        : (state.quickFilter === 'useful-review'
+          ? 'Nothing due for useful review.'
+          : (state.quickFilter === 'age' ? 'No unresolved links older than 90 days.' : 'No links match your current filters.'));
       linkList.appendChild(empty);
       return;
     }
@@ -732,8 +785,8 @@ function render(items, append = false) {
 
   const grouped = new Map();
   for (const item of items) {
-    const label = state.quickFilter === 'review'
-      ? 'Review queue'
+    const label = state.quickFilter === 'review' || state.quickFilter === 'useful-review'
+      ? (state.quickFilter === 'review' ? 'Review queue' : 'Useful revisit')
       : (item.pinned ? 'Pinned' : groupLabel(item.date));
     if (!grouped.has(label)) grouped.set(label, []);
     grouped.get(label).push(item);
@@ -808,8 +861,8 @@ async function fetchPage(page, append = false) {
   if (!append) showSkeleton();
 
   try {
-    const url = requestedFilter === 'review'
-      ? '/api/links/review'
+    const url = requestedFilter === 'review' || requestedFilter === 'useful-review'
+      ? (requestedFilter === 'review' ? '/api/links/review' : '/api/links/useful-review')
       : `/api/links?${buildApiParams(page, requestedFilter)}`;
     const res = await window.LinkNest.apiFetch(url);
     const data = await res.json();

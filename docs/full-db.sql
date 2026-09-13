@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS links (
   notes               TEXT         NOT NULL DEFAULT (''),
   first_meaningful_at DATETIME(3)  DEFAULT NULL,
   first_useful_at     DATETIME(3)  DEFAULT NULL,
+  last_useful_reviewed_at DATETIME(3) DEFAULT NULL,
   UNIQUE KEY uniq_url (url(768)),
   INDEX idx_links_updated_at (updated_at),
   INDEX idx_links_created_at (created_at),

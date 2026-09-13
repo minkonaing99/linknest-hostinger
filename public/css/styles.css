@@ -894,6 +894,7 @@ body.is-review-view .library-row.is-swiping {
   font-size: 12px;
 }
 .age-warning__text { font-weight: 600; }
+.useful-review-prompt { background: rgba(31, 156, 85, 0.09); color: #176b3d; }
 .age-warning__actions { display: flex; flex-wrap: wrap; gap: 4px; }
 .age-warning__action {
   min-height: 32px;
