@@ -18,15 +18,6 @@ const els = {
   formHeading: document.getElementById('form-heading'),
   pageTitle: document.getElementById('page-title'),
   message: document.getElementById('form-message'),
-  batchInput: document.getElementById('batch-input'),
-  batchImport: document.getElementById('batch-import'),
-  importMessage: document.getElementById('import-message'),
-  bookmarksFile: document.getElementById('bookmarks-file'),
-  bookmarksImport: document.getElementById('bookmarks-import'),
-  bookmarksMessage: document.getElementById('bookmarks-message'),
-  csvFile: document.getElementById('csv-file'),
-  csvImport: document.getElementById('csv-import'),
-  csvMessage: document.getElementById('csv-message'),
 };
 
 els.date.value = thailandDate();
@@ -46,20 +37,6 @@ function payload() {
 
 function shouldQueueOffline(error) {
   return !navigator.onLine || error instanceof TypeError || /offline|network|fetch/i.test(error.message);
-}
-
-function parseBatchLines(text) {
-  return text
-    .split(/\r?\n/)
-    .map(line => line.trim())
-    .filter(Boolean)
-    .map(line => {
-      const parts = line.split('|');
-      const url = (parts[0] || '').trim();
-      const title = parts.slice(1).join('|').trim();
-      return { url, title };
-    })
-    .filter(item => item.url);
 }
 
 async function fetchTitleMetadata(rawUrl) {
@@ -281,58 +258,6 @@ els.pasteClipboard.addEventListener('click', async () => {
   }
 });
 
-els.batchImport.addEventListener('click', async () => {
-  const raw = els.batchInput.value.trim();
-  if (!raw) return setMessage(els.importMessage, 'Paste at least one line first.', 'error');
-
-  const parsed = parseBatchLines(raw);
-  if (!parsed.length) return setMessage(els.importMessage, 'No valid lines found.', 'error');
-
-  setMessage(els.importMessage, `Preparing ${parsed.length} link(s)...`);
-  const today = thailandDate();
-  const links = [];
-
-  for (let i = 0; i < parsed.length; i += 1) {
-    const item = parsed[i];
-    let finalUrl = item.url;
-    let finalTitle = item.title;
-
-    if (!finalTitle) {
-      try {
-        const metadata = await fetchTitleMetadata(item.url);
-        finalUrl = metadata.url || item.url;
-        finalTitle = metadata.title || '';
-      } catch {
-        finalTitle = '';
-      }
-    }
-
-    links.push({
-      url: finalUrl,
-      title: finalTitle,
-      date: today,
-      status: 'saved',
-      tags: [],
-    });
-
-    setMessage(els.importMessage, `Preparing ${i + 1}/${parsed.length}...`);
-  }
-
-  try {
-    const res = await apiFetch('/api/links/import', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ links }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Import failed');
-    setMessage(els.importMessage, `Imported ${data.imported} links.`, 'success');
-    els.batchInput.value = '';
-  } catch (error) {
-    setMessage(els.importMessage, error.message, 'error');
-  }
-});
-
 async function loadFromShareParams() {
   if (queryParam('id')) return;
   const urlParam = queryParam('url');
@@ -368,53 +293,6 @@ if (importExportToggle && importExportBody) {
     const open = !importExportBody.classList.contains('hidden');
     importExportBody.classList.toggle('hidden', open);
     importExportToggle.classList.toggle('is-open', !open);
-  });
-}
-
-if (els.bookmarksImport) {
-  els.bookmarksImport.addEventListener('click', async () => {
-    const file = els.bookmarksFile?.files?.[0];
-    if (!file) return setMessage(els.bookmarksMessage, 'Choose a bookmarks HTML file first.', 'error');
-    setMessage(els.bookmarksMessage, 'Reading file…');
-    try {
-      const html = await file.text();
-      setMessage(els.bookmarksMessage, 'Importing…');
-      const res = await apiFetch('/api/links/import-bookmarks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ html }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Import failed');
-      setMessage(els.bookmarksMessage, `Imported ${data.imported} of ${data.parsed} bookmarks.`, 'success');
-      if (els.bookmarksFile) els.bookmarksFile.value = '';
-    } catch (err) {
-      setMessage(els.bookmarksMessage, err.message, 'error');
-    }
-  });
-}
-
-if (els.csvImport) {
-  els.csvImport.addEventListener('click', async () => {
-    const file = els.csvFile?.files?.[0];
-    if (!file) return setMessage(els.csvMessage, 'Choose a CSV file first.', 'error');
-    setMessage(els.csvMessage, 'Importing...');
-    els.csvImport.disabled = true;
-    try {
-      const res = await apiFetch('/api/links/import-csv', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ csv: await file.text() }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'CSV import failed');
-      setMessage(els.csvMessage, `Imported ${data.imported} of ${data.parsed} CSV rows.`, 'success');
-      els.csvFile.value = '';
-    } catch (error) {
-      setMessage(els.csvMessage, error.message, 'error');
-    } finally {
-      els.csvImport.disabled = false;
-    }
   });
 }
 

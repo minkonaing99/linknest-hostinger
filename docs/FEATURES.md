@@ -65,6 +65,10 @@ that has not shipped.
 - Export portable Markdown and CSV files.
 - Import JSON and CSV files.
 - Include title, URL, note, status, and saved date in portable exports.
+- Preview JSON, CSV, browser bookmark, and pasted-line imports before saving.
+- Show invalid and duplicate summaries, then import valid links in progress-tracked
+  batches.
+- Restore complete link-record fields and manual relationships from versioned JSON backups.
 
 ### YouTube Workflow
 
@@ -111,4 +115,3 @@ that has not shipped.
 - Gamification and recommendation scoring.
 - Richer metadata beyond current support.
 - Saved views.
-- Import preview, background progress, and detailed duplicate summaries.

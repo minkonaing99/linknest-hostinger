@@ -611,20 +611,27 @@ GET /api/links/export.csv
 Important detail:
 
 - export includes all links, not only active ones
-- plain-text notes are included in JSON export and import
-- JSON remains the complete backup format
+- plain-text notes and manual relationships are included in JSON export and import
+- JSON uses a versioned envelope and remains the complete backup format
 - Markdown and CSV contain title, URL, notes, status, and saved date
 
-### CSV import
+### Import preview and confirmation
 
-The editor reads a selected CSV file and sends its text as JSON:
+JSON, CSV, browser bookmarks, and pasted lines use one editor workflow. The
+browser reads selected text with `File.text()` and sends it to:
 
 ```text
-POST /api/links/import-csv
+POST /api/links/import-preview
 ```
 
-The server validates and parses the exact `title,url,notes,status,date` format,
-then passes new links to the existing `importLinks()` path. No database schema
+The server parses and normalizes rows, checks duplicate URLs without writing,
+and returns ready, duplicate, and invalid counts. The browser renders at most
+100 preview rows using DOM text nodes. Confirmation sends ready links to
+`POST /api/links/import` in batches of 100, then restores related-link
+connections, while updating a native progress bar.
+Each batch reports imported, duplicate, and invalid counts, including conflicts
+created after preview. JSON imports restore complete link-record fields and
+manual relationships. Legacy JSON arrays remain accepted. No database schema
 change is required.
 
 ## Flow 13: Tag chip loading

@@ -12,6 +12,7 @@ const script = fs.readFileSync(path.join(__dirname, '../public/js/home.js'), 'ut
 const shared = fs.readFileSync(path.join(__dirname, '../public/js/shared.js'), 'utf8');
 const editor = fs.readFileSync(path.join(__dirname, '../public/js/editor.js'), 'utf8');
 const editorRelated = fs.readFileSync(path.join(__dirname, '../public/js/editor-related.js'), 'utf8');
+const editorImport = fs.readFileSync(path.join(__dirname, '../public/js/editor-import.js'), 'utf8');
 const browse = fs.readFileSync(path.join(__dirname, '../public/js/browse.js'), 'utf8');
 
 describe('homepage workflow', () => {
@@ -96,7 +97,9 @@ describe('homepage workflow', () => {
     assert.match(editorHtml, /href="\/api\/links\/export\.md"/);
     assert.match(editorHtml, /href="\/api\/links\/export\.csv"/);
     assert.match(editorHtml, /id="csv-file"[^>]*accept="\.csv,text\/csv"/);
-    assert.match(editor, /api\/links\/import-csv/);
+    assert.match(editorImport, /api\/links\/import-preview/);
+    assert.match(editorImport, /links\.slice\(offset, offset \+ 100\)/);
+    assert.match(editorImport, /MAX_IMPORT_FILE_BYTES = 512_000_000/);
   });
 
   it('manages related links only while editing', () => {
@@ -110,5 +113,16 @@ describe('homepage workflow', () => {
     assert.match(editorRelated, /requestId !== searchRequest/);
     assert.doesNotMatch(editorRelated, /innerHTML/);
     assert.doesNotMatch(editorRelated, /DELETE.*api\/links\/\$\{encodeURIComponent\(relatedId\)\}(?!\/)/);
+  });
+
+  it('previews every import source before chunked confirmation', () => {
+    assert.match(editorHtml, /id="json-file"[^>]*accept="\.json,application\/json"/);
+    assert.match(editorHtml, /id="import-preview"[^>]*hidden/);
+    assert.match(editorHtml, /id="import-progress"[\s\S]*<progress[^>]*aria-labelledby="import-progress-text"/);
+    assert.match(editorHtml, /id="import-progress-text"[^>]*aria-live="polite"/);
+    assert.match(editorImport, /import-preview/);
+    assert.match(editorImport, /slice\(offset, offset \+ 100\)/);
+    assert.match(editorImport, /replaceChildren/);
+    assert.doesNotMatch(editorImport, /innerHTML/);
   });
 });
