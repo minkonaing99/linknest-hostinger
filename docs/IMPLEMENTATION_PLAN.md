@@ -105,7 +105,7 @@ DELETE /api/tokens/:id    revoke
 
 ### 3.5 Settings UI
 
-`public/settings.html` + `public/js/settings.js`:
+`views/settings.html` + `public/js/settings.js`:
 - List tokens (name, scope, created, last used)
 - Create form (name + scope)
 - Revoke button
@@ -166,9 +166,9 @@ Add `CORS_ORIGIN` env var (default `*`, document trade-off).
 | `lib/routes/tokens.js` | new file |
 | `lib/http.js` | CORS OPTIONS |
 | `mysql/003_api_tokens.sql` | new migration |
-| `public/settings.html` + `public/js/settings.js` | new files |
-| `public/editor.html` + `public/js/editor.js` | duplicate warning |
-| `public/browse.html` + `public/js/browse.js` | scan button |
+| `views/settings.html` + `public/js/settings.js` | new files |
+| `views/editor.html` + `public/js/editor.js` | duplicate warning |
+| `views/browse.html` + `public/js/browse.js` | scan button |
 | `test/auth.test.js` | new file |
 | `test/routes/auth.test.js` | new file |
 | `test/utils.ssrf.test.js` | new file |

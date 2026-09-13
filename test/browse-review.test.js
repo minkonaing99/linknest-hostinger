@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const html = fs.readFileSync(path.join(__dirname, '../public/browse.html'), 'utf8');
+const html = fs.readFileSync(path.join(__dirname, '../views/browse.html'), 'utf8');
 const script = fs.readFileSync(path.join(__dirname, '../public/js/browse.js'), 'utf8');
 const css = fs.readFileSync(path.join(__dirname, '../public/css/styles.css'), 'utf8');
 
