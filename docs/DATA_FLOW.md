@@ -70,7 +70,7 @@ Main backend logic lives in:
 
 ### User action
 
-The user submits the login form in `public/login.html`.
+The user submits the login form in `views/login.html`.
 
 ### Frontend path
 
@@ -118,11 +118,14 @@ The server:
 
 ### User action
 
-The browser opens `/`, `/browse.html`, `/editor.html`, or `/archive.html`.
+The browser opens `/`, `/browse.html`, `/editor.html`, `/archive.html`, or `/settings.html`.
 
 ### Backend path
 
 `lib/router.js` checks whether the page is protected.
+
+Protected HTML lives in `views/`, outside the CDN-visible `public/` directory,
+so every request reaches this server-side check before file contents are read.
 
 If yes:
 

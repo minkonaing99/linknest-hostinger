@@ -6,8 +6,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const html = fs.readFileSync(path.join(__dirname, '../public/index.html'), 'utf8');
-const editorHtml = fs.readFileSync(path.join(__dirname, '../public/editor.html'), 'utf8');
+const html = fs.readFileSync(path.join(__dirname, '../views/index.html'), 'utf8');
+const editorHtml = fs.readFileSync(path.join(__dirname, '../views/editor.html'), 'utf8');
 const script = fs.readFileSync(path.join(__dirname, '../public/js/home.js'), 'utf8');
 const shared = fs.readFileSync(path.join(__dirname, '../public/js/shared.js'), 'utf8');
 const editor = fs.readFileSync(path.join(__dirname, '../public/js/editor.js'), 'utf8');

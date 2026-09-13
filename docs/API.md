@@ -1034,11 +1034,14 @@ These are not JSON API endpoints, but useful to know for client behavior:
 - `/browse.html`
 - `/editor.html`
 - `/archive.html`
+- `/settings.html`
 - `/login.html`
 - `/offline.html`
 - `/logout` → clears session and redirects to login
 
-Protected pages require authentication.
+Protected pages require authentication and are served from the private `views/`
+directory. Login also routes through Node so security headers apply. Only the
+offline fallback remains public HTML.
 
 ### iOS Share Sheet / Shortcuts
 
