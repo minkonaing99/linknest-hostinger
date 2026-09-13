@@ -34,6 +34,7 @@ const {
   parseBookmarksHtml, importLinks, openLink, findDuplicateCandidates, readReviewQueue,
   readUsefulReviewQueue, markUsefulReviewed, mergeLinkNote,
   readRelatedLinks, addRelatedLink, removeRelatedLink,
+  previewImportLinks, previewImportRelationships, importRelationships,
 } = require('../lib/links');
 
 // Helpers
@@ -116,9 +117,64 @@ describe('importLinks', () => {
       return { rows: [], rowCount: 1 };
     };
     await importLinks([{ url: 'https://example.com/imported', notes: 'Imported note' }]);
-    const insert = calls.find(([sql]) => sql.includes('INSERT IGNORE'));
+    const insert = calls.find(([sql]) => sql.includes('INSERT INTO links'));
     assert.ok(insert[0].includes('notes'));
     assert.ok(insert[1].includes('Imported note'));
+  });
+
+  it('reports invalid and duplicate rows while preserving exported fields', async () => {
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      if (args[0].startsWith('INSERT')) {
+        if (calls.filter(([sql]) => sql.startsWith('INSERT')).length === 1) return { rows: [], rowCount: 1 };
+        throw Object.assign(new Error('duplicate'), { code: 'ER_DUP_ENTRY' });
+      }
+      return { rows: [{ count: '1' }], rowCount: 1 };
+    };
+    const result = await importLinks([
+      makeRow({ id: 'roundtrip', tags: ['backup'], openedCount: 3,
+        lastOpenedAt: '2026-02-01T00:00:00.000Z', firstUsefulAt: '2026-02-02T00:00:00.000Z' }),
+      { url: 'not-a-url' },
+      makeRow({ id: 'duplicate', url: 'https://duplicate.example' }),
+    ]);
+    assert.deepEqual({ imported: result.imported, invalid: result.invalid, duplicates: result.duplicates },
+      { imported: 1, invalid: 1, duplicates: 1 });
+    const insert = calls.find(([sql]) => sql.startsWith('INSERT'));
+    assert.match(insert[0], /last_opened_at.*opened_count.*last_useful_reviewed_at/s);
+    assert.equal(insert[1][12], 3);
+    assert.equal(insert[1][11].toISOString(), '2026-02-01T00:00:00.000Z');
+  });
+
+  it('previews and imports canonical related-link pairs', async () => {
+    const preview = previewImportRelationships([
+      { linkIdA: 'b', linkIdB: 'a', createdAt: '2026-01-01T00:00:00.000Z' },
+      { linkIdA: 'a', linkIdB: 'b' },
+      { linkIdA: 'a', linkIdB: 'a' },
+    ]);
+    assert.deepEqual(preview.relationshipSummary, { total: 3, ready: 1, invalid: 1, duplicates: 1 });
+    assert.equal(preview.readyRelationships[0].linkIdA, 'a');
+    currentImpl = async sql => sql.startsWith('INSERT')
+      ? { rows: [], rowCount: 1 } : { rows: [], rowCount: 0 };
+    assert.deepEqual(await importRelationships(preview.readyRelationships),
+      { imported: 1, invalid: 0, duplicates: 0 });
+  });
+
+  it('previews normalized ready, invalid, existing, and repeated links without writes', async () => {
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      return { rows: [{ id: 'existing', url: 'https://existing.example/', title: 'Existing', deleted_at: null }], rowCount: 1 };
+    };
+    const preview = await previewImportLinks([
+      { url: 'https://ready.example/?utm_source=x', title: 'Ready' },
+      { url: 'bad' },
+      { url: 'https://existing.example' },
+      { url: 'https://ready.example' },
+    ]);
+    assert.deepEqual(preview.summary, { total: 4, ready: 1, invalid: 1, duplicates: 2 });
+    assert.equal(preview.readyLinks[0].url, 'https://ready.example/');
+    assert.equal(calls.some(([sql]) => sql.startsWith('INSERT')), false);
   });
 });
 

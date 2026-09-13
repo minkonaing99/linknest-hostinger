@@ -15,12 +15,23 @@ require.cache[linksPath] = {
   loaded: true,
   exports: {
     importLinks: async links => ({ imported: links.length, total: links.length }),
-    parseBookmarksHtml: () => [],
+    importRelationships: async relationships => ({ imported: relationships.length, invalid: 0, duplicates: 0 }),
+    parseBookmarksHtml: html => html.includes('https://example.com') ? [link] : [],
     readAllLinksForExport: async () => [],
+    readAllRelationshipsForExport: async () => [{ linkIdA: 'a', linkIdB: 'b', createdAt: '2026-09-11T00:00:00.000Z' }],
+    previewImportLinks: async links => ({
+      summary: { total: links.length, ready: links.length, invalid: 0, duplicates: 0 },
+      rows: links.map((entry, index) => ({ index: index + 1, state: 'ready', entry })),
+      readyLinks: links,
+    }),
+    previewImportRelationships: relationships => ({
+      relationshipSummary: { total: relationships.length, ready: relationships.length, invalid: 0, duplicates: 0 },
+      readyRelationships: relationships,
+    }),
   },
 };
 
-const { handle, toCsv, parseCsv, toMarkdown } = require('../../lib/routes/import');
+const { handle, toCsv, parseCsv, toMarkdown, parseImportSource } = require('../../lib/routes/import');
 
 const link = {
   title: '=Research, "later"',
@@ -41,6 +52,8 @@ describe('portable exports', () => {
     for (const value of risky) {
       assert.equal(parseCsv(toCsv([{ ...link, title: value }]))[0].title, value);
     }
+    const boundary = '='.padEnd(300, 'x');
+    assert.equal(parseCsv(toCsv([{ ...link, title: boundary }]))[0].title, boundary);
   });
 
   it('rejects malformed CSV and unexpected headers', () => {
@@ -100,5 +113,30 @@ it('keeps JSON export as the complete backup endpoint', async () => {
   assert.equal(status, 200);
   assert.match(headers['Content-Type'], /application\/json/);
   assert.equal(headers['Cache-Control'], 'private, no-store');
-  assert.deepEqual(JSON.parse(body), []);
+  const backup = JSON.parse(body);
+  assert.equal(backup.version, 2);
+  assert.deepEqual(backup.links, []);
+  assert.equal(backup.relationships.length, 1);
+  assert.ok(Date.parse(backup.exportedAt));
+});
+
+it('parses all four preview formats and accepts legacy or wrapped JSON', async () => {
+  assert.equal(parseImportSource('json', JSON.stringify([link])).items.length, 1);
+  assert.equal(parseImportSource('json', JSON.stringify({ links: [link] })).items.length, 1);
+  assert.equal(parseImportSource('json', JSON.stringify({ links: [link], relationships: [{ linkIdA: 'a', linkIdB: 'b' }] })).relationships.length, 1);
+  assert.equal(parseImportSource('csv', toCsv([link])).items.length, 1);
+  assert.equal(parseImportSource('bookmarks', '<a href="https://example.com">Example</a>').items.length, 1);
+  assert.equal(parseImportSource('batch', 'https://example.com | Example').items.length, 1);
+});
+
+it('previews imports without committing them', async () => {
+  let status;
+  let body;
+  const res = { writeHead(code) { status = code; }, end(value) { body = JSON.parse(value); } };
+  const req = Readable.from([JSON.stringify({ format: 'json', data: JSON.stringify([link]) })]);
+  req.method = 'POST';
+  assert.equal(await handle(req, res, new URL('https://example.com/api/links/import-preview')), true);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(status, 200);
+  assert.equal(body.summary.ready, 1);
 });

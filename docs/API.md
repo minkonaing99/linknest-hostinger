@@ -768,11 +768,12 @@ Example fallback response:
 GET /api/links/export
 ```
 
-Returns the full link list as downloadable JSON.
+Returns a versioned downloadable JSON backup with `version`, `exportedAt`,
+`links`, and `relationships` fields.
 
 Notes:
 
-- export includes all links, including soft-deleted ones
+- export includes all links, including soft-deleted ones, and manual relationships
 - response is sent as `application/json`
 
 ### Export portable Markdown or CSV
@@ -792,7 +793,30 @@ CSV follows RFC 4180 quoting and uses UTF-8 with a BOM. To prevent spreadsheet
 formula execution, exported titles and notes beginning with `=`, `+`, `-`, or
 `@` receive a leading apostrophe. CSV import reverses this protection.
 
-### Import links from CSV
+### Preview an import
+
+```http
+POST /api/links/import-preview
+Content-Type: application/json
+```
+
+Request body uses `format` (`json`, `csv`, `bookmarks`, or `batch`) and `data`.
+File formats send text. JSON accepts either a legacy link array or a versioned
+backup object with `links` and `relationships` arrays.
+
+```json
+{
+  "format": "json",
+  "data": "[{\"url\":\"https://example.com\"}]"
+}
+```
+
+The response contains `summary`, up to 100 display `rows`, every normalized
+`readyLinks` entry, and relationship preview details for JSON backups. Preview
+performs no writes. It identifies invalid rows, repeated URLs in the import,
+and URLs already present in the database.
+
+### Legacy direct CSV import
 
 ```http
 POST /api/links/import-csv
@@ -814,8 +838,9 @@ Rules:
 - URLs must use HTTP or HTTPS
 - status must be `saved`, `unread`, `useful`, or `archived`
 - date must use `YYYY-MM-DD`
-- duplicates and invalid database entries are skipped by the existing importer
-- JSON remains the complete backup because CSV excludes tags, reminders, pin state, and timestamps
+- duplicates and invalid database entries are reported and skipped
+- the editor uses the preview endpoint; this direct endpoint remains for API compatibility
+- JSON remains the complete link-record backup because CSV excludes tags, reminders, pin state, and timestamps
 
 ### Import links from JSON payload
 
@@ -858,6 +883,8 @@ Success response:
 {
   "ok": true,
   "imported": 1,
+  "duplicates": 0,
+  "invalid": 0,
   "total": 43
 }
 ```
@@ -868,8 +895,13 @@ Rules:
 - duplicates are skipped
 - invalid items are skipped
 - `total` is the active-link count after import
+- exported JSON link records restore IDs, tags, status, pin state, reminders,
+  notes, open history, and revisit timestamps
+- version 2 JSON backups restore manual related-link connections after links
+- the editor sends ready links in batches of 100, so large imports expose
+  progress and may be partially complete if a later batch fails
 
-### Import browser bookmarks HTML
+### Legacy direct browser bookmarks HTML import
 
 ```http
 POST /api/links/import-bookmarks
@@ -898,6 +930,7 @@ Success response:
 Behavior:
 
 - parses `<a href="...">` entries from bookmark HTML
+- the editor uses the preview endpoint; this direct endpoint remains for API compatibility
 - only `http` and `https` links are imported
 - missing or invalid links are skipped
 - imported bookmark items default to `status: saved`

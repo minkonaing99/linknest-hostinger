@@ -17,19 +17,8 @@ See [FEATURES.md](FEATURES.md) for shipped capabilities.
 
 ## Next
 
-No feature is currently committed for implementation. Promote work from
-Possible Later Improvements only after observed use proves the need.
-
-## Possible Later Improvements
-
-These need evidence from real use before implementation.
-
-### Improved Import
-
-- Preview an import before saving.
-- Show progress for large files.
-- Summarize invalid and duplicate rows.
-- Preserve reliable JSON round trips without manual reshaping.
+No feature is currently committed for implementation. Add work only after
+observed use proves the need.
 
 ## Explicitly Deferred
 

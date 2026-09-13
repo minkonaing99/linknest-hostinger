@@ -290,6 +290,39 @@ input, textarea, select {
   width: 100%;
 }
 
+.import-preview {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 16px;
+  background: var(--surface-muted);
+}
+.import-preview[hidden], .import-progress[hidden] { display: none; }
+.import-preview h3, .import-preview p { margin: 0; }
+.import-preview h3 { font-size: 15px; }
+.import-preview__rows { display: grid; max-height: 320px; overflow-y: auto; }
+.import-preview__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--separator);
+}
+.import-preview__row > span:first-child { display: grid; gap: 2px; min-width: 0; margin-right: auto; }
+.import-preview__row strong, .import-preview__row small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.import-preview__row small { color: var(--muted); }
+.import-preview__state { font-size: 12px; text-transform: capitalize; }
+.import-preview__state--ready { color: var(--success); }
+.import-preview__state--duplicate { color: var(--muted); }
+.import-preview__state--invalid { color: var(--danger); }
+.import-progress { display: grid; gap: 5px; color: var(--muted); font-size: 12px; }
+.import-progress progress { width: 100%; accent-color: var(--accent); }
+
 .related-links {
   display: grid;
   gap: 10px;
