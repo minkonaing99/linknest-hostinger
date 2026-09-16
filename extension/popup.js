@@ -20,13 +20,24 @@ function parseTags(raw) {
   return raw.split(',').map(t => t.trim()).filter(Boolean);
 }
 
+function isSecureServerUrl(value) {
+  try {
+    const parsed = new URL(value);
+    if (parsed.username || parsed.password) return false;
+    const localHosts = ['localhost', '127.0.0.1', '[::1]'];
+    return parsed.protocol === 'https:' || (parsed.protocol === 'http:' && localHosts.includes(parsed.hostname));
+  } catch {
+    return false;
+  }
+}
+
 openSettings.addEventListener('click', (e) => {
   e.preventDefault();
   chrome.runtime.openOptionsPage();
 });
 
 chrome.storage.local.get(['serverUrl', 'apiToken'], async ({ serverUrl, apiToken }) => {
-  if (!serverUrl || !apiToken) {
+  if (!isSecureServerUrl(serverUrl) || !apiToken) {
     mainDiv.style.display = 'none';
     notConfigured.style.display = 'block';
     return;
