@@ -17,19 +17,8 @@ See [FEATURES.md](FEATURES.md) for shipped capabilities.
 
 ## Next
 
-Implement these features one at a time, in this order:
-
-### 1. PWA Share Target
-
-- Register the installed PWA as a share target on supported Android and ChromeOS devices.
-- Accept a shared title, text, and URL.
-- Open the existing editor with the shared link prefilled.
-- Keep the link editable before saving.
-- Use the existing offline capture queue when the device is offline.
-- Keep duplicate handling in the existing editor flow.
-
-No database change is required. Sharing while logged out may require a later auth
-return-path improvement if real use proves it necessary.
+No feature is currently committed for implementation. Add work only after
+observed use proves the need.
 
 ## Explicitly Deferred
 
