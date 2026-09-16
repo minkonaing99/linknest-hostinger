@@ -130,3 +130,15 @@ it('supports a separate 30-day useful revisit queue', () => {
   assert.match(script, /state\.quickFilter === 'useful-review'/);
   assert.match(script, /Nothing due for useful review/);
 });
+
+it('asks for an optional takeaway across single-link useful actions', () => {
+  assert.match(script, /next === 'useful' \? await window\.LinkNest\.usefulUpdate/);
+  assert.match(script, /if \(!fields\) return;/);
+  assert.match(script, /updateLinkFields\(item, fields\)/);
+  assert.match(script, /ArrowRight: '\.mark-useful-button'/);
+  assert.match(script, /dx >= SWIPE_THRESHOLD[\s\S]{0,120}'\.mark-useful-button'/);
+  const editor = fs.readFileSync(path.join(__dirname, '../public/js/editor.js'), 'utf8');
+  assert.match(editor, /draft\.status === 'useful' && loadedItem\?\.status !== 'useful' && !String\(loadedItem\?\.notes \|\| ''\)\.trim\(\) && !draft\.notes/);
+  assert.match(editor, /await window\.LinkNest\.usefulUpdate/);
+  assert.match(editor, /const \{ notes, \.\.\.withoutNotes \} = draft/);
+});

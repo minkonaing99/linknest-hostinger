@@ -567,12 +567,18 @@ function buildRow(item) {
     const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
     statusDot.classList.add('status-dot--transitioning');
     try {
-      const res = await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...item, status: next }),
+      const fields = next === 'useful' ? await window.LinkNest.usefulUpdate(state.links.find(link => link.id === item.id) || item) : { status: next };
+      if (!fields) return;
+      const response = await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fields),
       });
-      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Failed'); }
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to update status');
+      const updated = data.entry || { ...item, ...fields };
+      state.links = state.links.map(link => link.id === item.id ? updated : link);
+      const note = rowArticle.querySelector('.library-row__notes');
+      note.textContent = updated.notes || '';
+      note.classList.toggle('hidden', !updated.notes);
       currentStatus = next;
       applyStatusStyles(statusDot, statusText, next);
       window.LinkNest.updateUnreadBadge();
@@ -677,7 +683,9 @@ function buildRow(item) {
     event.stopPropagation();
     if (!beginRowAction(rowArticle)) return;
     try {
-      await updateLinkFields(item, { status: 'useful' });
+      const fields = await window.LinkNest.usefulUpdate(state.links.find(link => link.id === item.id) || item);
+      if (!fields) return;
+      await updateLinkFields(item, fields);
       resolveReviewItem(item.id);
     }
     catch (err) { window.LinkNest.showToast(err.message); }

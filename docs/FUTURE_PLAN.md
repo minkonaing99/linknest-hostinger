@@ -19,17 +19,7 @@ See [FEATURES.md](FEATURES.md) for shipped capabilities.
 
 Implement these features one at a time, in this order:
 
-### 1. Optional Useful Takeaway
-
-- When a link without a note is marked useful, ask `What was useful?`.
-- Save a non-empty answer in the existing note field.
-- Allow Skip or Cancel without blocking the useful decision.
-- Do not ask when the link already has a note.
-- Cover review buttons, keyboard and swipe actions, status changes, and command search.
-
-No database change is required.
-
-### 2. PWA Share Target
+### 1. PWA Share Target
 
 - Register the installed PWA as a share target on supported Android and ChromeOS devices.
 - Accept a shared title, text, and URL.
