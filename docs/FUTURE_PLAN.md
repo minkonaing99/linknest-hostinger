@@ -17,8 +17,40 @@ See [FEATURES.md](FEATURES.md) for shipped capabilities.
 
 ## Next
 
-No feature is currently committed for implementation. Add work only after
-observed use proves the need.
+Implement these features one at a time, in this order:
+
+### 1. Save Selected Text
+
+- Add a browser-extension context menu action named `Save selection to Link Nest`.
+- Save the current page URL and title automatically.
+- Store the selected text in the existing plain-text note field.
+- Use the existing extension API settings and token.
+- Reject unsupported page URLs and notes longer than the current limit.
+- Show a small success, duplicate, or failure badge.
+
+No database change is required.
+
+### 2. Optional Useful Takeaway
+
+- When a link without a note is marked useful, ask `What was useful?`.
+- Save a non-empty answer in the existing note field.
+- Allow Skip or Cancel without blocking the useful decision.
+- Do not ask when the link already has a note.
+- Cover review buttons, keyboard and swipe actions, status changes, and command search.
+
+No database change is required.
+
+### 3. PWA Share Target
+
+- Register the installed PWA as a share target on supported Android and ChromeOS devices.
+- Accept a shared title, text, and URL.
+- Open the existing editor with the shared link prefilled.
+- Keep the link editable before saving.
+- Use the existing offline capture queue when the device is offline.
+- Keep duplicate handling in the existing editor flow.
+
+No database change is required. Sharing while logged out may require a later auth
+return-path improvement if real use proves it necessary.
 
 ## Explicitly Deferred
 
