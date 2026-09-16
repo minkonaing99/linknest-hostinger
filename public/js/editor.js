@@ -1,6 +1,7 @@
 const { getLinks, setMessage, parseTags, queryParam, apiFetch, findDuplicateCandidates, thailandDateString: thailandDate } = window.LinkNest;
 
 let allowDuplicateOnce = false;
+let loadedItem = null;
 
 const els = {
   form: document.getElementById('link-form'),
@@ -120,6 +121,7 @@ async function loadForEdit() {
   const data = await res.json();
   const item = data.entry;
   if (!item) return;
+  loadedItem = { ...item };
   els.id.value = item.id;
   els.title.value = item.title || '';
   els.url.value = item.url || '';
@@ -141,6 +143,15 @@ els.form.addEventListener('submit', async event => {
   allowDuplicateOnce = false;
   setMessage(els.message, editing ? 'Saving changes...' : 'Saving...');
   try {
+    if (draft.status === 'useful' && loadedItem?.status !== 'useful' && !String(loadedItem?.notes || '').trim() && !draft.notes) {
+      const fields = await window.LinkNest.usefulUpdate({ ...loadedItem, id: draft.id, notes: draft.notes });
+      if (!fields) return;
+      draft = { ...draft, ...fields };
+      if (editing) {
+        const { notes, ...withoutNotes } = draft;
+        draft = withoutNotes;
+      }
+    }
     if (!editing && !navigator.onLine) {
       await window.LinkNestOffline.queueCapture(draft);
       els.form.reset();
