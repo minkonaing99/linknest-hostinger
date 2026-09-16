@@ -30,3 +30,14 @@ test('extension API settings use a rounded settings group', () => {
   assert.match(html, /min-height:\s*44px/);
   assert.match(html, /prefers-reduced-motion/);
 });
+
+test('extension never sends API tokens to insecure remote servers', () => {
+  for (const name of ['popup.js', 'settings.js']) {
+    const script = readExtensionFile(name);
+    assert.match(script, /function isSecureServerUrl\(value\)/);
+    assert.match(script, /parsed\.username \|\| parsed\.password/);
+    assert.match(script, /parsed\.protocol === 'https:'/);
+    assert.match(script, /\['localhost', '127\.0\.0\.1', '\[::1\]'\]/);
+    assert.match(script, /isSecureServerUrl\(serverUrl\)/);
+  }
+});

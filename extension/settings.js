@@ -6,6 +6,17 @@ const apiTokenInput  = document.getElementById('api-token');
 const statusEl       = document.getElementById('status');
 const openSettingsLink = document.getElementById('open-settings-link');
 
+function isSecureServerUrl(value) {
+  try {
+    const parsed = new URL(value);
+    if (parsed.username || parsed.password) return false;
+    const localHosts = ['localhost', '127.0.0.1', '[::1]'];
+    return parsed.protocol === 'https:' || (parsed.protocol === 'http:' && localHosts.includes(parsed.hostname));
+  } catch {
+    return false;
+  }
+}
+
 // Load saved values
 chrome.storage.local.get(['serverUrl', 'apiToken'], ({ serverUrl, apiToken }) => {
   if (serverUrl) serverUrlInput.value = serverUrl;
@@ -30,6 +41,11 @@ form.addEventListener('submit', async (e) => {
 
   if (!serverUrl || !apiToken) {
     statusEl.textContent = 'Both fields are required.';
+    statusEl.className = 'status status--err';
+    return;
+  }
+  if (!isSecureServerUrl(serverUrl)) {
+    statusEl.textContent = 'Use HTTPS. HTTP is allowed only for local development.';
     statusEl.className = 'status status--err';
     return;
   }

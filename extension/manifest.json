@@ -3,8 +3,11 @@
   "name": "Link Nest",
   "version": "1.0.0",
   "description": "Quick-save the current tab to your Link Nest library.",
-  "permissions": ["activeTab", "storage"],
+  "permissions": ["activeTab", "storage", "contextMenus"],
   "host_permissions": ["https://*/*", "http://*/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

@@ -86,6 +86,8 @@ that has not shipped.
 - Support safe-area insets, phone layouts, tablet layouts, and reduced motion.
 - Save the current browser tab through the browser extension.
 - Capture an optional plain-text note from the extension popup.
+- Save selected page text as a note from the browser context menu.
+- Show extension badge feedback for saved, duplicate, setup, and failed captures.
 - Configure extension server URL and write-scoped API token.
 - Save shared URLs from iPhone or iPad using the documented
   [Shortcuts setup](IPHONE_SHORTCUT.md).
