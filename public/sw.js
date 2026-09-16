@@ -1,4 +1,4 @@
-const CACHE = 'linknest-v28';
+const CACHE = 'linknest-v29';
 
 // Public assets only — protected pages are cached at runtime after login
 const PRECACHE = [
@@ -67,14 +67,21 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(request)
         .then(res => {
-          if (res.ok) {
+          if (res.ok && !res.redirected) {
             const copy = res.clone();
             caches.open(CACHE).then(c => c.put(request, copy));
           }
           return res;
         })
         .catch(() =>
-          caches.match(request).then(cached => cached || caches.match('/offline.html'))
+          caches.match(request).then(async cached => {
+            if (cached) return cached;
+            if (url.pathname === '/editor.html') {
+              const editor = await caches.match('/editor.html', { ignoreSearch: true });
+              if (editor) return editor;
+            }
+            return caches.match('/offline.html');
+          })
         )
     );
     return;

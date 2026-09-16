@@ -269,16 +269,38 @@ els.pasteClipboard.addEventListener('click', async () => {
   }
 });
 
+function sharedHttpUrl() {
+  const candidates = [queryParam('url'), ...(String(queryParam('text') || '').match(/https?:\/\/[^\s<>"']+/g) || [])];
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    try {
+      const parsed = new URL(String(candidate).trim());
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') continue;
+      if (parsed.username || parsed.password) continue;
+      return parsed.toString();
+    } catch {}
+  }
+  return null;
+}
+
 async function loadFromShareParams() {
-  if (queryParam('id')) return;
-  const urlParam = queryParam('url');
-  if (!urlParam) return;
-  els.url.value = urlParam;
+  if (queryParam('id') || queryParam('offlineId')) return;
+  if (!queryParam('url') && !queryParam('text')) return;
+  const urlParam = sharedHttpUrl();
+  if (!urlParam) {
+    setMessage(els.message, 'Shared content does not contain a valid web link.', 'error');
+    return;
+  }
   const titleParam = queryParam('title');
+  if (titleParam && titleParam.length > 300) {
+    setMessage(els.message, 'Shared title must be 300 characters or fewer.', 'error');
+    return;
+  }
+  els.url.value = urlParam;
   if (titleParam) {
     els.title.value = titleParam;
   } else {
-    await fetchAndApplyTitle(urlParam);
+    if (navigator.onLine) await fetchAndApplyTitle(urlParam);
   }
 }
 

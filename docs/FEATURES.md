@@ -84,6 +84,10 @@ that has not shipped.
 ### PWA and Browser Extension
 
 - Install Link Nest as a standalone PWA.
+- Receive shared links in the installed PWA on supported Android and ChromeOS devices.
+- Prefill the editor for confirmation and use the existing capture queue when offline.
+- Offline sharing requires a prior online editor visit; logged-out shares require login
+  and may need to be shared again afterward.
 - Cache the application shell and show an offline page.
 - Support safe-area insets, phone layouts, tablet layouts, and reduced motion.
 - Save the current browser tab through the browser extension.
