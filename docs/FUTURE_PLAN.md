@@ -17,8 +17,12 @@ See [FEATURES.md](FEATURES.md) for shipped capabilities.
 
 ## Next
 
-No feature is currently committed for implementation. Add work only after
-observed use proves the need.
+The eight requested v3.2 features are planned in
+[V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md): undo, reading
+position, save reasons, related-link suggestions, review history, offline
+library access, selective Markdown export, and extension clipboard capture.
+They are not shipped yet. The plan defines scope, sequence, storage/API changes,
+acceptance tests, and rollout requirements.
 
 ## Explicitly Deferred
 
