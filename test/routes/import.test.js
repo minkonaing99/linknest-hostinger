@@ -7,6 +7,13 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-000000000000
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const { Readable } = require('node:stream');
+const exportedEvent = { id: '11111111-1111-4111-8111-111111111111', type: 'note_updated',
+  occurred_at: '2026-10-05T01:00:00.000Z', metadata: { changedFields: ['notes'] }, link_id: 'one' };
+const dbPath = require.resolve('../../lib/db');
+require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: {
+  query: async () => ({ rows: [] }),
+  withTransaction: async work => work(async sql => ({ rows: sql.includes('FROM link_events') ? [exportedEvent] : [] })),
+} };
 
 const linksPath = require.resolve('../../lib/links');
 require.cache[linksPath] = {
@@ -17,7 +24,7 @@ require.cache[linksPath] = {
     importLinks: async links => ({ imported: links.length, total: links.length }),
     importRelationships: async relationships => ({ imported: relationships.length, invalid: 0, duplicates: 0 }),
     parseBookmarksHtml: html => html.includes('https://example.com') ? [link] : [],
-    readAllLinksForExport: async () => [],
+    readAllLinksForExport: async () => [{ ...link, id: 'one' }],
     readAllRelationshipsForExport: async () => [{ linkIdA: 'a', linkIdB: 'b', createdAt: '2026-09-11T00:00:00.000Z' }],
     previewImportLinks: async links => ({
       summary: { total: links.length, ready: links.length, invalid: 0, duplicates: 0 },
@@ -126,8 +133,10 @@ it('keeps JSON export as the complete backup endpoint', async () => {
   assert.match(headers['Content-Type'], /application\/json/);
   assert.equal(headers['Cache-Control'], 'private, no-store');
   const backup = JSON.parse(body);
-  assert.equal(backup.version, 2);
-  assert.deepEqual(backup.links, []);
+  assert.equal(backup.version, 3);
+  assert.deepEqual(backup.links[0].history, [{ id: exportedEvent.id, type: exportedEvent.type,
+    occurredAt: exportedEvent.occurred_at, metadata: exportedEvent.metadata }]);
+  assert.equal(parseImportSource('json', backup).items[0].history[0].id, exportedEvent.id);
   assert.equal(backup.relationships.length, 1);
   assert.ok(Date.parse(backup.exportedAt));
 });

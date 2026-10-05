@@ -530,6 +530,51 @@ Unexpected failures return `500` with a generic message. Use the existing
 relationship POST to confirm a connection. Skip for now is local to the editor
 session and has no API write.
 
+### Review history
+
+```http
+GET /api/links/:id/history?limit=20&cursor=...
+GET /api/v1/links/:id/history?limit=20&cursor=...
+```
+
+Authenticated sessions and read-scoped tokens can read history, including for
+soft-archived links. Responses are private and no-store:
+
+```json
+{
+  "events": [
+    {
+      "id": "11111111-1111-4111-8111-111111111111",
+      "type": "marked_useful",
+      "occurredAt": "2026-10-05T01:00:00.000Z",
+      "metadata": { "changedFields": ["status", "notes"], "fromStatus": "saved", "toStatus": "useful" }
+    }
+  ],
+  "nextCursor": null
+}
+```
+
+Limit defaults to 20, accepts integers 1-100, and rejects duplicate/unknown query
+parameters. Treat `nextCursor` as opaque and send it unchanged for the next page.
+Events order by descending timestamp and binary event ID; the validated cursor
+contains that pair. Malformed IDs, limits, or cursors return `400`; missing or
+permanently deleted links return `404`; unexpected failures return a generic `500`.
+
+Types are `saved`, `imported`, `note_updated`, `marked_useful`, `status_changed`,
+`snoozed`, `archived`, `restored`, `useful_review_completed`, `save_reason_updated`,
+and `details_updated`. One compound operation creates one event. Metadata lists
+changed fields and may include before/after status or reminder time; it never
+stores old or new note/reason text. Actor IDs are stored internally from the
+authenticated user and omitted from this response and portable backups.
+
+Writes and events commit together. Unchanged edits, repeated archive/restore,
+opening, and position saves create no event. Useful-review completion records
+each successful completion; merge-note retries append again under the existing
+contract. Request-ID deduplication is reserved for the later Undo feature.
+History begins when the schema and compatible application are enabled; existing
+links receive no fabricated past events. Soft archive retains events, while
+permanent deletion cascades them.
+
 ### Update a link
 
 ```http
@@ -828,7 +873,7 @@ outside the supported article flow.
 
 ### Backup compatibility
 
-Complete JSON version 2 backups embed nullable `readingPosition` on each link.
+Complete JSON backups embed nullable `readingPosition` on each link.
 Import and preview validate its fields, URL identity, and exact UTC ISO save time.
 Invalid positions make that import row invalid; missing/null fields support older
 backups. CSV and Markdown are portable notes exports and omit reading positions.
@@ -890,8 +935,9 @@ Returns a versioned downloadable JSON backup with `version`, `exportedAt`,
 Notes:
 
 - export includes all links, including soft-deleted ones, and manual relationships
-- version 2 link records also include `saveReason`; legacy records that omit it import with an empty reason
-- version 2 link records include nullable `readingPosition`; legacy records default to null
+- version 3 retains `saveReason` and nullable `readingPosition`; legacy records default to empty reason and null position
+- version 3 includes each link's complete `history` array and reads links, relationships, and events in one repeatable-read transaction
+- history events contain only validated ID, type, ISO timestamp, and compact metadata; no portable actor identity or undo snapshots
 - response is sent as `application/json`
 
 ### Export portable Markdown or CSV
@@ -1049,6 +1095,11 @@ Rules:
 - exported JSON link records restore IDs, tags, status, pin state, reminders,
   notes, save reasons, open history, and revisit timestamps
 - version 2 JSON backups restore manual related-link connections after links
+- version 3 also restores validated per-link `history` within the link's insertion transaction, then appends an Imported event
+- legacy arrays/version 2 remain accepted; omitted history means no fabricated past timeline
+- malformed history makes its link invalid; event-ID conflicts roll back that link and count invalid rather than overwriting an existing event
+- duplicate links skip their accompanying history; restore never replaces an existing link or timeline
+- restored events retain IDs and timestamps but receive the current importer's internal actor ID; incoming actor IDs and note/reason snapshots are rejected
 - the editor sends ready links in batches of 100, so large imports expose
   progress and may be partially complete if a later batch fails
 

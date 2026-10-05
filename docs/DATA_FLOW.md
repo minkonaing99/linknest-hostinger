@@ -347,6 +347,24 @@ Connect uses the existing relationship POST and refreshes the canonical list;
 Request counters reject stale responses, pending IDs prevent duplicate clicks,
 and inline retry and restored keyboard focus handle failures and row updates.
 
+### Review history
+
+`public/js/editor-history.js` exposes a collapsed History section for existing
+links. Opening it lazily requests `GET /api/links/:id/history?limit=20`; Load more
+uses the opaque cursor. The server validates source IDs, query parameters, limits,
+and the timestamp/UUID cursor, returning newest-first events, including archived
+links. The UI renders text nodes, formats dates in Asia/Bangkok, prevents concurrent
+page requests, preserves loaded rows on failure, and provides retry/focus feedback.
+
+Domain saves, edits, note merges, useful-review completions, archive, restore, and
+bulk status changes use `withTransaction()` with the same connection for row
+locks, writes, and event insertion. Each actual compound change creates one
+`link_events` item, attributed to `req._auth.user.id`. Metadata names changed
+fields and optional status/reminder values; note and save-reason text are omitted.
+No-op edits, open tracking, position saves, and repeated archive/restore create no
+event. Existing milestone calculations remain unchanged. Soft archive retains
+events; permanent deletion cascades them through the link FK.
+
 ## Flow 5: Browse library
 
 ### User action
@@ -679,7 +697,8 @@ Important detail:
 
 - export includes all links, not only active ones
 - plain-text notes, save reasons, and manual relationships are included in JSON export and import
-- JSON uses a versioned envelope and remains the complete backup format
+- JSON version 3 uses a versioned envelope and remains the complete backup format; each link carries its complete history array
+- Complete exports use one repeatable-read transaction for links, relationships, and events, excluding actor identities and credentials
 - Markdown and CSV contain title, URL, notes, status, and saved date
 - Markdown also includes a separate save-reason section; CSV keeps its existing five columns
 - Browse sends `scope=selected` with chosen IDs or `scope=filtered` with the
@@ -710,6 +729,16 @@ created after preview. JSON imports restore complete link-record fields and
 manual relationships and save reasons. Legacy JSON arrays remain accepted;
 records without `saveReason` default to empty text. Importing reasons requires
 the `save_reason` column included in the manual [SQL update](db-changes.sql).
+
+History follows each ready link through the same existing preview and 100-link
+batch workflow. The server validates event IDs, types, canonical ISO timestamps,
+and allowed compact metadata before insertion. Each imported link and its
+restored history commit atomically; an Imported event records the restore without
+inventing a review decision. Event IDs/times survive, actor attribution uses the
+current importer, and event conflicts count the link invalid with rollback.
+Duplicate links and their histories are skipped together. There is no fixed event
+count cap; existing HTTP/file size limits still apply. Legacy records without
+history remain compatible. No SQL was executed during implementation.
 
 ## Flow 13: Tag chip loading
 

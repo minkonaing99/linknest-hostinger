@@ -8,9 +8,10 @@ const assert = require('node:assert/strict');
 const { Readable } = require('node:stream');
 let implementation;
 const calls = [];
+const query = async (sql, params) => { calls.push({ sql, params }); return implementation(sql, params); };
 const dbPath = require.resolve('../lib/db');
 require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true,
-  exports: { query: async (sql, params) => { calls.push({ sql, params }); return implementation(sql, params); } } };
+  exports: { query, withTransaction: async work => work(query) } };
 const { canonicalReadingUrl, validateReadingPosition, decodeReadingPosition,
   lookupReadingLink, readReadingPosition, saveReadingPosition } = require('../lib/reading-position');
 const { readLink, readAllLinksForExport, updateLink, importLinks, previewImportLinks, deleteLink } = require('../lib/links');

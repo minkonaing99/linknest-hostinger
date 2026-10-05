@@ -120,6 +120,14 @@
                   <button type="button" id="suggestions-retry" class="button button--ghost button--small" hidden>Try again</button>
                 </section>
               </section>
+              <details id="link-history" class="link-history" hidden>
+                <summary id="history-summary">History</summary>
+                <p class="history-hint">Saved actions, newest first. Times shown in Bangkok.</p>
+                <ol id="history-list" class="history-list" aria-label="Link history" aria-busy="false"></ol>
+                <p id="history-status" class="form-message" role="status" aria-live="polite"></p>
+                <button type="button" id="history-more" class="button button--ghost button--small" hidden>Load more</button>
+                <button type="button" id="history-retry" class="button button--ghost button--small" hidden>Try again</button>
+              </details>
             </div>
 
             <div class="form-stack form-stack--tight editor-submit-row">
@@ -185,5 +193,6 @@
     <script src="/js/editor.js"></script>
     <script src="/js/editor-import.js"></script>
     <script src="/js/editor-related.js"></script>
+    <script src="/js/editor-history.js"></script>
   </body>
 </html>

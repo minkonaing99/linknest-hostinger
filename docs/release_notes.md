@@ -1,5 +1,33 @@
 # Release notes
 
+## v3.2 - Review history - 2026-10-05
+
+- Expand History in the editor to load 20 newest events at a time, with Bangkok timestamps, Load more, and retry. New captures hide the section until saved.
+- Record saves, imports, notes/reasons, status/useful decisions, reminders, archives/restores, useful-review completions, and detail edits. Compound edits produce one summary; note and reason text versions are never retained.
+- Same-connection transactions lock affected rows and commit mutations with their events. Existing review milestones remain unchanged. No-op edits, repeated archive/restore, opening, and reading-position saves produce no event.
+- Authenticated read tokens can read history under both API prefixes, including archived links. History starts when enabled; existing links receive no fabricated past events. Permanent deletion cascades events.
+- Complete JSON version 3 backups include all history per link from a repeatable-read snapshot. Validated imports restore IDs and times atomically for new links, attribute events to the current importer, and append Imported. Duplicate links skip their histories; conflicts roll back and count invalid. Legacy arrays/version 2 remain compatible.
+
+Deployment: back up the database, then manually apply the new
+`CREATE TABLE IF NOT EXISTS link_events` query in [db-changes.sql](db-changes.sql).
+Do not reapply earlier ALTER queries when their columns already exist. Deploy
+backend and web assets/service worker v33 together after the table exists.
+Fresh-install schema includes the table. No SQL, migration, or new dependency
+was executed or added during implementation. Rollback restores prior application
+files and retains the additive table; writes during rollback will not record history.
+
+Merge-note retries remain separate appends, and useful-review completion records
+each successful call. Undo/request-ID deduplication is the next feature. Real-browser
+and disposable-MySQL transaction/concurrency/restore smoke checks remain pending;
+automated persistence and DOM verification use mocks.
+
+Validation: all 398 tests pass. Overall coverage is 88.30% lines, 85.94% branches,
+and 90.13% functions. History reader and route have 100% lines/functions; history
+UI has 100% lines/functions and 88.89% branches. DB helper coverage is 96.47%
+lines, 91.30% branches, and 100% functions. Code and security review findings
+were resolved, including complete histories above 5,000 events and linear export
+grouping.
+
 ## v3.2 - Related-link suggestions - 2026-10-05
 
 - The editor shows up to five suggested connections with shared-tag or similar-title reasons, based on saved values.
