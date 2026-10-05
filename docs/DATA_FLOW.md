@@ -866,11 +866,38 @@ The selected result supports open, note, useful, one-week snooze, and archive
 through existing link endpoints. These actions update copied client state and
 refresh the unread badge without reloading the page.
 
+## Offline library download and device storage
+
+Settings offers explicit Download library, Refresh download, Remove download,
+and optional native persistent storage. The public `/offline-library.html`
+shell reads only downloaded IndexedDB data and renders title, URL, tags, notes,
+and save reason as text. Search and status filtering stay local; edit/review
+controls are absent. Article pages require internet. The offline fallback links
+to this view, and an empty/evicted store asks for another online download.
+
+`offline-library.js` verifies `/api/me` online, captures the local identity and
+generation, then requests `/api/links/offline-snapshot` with an expected-user
+header. `lib/offline-library.js` reads a bounded, consistent active-link snapshot.
+`offline-store.js` validates the response and atomically replaces it only when
+owner and generation still match. Full replacement removes remotely archived or
+deleted rows. Failed downloads and transaction/quota failures keep the old copy.
+
+IndexedDB `linknest-offline` v2 preserves `captures` and adds `library` and `meta`.
+The shared opener handles blocked upgrades and closes connections when their
+version changes. Logout, known online 401, and account changes clear downloaded
+data and visible notes across tabs, invalidate in-flight downloads, and remove
+protected navigation caches. Unsynced captures remain separate and owner-bound.
+Remote session expiry cannot revoke a download while disconnected; opt-in copy
+explains this device-storage limit. API responses stay network-only.
+
 ## Offline Capture Queue
 
 New captures that lose network access are validated and stored in the browser's
 IndexedDB. Home shows pending, saved, and failed captures. The queue syncs
-sequentially when connectivity returns. Duplicate candidates stay failed until
+sequentially when connectivity returns, after verifying the current account.
+Only matching-owner drafts sync automatically. Older/unowned or other-account
+drafts require an explicit claim after online login; their contents stay hidden
+until claimed. The expected-user header prevents cookie/account races. Duplicate candidates stay failed until
 the user reviews them; the client never silently creates another copy.
 
 The online event provides the cross-browser sync path. Supporting browsers also

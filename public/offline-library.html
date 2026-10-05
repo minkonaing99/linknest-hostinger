@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f2f2f7" />
+    <title>Offline library - Link Nest</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body data-page="offline-library">
+    <div class="app-shell app-shell--narrow">
+      <header class="page-header">
+        <div class="page-bar">
+          <div class="page-bar__identity">
+            <img class="brand-mark" src="/img/logo-mark.png" alt="Link Nest logo" />
+            <span class="page-kicker">Link Nest</span>
+          </div>
+          <button type="button" id="logout-button" class="button button--ghost button--small">Logout</button>
+        </div>
+        <nav class="segmented-nav settings-nav" aria-label="Offline library navigation">
+          <a class="segmented-nav__item" href="/">Home</a>
+          <a class="segmented-nav__item" href="/settings.html">Settings</a>
+        </nav>
+      </header>
+      <main class="page-stack page-stack--airy">
+        <section class="surface surface--soft settings-section">
+          <h1 class="section-title">Offline library</h1>
+          <p class="section-copy">Read-only download on this device. Article pages need internet. Search covers downloaded titles, URLs, tags, notes, and save reasons.</p>
+          <p class="section-copy">Downloaded notes stay on this device while disconnected, even if your remote session expires. Logout removes the download. Avoid shared devices.</p>
+          <p id="offline-library-summary" class="section-copy" aria-live="polite">Checking download...</p>
+          <div class="field-row">
+            <label class="field-group"><span>Search downloaded links</span><input id="offline-search" class="field" type="search" maxlength="300" /></label>
+            <label class="field-group"><span>Status</span><select id="offline-status-filter" class="field field--select">
+              <option value="">All</option><option value="saved">Saved</option><option value="unread">Unread</option><option value="useful">Useful</option>
+            </select></label>
+          </div>
+          <div class="offline-library-actions">
+            <button id="offline-library-download" type="button" class="button button--primary">Download library</button>
+            <button id="offline-library-remove" type="button" class="button button--ghost" disabled>Remove download</button>
+          </div>
+          <p id="offline-library-message" class="form-message" role="status" aria-live="polite"></p>
+          <p id="offline-result-count" class="section-copy" aria-live="polite"></p>
+        </section>
+        <section id="offline-library-list" class="page-stack" aria-label="Downloaded links"></section>
+      </main>
+    </div>
+    <script src="/js/offline-store.js"></script>
+    <script src="/js/shared.js"></script>
+    <script src="/js/offline-library.js"></script>
+  </body>
+</html>

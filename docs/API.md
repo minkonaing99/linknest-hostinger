@@ -14,6 +14,40 @@ All documented routes are available under both:
 
 Examples in this document use `/api/...` for brevity.
 
+## Offline library snapshot
+
+`GET /api/links/offline-snapshot` (also `/api/v1/`) requires authentication;
+read-scoped tokens are supported. It accepts no query parameters and returns
+`Cache-Control: private, no-store`.
+
+```json
+{
+  "schemaVersion": 1,
+  "userId": "authenticated-user-id",
+  "links": [],
+  "total": 0,
+  "complete": true,
+  "downloadedAt": "2026-10-05T00:00:00.000Z"
+}
+```
+
+The snapshot includes active links only (`deleted_at IS NULL` and status other
+than `archived`), ordered by `updated_at DESC, id ASC`. One repeatable-read
+transaction reads count and rows. It returns a prefix of at most 2,000 links and
+25 MiB of UTF-8 serialized JSON, including the envelope. `total` counts all
+eligible links; `complete` is false when either cap truncates the library.
+
+Each link contains only `id`, `url`, `title`, `status`, `tags`, `notes`,
+`saveReason`, `pinned`, `date`, `createdAt`, and `updatedAt`. Credentials, internal
+revisions, action receipts, histories, and reading positions are excluded.
+This is a device read cache, not a complete backup or an article download.
+
+Browser downloads and capture sync send optional `X-LinkNest-User-ID` with the
+last verified user ID. After authentication, the router rejects a mismatched
+or invalid supplied header with `409` before reads/writes. Clients without this header
+keep their existing contract. `/api/me` success and authentication failure are
+also private, no-store. A failed download never replaces the old device snapshot.
+
 ## Base URL
 
 Examples:

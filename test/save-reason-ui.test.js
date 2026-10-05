@@ -123,6 +123,7 @@ it('offline validation, queueing, and sync retain intent and reject invalid reas
   const navigator = { onLine: false };
   const { validateDraft, queueCapture, syncRecord } = loadFunctions('public/js/offline-queue.js', ['validateDraft', 'queueCapture', 'syncRecord'], {
     URL, URLSearchParams, crypto: { randomUUID: () => 'queued' }, navigator,
+    storage: { getIdentity: async () => ({ userId: 'owner', generation: 1 }), sameIdentity: (a, b) => a.userId === b.userId && a.generation === b.generation },
     listCaptures: async () => records, saveCapture: async record => records.push(record), notifyChange() {},
     markRecord: async () => {},
     fetch: async (_url, options = {}) => {
@@ -137,7 +138,7 @@ it('offline validation, queueing, and sync retain intent and reject invalid reas
   const record = await queueCapture({ url: 'https://example.com', saveReason: '  Offline intent  ' });
   assert.equal(record.saveReason, 'Offline intent');
   assert.equal(records[0].saveReason, record.saveReason);
-  assert.equal(await syncRecord(record), true);
+  assert.equal(await syncRecord(record, { userId: 'owner', generation: 1 }), true);
   assert.equal(posted[0].saveReason, record.saveReason);
 });
 

@@ -31,6 +31,19 @@
       </header>
 
       <main class="page-stack page-stack--airy">
+        <section class="surface surface--soft settings-section" aria-labelledby="offline-library-heading">
+          <h2 id="offline-library-heading" class="surface-title">Offline library</h2>
+          <p class="surface-description">Download up to 2,000 recently updated links, including notes, tags, and save reasons. Read and search them on this device without internet. Article pages are not downloaded.</p>
+          <p class="surface-description">Downloaded notes remain on this device while disconnected, even if your remote session expires. Logout removes the download. Avoid downloading on a shared device.</p>
+          <p id="offline-library-summary" class="section-copy" aria-live="polite">Checking download...</p>
+          <div class="offline-library-actions">
+            <button id="offline-library-download" type="button" class="button button--primary">Download library</button>
+            <a href="/offline-library.html" class="button button--ghost">Open offline library</a>
+            <button id="offline-library-remove" type="button" class="button button--ghost" disabled>Remove download</button>
+            <button id="offline-library-persist" type="button" class="button button--ghost">Keep storage on device</button>
+          </div>
+          <p id="offline-library-message" class="form-message" role="status" aria-live="polite"></p>
+        </section>
         <section class="surface surface--soft settings-section">
           <h2 class="surface-title">API Tokens</h2>
           <p class="surface-description">Create long-lived tokens for iOS shortcuts, browser extensions, and scripts. Each token is shown once, so save it immediately.</p>
@@ -69,6 +82,9 @@
         </section>
       </main>
     </div>
+    <script src="/js/offline-store.js"></script>
+    <script src="/js/shared.js"></script>
+    <script src="/js/offline-library.js"></script>
     <script src="/js/settings.js"></script>
   </body>
 </html>

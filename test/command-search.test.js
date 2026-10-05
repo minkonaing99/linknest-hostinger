@@ -15,7 +15,7 @@ it('builds an accessible native command-search dialog', () => {
   assert.match(script, /aria-controls', 'command-results'/);
   assert.match(script, /role', 'listbox'/);
   assert.match(script, /dialog\.showModal\(\)/);
-  assert.match(script, /document\.body\.dataset\.page === 'login'/);
+  assert.match(script, /\['login', 'offline-library'\]\.includes\(document\.body\.dataset\.page\)/);
 });
 
 it('opens with slash or Cmd/Ctrl+K without hijacking typing', () => {
@@ -62,7 +62,7 @@ it('keeps useful takeaway optional and bounded', () => {
 it('preserves existing notes and handles entered, skipped, and oversized takeaways', async () => {
   let answer = null;
   let prompts = 0;
-  const window = { prompt: () => { prompts += 1; return answer; } };
+  const window = { addEventListener() {}, prompt: () => { prompts += 1; return answer; } };
   vm.runInNewContext(script.split('let commandState')[0], { window, URL, Intl });
   window.LinkNest.showToast = () => {};
   const update = async item => JSON.parse(JSON.stringify(await window.LinkNest.usefulUpdate(item)));
