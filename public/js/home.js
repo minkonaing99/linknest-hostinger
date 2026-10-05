@@ -11,6 +11,7 @@ const weeklyOldest = document.getElementById('weekly-oldest');
 const template = document.getElementById('link-template');
 const quickAddForm = document.getElementById('quick-add-form');
 const quickAddUrl = document.getElementById('quick-add-url');
+const quickAddReason = document.getElementById('quick-add-reason');
 const quickAddPaste = document.getElementById('quick-add-paste');
 const quickAddMessage = document.getElementById('quick-add-message');
 
@@ -50,6 +51,9 @@ function fillLinkRow(node, item) {
   title.href = item.url;
   title.title = rawTitle;
   title.addEventListener('click', () => trackOpen(item));
+  const reason = node.querySelector('.save-reason');
+  reason.textContent = item.saveReason ? `Why I saved this: ${item.saveReason}` : '';
+  reason.classList.toggle('hidden', !item.saveReason);
 
   const favoriteButton = node.querySelector('.favorite-button');
   favoriteButton.textContent = item.pinned ? 'Remove from Favorites' : 'Add to Favorites';
@@ -198,6 +202,7 @@ async function createQuickLink(metadata) {
       title: metadata.title || metadata.url,
       date: thailandDate(),
       status: 'saved',
+      saveReason: metadata.saveReason || '',
       tags: [],
       pinned: false,
     }),
@@ -253,19 +258,21 @@ async function saveQuickAdd(rawUrl) {
     return;
   }
 
+  const saveReason = quickAddReason.value.trim();
   quickAddUrl.disabled = true;
+  quickAddReason.disabled = true;
   quickAddPaste.disabled = true;
   setMessage(quickAddMessage, 'Fetching title...');
 
   try {
     if (!navigator.onLine) {
-      await window.LinkNestOffline.queueCapture({ url: rawUrl, title: '', date: thailandDate(), status: 'saved' });
+      await window.LinkNestOffline.queueCapture({ url: rawUrl, title: '', date: thailandDate(), status: 'saved', saveReason });
       quickAddForm.reset();
       setMessage(quickAddMessage, 'Pending - saves when online.', 'success');
       return;
     }
     const metadata = await fetchTitleMetadata(rawUrl);
-    const draft = { ...metadata, url: metadata.url || rawUrl };
+    const draft = { ...metadata, url: metadata.url || rawUrl, saveReason };
     const candidates = await findDuplicateCandidates(draft.url, draft.title);
     if (candidates.length) {
       renderQuickAddDuplicates(candidates, draft);
@@ -275,7 +282,7 @@ async function saveQuickAdd(rawUrl) {
     await createQuickLink(draft);
   } catch (error) {
     if (shouldQueueOffline(error)) {
-      await window.LinkNestOffline.queueCapture({ url: rawUrl, title: '', date: thailandDate(), status: 'saved' });
+      await window.LinkNestOffline.queueCapture({ url: rawUrl, title: '', date: thailandDate(), status: 'saved', saveReason });
       quickAddForm.reset();
       setMessage(quickAddMessage, 'Pending - saves when online.', 'success');
     } else {
@@ -283,6 +290,7 @@ async function saveQuickAdd(rawUrl) {
     }
   } finally {
     quickAddUrl.disabled = false;
+    quickAddReason.disabled = false;
     quickAddPaste.disabled = false;
   }
 }

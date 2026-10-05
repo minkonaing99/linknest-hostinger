@@ -1,6 +1,6 @@
 # Link Nest API
 
-Last updated: 2026-04-14
+Last updated: 2026-10-05
 
 Link Nest exposes a private JSON API for:
 
@@ -222,6 +222,7 @@ A link document returned by the API looks like this:
   "url": "https://example.com/article",
   "host": "example.com",
   "notes": "Useful explanation of the topic.",
+  "saveReason": "Reference for my next project.",
   "tags": ["reading", "reference"],
   "status": "saved",
   "pinned": false,
@@ -247,6 +248,9 @@ A link document returned by the API looks like this:
 - `deletedAt != null` means the link is soft-deleted
 - `host` is derived from the normalized URL
 - `notes` is optional plain text, limited to 10,000 characters
+- `saveReason` is optional plain text, limited to 500 JavaScript UTF-16 code units after trimming, and defaults to `""`
+- `saveReason` accepts strings only when supplied; null, arrays, and other types return `400`
+- changing `saveReason` updates `updatedAt` but does not count as a meaningful revisit or useful review
 - `lastOpenedAt` is set each time `POST /api/links/:id/opened` is called
 - `openedCount` increments by 1 on each open call
 - `remindAt` is a nullable ISO datetime for user-set reminders
@@ -329,7 +333,7 @@ Response:
 
 - active lists exclude deleted links by default
 - `status=deleted` returns only soft-deleted links
-- `q` searches `title`, `notes`, `url`, `host`, `tags`, and `date`
+- `q` searches `title`, `notes`, `saveReason`, `url`, `host`, `tags`, and `date`
 - sorting always keeps pinned items first
 
 ### Review queue
@@ -397,6 +401,7 @@ Request body:
   "status": "saved",
   "tags": ["reading", "reference"],
   "notes": "Useful explanation of the topic.",
+  "saveReason": "Reference for my next project.",
   "pinned": false
 }
 ```
@@ -507,6 +512,10 @@ Content-Type: application/json
 ```
 
 Request body uses the same shape as create.
+
+Omitting `saveReason` preserves the existing value. Send `"saveReason": ""`
+to clear it. Save reasons are separate from notes and are never automatically
+merged or overwritten when restoring an archived duplicate or merging a note.
 
 Success response:
 
@@ -774,6 +783,7 @@ Returns a versioned downloadable JSON backup with `version`, `exportedAt`,
 Notes:
 
 - export includes all links, including soft-deleted ones, and manual relationships
+- version 2 link records also include `saveReason`; legacy records that omit it import with an empty reason
 - response is sent as `application/json`
 
 ### Export portable Markdown or CSV
@@ -783,7 +793,9 @@ GET /api/links/export.md
 GET /api/links/export.csv
 ```
 
-Both exports include all links. CSV uses this exact header:
+Both exports include all links. Markdown adds a separate `Why I saved this`
+section for links with a save reason. CSV keeps its existing five columns and
+does not include save reasons; use JSON for a complete backup. CSV uses this exact header:
 
 ```csv
 title,url,notes,status,date
@@ -896,7 +908,7 @@ Rules:
 - invalid items are skipped
 - `total` is the active-link count after import
 - exported JSON link records restore IDs, tags, status, pin state, reminders,
-  notes, open history, and revisit timestamps
+  notes, save reasons, open history, and revisit timestamps
 - version 2 JSON backups restore manual related-link connections after links
 - the editor sends ready links in batches of 100, so large imports expose
   progress and may be partially complete if a later batch fails

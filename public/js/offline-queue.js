@@ -53,14 +53,18 @@
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error('Enter a valid web link.');
     const title = String(draft.title || '');
     const notes = String(draft.notes || '');
+    if (draft.saveReason !== undefined && typeof draft.saveReason !== 'string') {
+      throw new Error('Save reason must be plain text.');
+    }
+    const saveReason = (draft.saveReason || '').trim();
     const tags = Array.isArray(draft.tags) ? draft.tags.map(tag => String(tag).trim()).filter(Boolean) : [];
-    if (title.length > 300 || notes.length > 10000 || tags.length > 20 || tags.some(tag => tag.length > 50)) {
+    if (title.length > 300 || notes.length > 10000 || saveReason.length > 500 || tags.length > 20 || tags.some(tag => tag.length > 50)) {
       throw new Error('Capture is too large to save offline.');
     }
     return {
       url: parsed.toString(), title,
       date: String(draft.date || ''), status: String(draft.status || 'saved'), tags,
-      notes, remindAt: draft.remindAt || null,
+      notes, saveReason, remindAt: draft.remindAt || null,
       pinned: Boolean(draft.pinned),
     };
   }

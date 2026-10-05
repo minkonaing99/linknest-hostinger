@@ -1,6 +1,6 @@
 # Link Nest Data Flow
 
-Last updated: 2026-04-14
+Last updated: 2026-10-05
 
 This document explains how data moves through Link Nest during the main user actions.
 
@@ -8,7 +8,7 @@ It focuses on the real current code paths, not an idealized future design.
 
 ## Overview
 
-Link Nest is a multi-page web app backed by a small Node.js HTTP server and Supabase (PostgreSQL).
+Link Nest is a multi-page web app backed by a small Node.js HTTP server and Hostinger MySQL via `mysql2`.
 
 At a high level, most actions follow this pattern:
 
@@ -19,7 +19,7 @@ Browser UI
   -> lib/router.js
   -> auth check if needed
   -> domain logic in lib/auth.js or lib/links.js
-  -> Supabase (PostgreSQL)
+  -> Hostinger MySQL
   -> JSON response
   -> UI re-render in browser
 ```
@@ -59,7 +59,7 @@ Main backend logic lives in:
 
 ### Persistence layer
 
-`lib/db.js` initializes the Supabase connection pool and exposes a `query()` helper used by all domain modules. Tables:
+`lib/db.js` initializes the MySQL connection pool and exposes a `query()` helper used by all domain modules. Tables:
 
 - `links`
 - `users`
@@ -140,6 +140,19 @@ If yes:
 - unauthenticated user: browser is redirected to `/login.html`
 
 ## Flow 3: Quick add from the home page
+
+Capture can include an optional `saveReason`, up to 500 UTF-16 code units after
+trimming. The browser snapshots it before metadata/duplicate requests, and sends
+it with link creation or the offline draft. URL-only capture still works.
+Editor and extension capture use the same field. Existing duplicates keep their
+own reason when restored or when notes are merged; Save separately retains the
+new draft's reason.
+
+`sanitizeEntry()` validates the field; `lib/links.js` stores it in
+`links.save_reason` and maps it back to `saveReason`. Partial updates retain an
+omitted reason; an empty string clears it. Reason changes never set meaningful
+or useful-review milestones. Home/library cards render it as text separately
+from notes. Existing databases need the manual [SQL update](db-changes.sql).
 
 ### User action
 
@@ -317,7 +330,7 @@ The backend can filter by:
 - updated-after timestamp
 - YouTube-only or YouTube-excluded results
 
-Search text matches titles, notes, URLs, hosts, tags, and dates.
+Search text matches titles, notes, save reasons, URLs, hosts, tags, and dates.
 
 It can sort by:
 
@@ -614,9 +627,10 @@ GET /api/links/export.csv
 Important detail:
 
 - export includes all links, not only active ones
-- plain-text notes and manual relationships are included in JSON export and import
+- plain-text notes, save reasons, and manual relationships are included in JSON export and import
 - JSON uses a versioned envelope and remains the complete backup format
 - Markdown and CSV contain title, URL, notes, status, and saved date
+- Markdown also includes a separate save-reason section; CSV keeps its existing five columns
 
 ### Import preview and confirmation
 
@@ -634,8 +648,9 @@ and returns ready, duplicate, and invalid counts. The browser renders at most
 connections, while updating a native progress bar.
 Each batch reports imported, duplicate, and invalid counts, including conflicts
 created after preview. JSON imports restore complete link-record fields and
-manual relationships. Legacy JSON arrays remain accepted. No database schema
-change is required.
+manual relationships and save reasons. Legacy JSON arrays remain accepted;
+records without `saveReason` default to empty text. Importing reasons requires
+the `save_reason` column included in the manual [SQL update](db-changes.sql).
 
 ## Flow 13: Tag chip loading
 
@@ -837,7 +852,7 @@ The current design works well because:
 - request flow is easy to trace end to end
 - backend logic is centralized in a few clear modules
 - the same API supports both browser and future mobile clients
-- PostgreSQL schema is simple and sync-friendly
+- MySQL schema is simple and sync-friendly
 
 ## Current flow weaknesses
 

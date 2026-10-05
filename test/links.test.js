@@ -109,6 +109,24 @@ describe('parseBookmarksHtml', () => {
 });
 
 describe('importLinks', () => {
+  it('round-trips save reasons through database reads, backup, preview, and import', async () => {
+    const row = makeRow({ save_reason: 'For my project' });
+    seq({ rows: [row], rowCount: 1 });
+    const entry = await readLink(row.id);
+    assert.equal(entry.saveReason, 'For my project');
+    seq({ rows: [], rowCount: 0 });
+    const preview = await previewImportLinks([entry]);
+    assert.equal(preview.readyLinks[0].saveReason, entry.saveReason);
+    const calls = [];
+    currentImpl = async (...args) => {
+      calls.push(args);
+      return args[0].includes('COUNT(*)') ? { rows: [{ count: 1 }], rowCount: 1 } : { rows: [], rowCount: 1 };
+    };
+    await importLinks(preview.readyLinks);
+    const insert = calls.find(([sql]) => sql.includes('INSERT INTO links'));
+    assert.match(insert[0], /save_reason/);
+    assert.ok(insert[1].includes(entry.saveReason));
+  });
   it('imports notes', async () => {
     const calls = [];
     currentImpl = async (...args) => {
@@ -365,6 +383,15 @@ describe('useful review queue', () => {
 });
 
 describe('createLink', () => {
+  it('stores optional save reason on capture', async () => {
+    const calls = [];
+    currentImpl = async (...args) => { calls.push(args); return { rows: [], rowCount: 1 }; };
+    const { entry } = await createLink({ url: 'https://example.com', title: 'Example', saveReason: 'For later research' });
+    assert.equal(entry.saveReason, 'For later research');
+    const insert = calls.find(([sql]) => sql.includes('INSERT INTO links'));
+    assert.match(insert[0], /save_reason/);
+    assert.ok(insert[1].includes(entry.saveReason));
+  });
   it('creates and returns a new link with duplicateCandidates', async () => {
     seq(
       { rows: [], rowCount: 0 },  // no existing url match
@@ -424,6 +451,33 @@ describe('createLink', () => {
 });
 
 describe('updateLink', () => {
+  it('edits, preserves, and clears save reason without meaningful review milestones', async () => {
+    for (const [body, expected] of [[{ saveReason: 'New intent' }, 'New intent'], [{ pinned: true }, 'Original intent'], [{ saveReason: '' }, '']]) {
+      const calls = [];
+      currentImpl = async (...args) => {
+        calls.push(args);
+        return calls.length === 1 ? { rows: [makeRow({ save_reason: 'Original intent' })], rowCount: 1 } : { rows: [], rowCount: 1 };
+      };
+      const entry = await updateLink('link-id-123', body);
+      assert.equal(entry.saveReason, expected);
+      assert.equal(entry.firstMeaningfulAt, null);
+      assert.equal(entry.firstUsefulAt, null);
+      const update = calls.find(([sql]) => sql.includes('UPDATE links'));
+      assert.match(update[0], /save_reason=\?/);
+      assert.ok(update[1].includes(expected));
+      assert.equal(update[1].at(-3), 0);
+      assert.equal(update[1].at(-5), 0);
+    }
+  });
+
+  it('preserves existing useful-review timestamps when only capture intent changes', async () => {
+    const row = makeRow({ status: 'useful', first_meaningful_at: '2026-02-01T00:00:00.000Z', first_useful_at: '2026-02-01T00:00:00.000Z', last_useful_reviewed_at: '2026-03-01T00:00:00.000Z' });
+    seq({ rows: [row], rowCount: 1 }, { rows: [], rowCount: 0 }, { rows: [], rowCount: 1 });
+    const entry = await updateLink(row.id, { saveReason: 'New context' });
+    assert.equal(entry.firstMeaningfulAt, row.first_meaningful_at);
+    assert.equal(entry.firstUsefulAt, row.first_useful_at);
+    assert.equal(entry.lastUsefulReviewedAt, row.last_useful_reviewed_at);
+  });
   it('updates fields and returns the updated link', async () => {
     seq(
       { rows: [makeRow()], rowCount: 1 },   // fetch current

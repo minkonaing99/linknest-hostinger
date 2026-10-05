@@ -517,6 +517,25 @@ input, textarea, select {
   grid-template-columns: minmax(0, 1fr) auto auto;
   padding: 0;
 }
+.quick-add-reason { padding: 0 14px 14px; }
+.quick-add-reason summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.quick-add-reason summary::before { content: '+'; margin-right: 8px; }
+.quick-add-reason[open] summary::before { content: '-'; }
+.save-reason {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .filter-stack {
   display: grid;
   gap: 10px;

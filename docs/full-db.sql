@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS links (
   opened_count        INT          NOT NULL DEFAULT 0,
   remind_at           DATETIME(3)  DEFAULT NULL,
   notes               TEXT         NOT NULL DEFAULT (''),
+  save_reason         VARCHAR(500) NOT NULL DEFAULT '',
   first_meaningful_at DATETIME(3)  DEFAULT NULL,
   first_useful_at     DATETIME(3)  DEFAULT NULL,
   last_useful_reviewed_at DATETIME(3) DEFAULT NULL,

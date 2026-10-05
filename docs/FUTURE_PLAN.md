@@ -17,8 +17,15 @@ See [FEATURES.md](FEATURES.md) for shipped capabilities.
 
 ## Next
 
-No feature is currently committed for implementation. Add work only after
-observed use proves the need.
+Save reasons are implemented in source. Existing databases require the manual
+SQL in [db-changes.sql](db-changes.sql) before deployment; see
+[release_notes.md](release_notes.md).
+
+Seven remaining v3.2 features are planned in
+[V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md): undo, reading
+position, related-link suggestions, review history, offline library access,
+selective Markdown export, and extension clipboard capture. The plan defines
+scope, sequence, storage/API changes, acceptance tests, and rollout requirements.
 
 ## Explicitly Deferred
 

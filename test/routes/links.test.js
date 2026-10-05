@@ -7,6 +7,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-000000000000
 const { it } = require('node:test');
 const assert = require('node:assert/strict');
 const { Readable } = require('node:stream');
+const { sanitizeEntry } = require('../../lib/utils');
 
 const linksPath = require.resolve('../../lib/links');
 require.cache[linksPath] = {
@@ -14,6 +15,8 @@ require.cache[linksPath] = {
   filename: linksPath,
   loaded: true,
   exports: {
+    createLink: async input => ({ entry: sanitizeEntry(input), duplicateCandidates: [] }),
+    updateLink: async (id, input) => sanitizeEntry({ url: 'https://example.com', ...input, id }),
     readReviewQueue: async () => [{ id: 'review-1' }],
     readUsefulReviewQueue: async () => [{ id: 'useful-1' }],
     markUsefulReviewed: async id => ({ id, lastUsefulReviewedAt: '2026-06-15T00:00:00.000Z' }),
@@ -29,6 +32,24 @@ require.cache[linksPath] = {
 };
 
 const { handle } = require('../../lib/routes/links');
+
+it('create and update routes preserve save reasons and reject invalid input under both API prefixes', async () => {
+  for (const prefix of ['/api', '/api/v1']) {
+    for (const [method, suffix] of [['POST', ''], ['PUT', '/one']]) {
+      for (const [saveReason, expected] of [['For my exam', method === 'POST' ? 201 : 200], ['', method === 'POST' ? 201 : 200], [null, 400], ['x'.repeat(501), 400]]) {
+        let status, body;
+        const req = Readable.from([JSON.stringify({ url: 'https://example.com', saveReason })]);
+        req.method = method;
+        const res = { writeHead(code) { status = code; }, end(value) { body = JSON.parse(value); } };
+        assert.equal(await handle(req, res, new URL(`https://example.com${prefix}/links${suffix}`)), true);
+        await new Promise(resolve => setImmediate(resolve));
+        assert.equal(status, expected);
+        if (expected !== 400) assert.equal(body.entry.saveReason, saveReason);
+        else assert.match(body.error, /saveReason/);
+      }
+    }
+  }
+});
 
 it('GET /api/links/review returns review links', async () => {
   let status;
