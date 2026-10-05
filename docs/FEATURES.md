@@ -99,6 +99,8 @@ that has not shipped.
 - Cache the application shell and show an offline page.
 - Support safe-area insets, phone layouts, tablet layouts, and reduced motion.
 - Save the current browser tab through the browser extension.
+- Use Paste and save to capture one copied URL with the popup's tags, note, and save reason.
+- Read clipboard only on click, with optional permission retry and editable URL fallback.
 - Capture an optional plain-text note from the extension popup.
 - Capture an optional save reason from the extension popup and retain it through offline capture and sync.
 - Save selected page text as a note from the browser context menu.
@@ -119,7 +121,7 @@ that has not shipped.
 
 ## Next
 
-- Six remaining features are planned in [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md).
+- Five remaining features are planned in [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md).
 - Save reasons are implemented in source; existing databases need the manual SQL in [db-changes.sql](db-changes.sql) before running this version.
 
 ## Deferred

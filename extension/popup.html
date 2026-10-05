@@ -61,6 +61,9 @@
       .button:hover { background: oklch(49% .13 155); }
       .button:active { transform: scale(.985); }
       .button:disabled { opacity: .5; cursor: default; }
+      .button--secondary { background: oklch(92% .025 155); color: oklch(35% .07 155); }
+      .button--secondary:hover { background: oklch(88% .035 155); }
+      .capture-hint { font-size: 12px; line-height: 1.4; color: oklch(46% .012 155); }
       .button:focus-visible, .not-configured a:focus-visible { outline: 3px solid oklch(68% .12 155 / .35); outline-offset: 2px; }
       .status {
         padding: 10px 12px;
@@ -85,12 +88,14 @@
         <h1>Save to Link Nest</h1>
       </div>
       <div id="main">
-        <input id="url" class="field" type="url" placeholder="URL" aria-label="URL" readonly />
+        <input id="url" class="field" type="url" maxlength="2048" placeholder="URL" aria-label="URL" />
         <input id="title" class="field" type="text" placeholder="Title" aria-label="Title" />
         <input id="tags" class="field" type="text" placeholder="Tags (comma-separated)" aria-label="Tags" />
         <textarea id="notes" class="field" maxlength="10000" rows="3" placeholder="Note (optional)" aria-label="Note (optional)"></textarea>
         <textarea id="save-reason" class="field" maxlength="500" rows="2" placeholder="Why save this? (optional)" aria-label="Why save this? (optional)"></textarea>
-        <button id="save" class="button">Save Link</button>
+        <button id="save" class="button" disabled>Save Link</button>
+        <button id="paste-save" class="button button--secondary" aria-describedby="clipboard-hint" disabled>Paste and save</button>
+        <p id="clipboard-hint" class="capture-hint">Save one copied URL with the tags and notes above. You can also paste into the URL field.</p>
         <div id="status" class="status" role="status" aria-live="polite"></div>
       </div>
       <div id="not-configured" class="not-configured" style="display:none">

@@ -758,6 +758,12 @@ Behavior:
 - title fetching may use oEmbed for supported providers
 - if title extraction fails cleanly, `needsManualEntry` may be `true`
 
+Extension clipboard capture reuses this authenticated endpoint for a missing
+title, then sends the validated copied URL to `POST /api/links` with the popup's
+tags, notes, and `saveReason`. Metadata failure or a five-second client timeout
+uses the copied URL as title. Metadata does not replace capture URL identity.
+No new endpoint or database field is needed for clipboard capture.
+
 Example fallback response:
 
 ```json
