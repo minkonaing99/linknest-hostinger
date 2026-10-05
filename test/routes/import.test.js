@@ -42,6 +42,18 @@ const link = {
 };
 
 describe('portable exports', () => {
+  it('exports capture intent safely without changing legacy CSV columns', () => {
+    const entry = { ...link, saveReason: '<img src=x> [Exam]\n# Heading' };
+    const markdown = toMarkdown([entry]);
+    assert.match(markdown, /### Why I saved this/);
+    assert.match(markdown, /    &lt;img src=x&gt; \\\[Exam\\\]/);
+    assert.match(markdown, /    # Heading/);
+    assert.doesNotMatch(markdown, /<img src=x>/);
+    assert.doesNotMatch(toMarkdown([link]), /Why I saved this/);
+    assert.equal(toCsv([entry]), toCsv([link]));
+    const backup = parseImportSource('json', JSON.stringify({ version: 2, links: [entry] }));
+    assert.equal(backup.items[0].saveReason, entry.saveReason);
+  });
   it('writes RFC 4180 CSV and round-trips protected fields', () => {
     const csv = toCsv([link]);
     assert.ok(csv.startsWith('\uFEFF"title","url","notes","status","date"\r\n'));

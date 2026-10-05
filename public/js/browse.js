@@ -645,6 +645,9 @@ function buildRow(item) {
     titleEl.setAttribute('aria-controls', 'youtube-action-sheet');
   }
 
+  const reason = node.querySelector('.save-reason');
+  reason.textContent = item.saveReason ? `Why I saved this: ${item.saveReason}` : '';
+  reason.classList.toggle('hidden', !item.saveReason);
   const notesEl = node.querySelector('.library-row__notes');
   if (item.notes) {
     notesEl.textContent = item.notes;

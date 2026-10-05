@@ -17,12 +17,15 @@ See [FEATURES.md](FEATURES.md) for shipped capabilities.
 
 ## Next
 
-The eight requested v3.2 features are planned in
+Save reasons are implemented in source. Existing databases require the manual
+SQL in [db-changes.sql](db-changes.sql) before deployment; see
+[release_notes.md](release_notes.md).
+
+Seven remaining v3.2 features are planned in
 [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md): undo, reading
-position, save reasons, related-link suggestions, review history, offline
-library access, selective Markdown export, and extension clipboard capture.
-They are not shipped yet. The plan defines scope, sequence, storage/API changes,
-acceptance tests, and rollout requirements.
+position, related-link suggestions, review history, offline library access,
+selective Markdown export, and extension clipboard capture. The plan defines
+scope, sequence, storage/API changes, acceptance tests, and rollout requirements.
 
 ## Explicitly Deferred
 

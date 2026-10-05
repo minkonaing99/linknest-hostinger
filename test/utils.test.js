@@ -288,6 +288,22 @@ describe('ensurePlainObject', () => {
 });
 
 describe('sanitizeEntry', () => {
+  it('keeps capture intent separate from notes and defaults old payloads', () => {
+    const entry = sanitizeEntry({ url: 'https://example.com', saveReason: '  For my exam  ', notes: 'Takeaway' });
+    assert.equal(entry.saveReason, 'For my exam');
+    assert.equal(entry.notes, 'Takeaway');
+    assert.equal(sanitizeEntry({ url: 'https://example.com' }).saveReason, '');
+    assert.equal(normalizeStoredEntry({ url: 'https://example.com' }).saveReason, '');
+    assert.equal(normalizeStoredEntry(entry).saveReason, entry.saveReason);
+  });
+
+  it('validates save reasons as optional plain text up to 500 characters', () => {
+    assert.equal(sanitizeEntry({ url: 'https://example.com', saveReason: 'x'.repeat(500) }).saveReason.length, 500);
+    for (const saveReason of [null, 0, false, [], {}, 'x'.repeat(501)]) {
+      assert.throws(() => sanitizeEntry({ url: 'https://example.com', saveReason }), error => error.statusCode === 400);
+    }
+    assert.equal(sanitizeEntry({ url: 'https://example.com', saveReason: 'စာမေးပွဲ' }).saveReason, 'စာမေးပွဲ');
+  });
   const base = {
     url: 'https://example.com/article',
     title: 'Test Title',
@@ -525,7 +541,8 @@ describe('parseLinkListQuery', () => {
     const q = parseLinkListQuery(p({ q: 'react hooks' }));
     assert.ok(q.whereClause.includes('LIKE ?'));
     assert.ok(q.whereClause.includes('notes LIKE ?'));
-    assert.equal(q.params.length, 6);
+    assert.ok(q.whereClause.includes('save_reason LIKE ?'));
+    assert.equal(q.params.length, 7);
     assert.equal(q.query, 'react hooks');
   });
 

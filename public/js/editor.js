@@ -12,6 +12,7 @@ const els = {
   status: document.getElementById('status'),
   tags: document.getElementById('tags'),
   notes: document.getElementById('notes'),
+  saveReason: document.getElementById('save-reason'),
   remindAt: document.getElementById('remind-at'),
   fetchTitle: document.getElementById('fetch-title'),
   pasteClipboard: document.getElementById('paste-clipboard'),
@@ -32,6 +33,7 @@ function payload() {
     status: els.status.value,
     tags: parseTags(els.tags.value),
     notes: els.notes.value.trim(),
+    saveReason: els.saveReason.value.trim(),
     remindAt: els.remindAt.value || null,
   };
 }
@@ -129,6 +131,7 @@ async function loadForEdit() {
   els.status.value = item.status || 'saved';
   els.tags.value = (item.tags || []).join(', ');
   els.notes.value = item.notes || '';
+  els.saveReason.value = item.saveReason || '';
   els.remindAt.value = item.remindAt ? item.remindAt.slice(0, 10) : '';
   els.formHeading.textContent = 'Edit link';
   els.pageTitle.textContent = 'Edit Link';
@@ -315,6 +318,7 @@ async function loadOfflineDraft() {
   els.status.value = item.status || 'saved';
   els.tags.value = (item.tags || []).join(', ');
   els.notes.value = item.notes || '';
+  els.saveReason.value = item.saveReason || '';
   els.remindAt.value = item.remindAt ? item.remindAt.slice(0, 10) : '';
   setMessage(els.message, 'Offline capture loaded. Save or resolve duplicate, then dismiss queued copy.');
 }

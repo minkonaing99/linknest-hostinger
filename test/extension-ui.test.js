@@ -19,7 +19,7 @@ test('extension popup captures an optional plain-text note', () => {
   assert.match(html, /<textarea[^>]+id="notes"[^>]+maxlength="10000"/);
   assert.match(html, /placeholder="Note \(optional\)"/);
   assert.match(script, /document\.getElementById\('notes'\)/);
-  assert.match(script, /JSON\.stringify\(\{ url, title, tags, notes \}\)/);
+  assert.match(script, /JSON\.stringify\(\{ url, title, tags, notes, saveReason \}\)/);
 });
 
 test('extension API settings use a rounded settings group', () => {

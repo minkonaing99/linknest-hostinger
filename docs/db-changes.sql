@@ -1,0 +1,2 @@
+ALTER TABLE `links`
+  ADD COLUMN `save_reason` VARCHAR(500) NOT NULL DEFAULT '' AFTER `notes`;

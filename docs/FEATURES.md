@@ -9,7 +9,8 @@ that has not shipped.
 
 - Capture a link using only its URL and fetch its title on the server.
 - Edit title, URL, status, tags, reminder, and plain-text notes.
-- Search titles, URLs, tags, and notes.
+- Capture and edit an optional 500-character save reason, separately from notes.
+- Search titles, URLs, tags, notes, and save reasons.
 - Filter and sort the library.
 - Mark links unread, saved, useful, favorite, archived, or deleted.
 - Restore archived links.
@@ -25,6 +26,7 @@ that has not shipped.
 - Build a five-link queue from due reminders and oldest eligible links.
 - Require a meaningful decision before removing a link from the queue.
 - Add or edit a note, mark useful, snooze, archive, or open during review.
+- Show the original save reason on home review cards and library rows.
 - Optionally capture a plain-text takeaway when marking a link without a note useful.
 - Skip the takeaway with a blank answer or Cancel without blocking the useful decision.
 - Snooze for one week or until a custom date.
@@ -43,6 +45,7 @@ that has not shipped.
 - Record the first meaningful action in `firstMeaningfulAt`.
 - Count note changes, useful decisions, and soft archives as meaningful.
 - Do not count opening or snoozing as meaningful.
+- Do not count adding, editing, or clearing a save reason as meaningful.
 - Measure eligible links only after they become at least 14 days old.
 - Build a 30-day baseline before comparing revisit performance.
 - Show a homepage weekly summary with saved, reviewed, useful, revisit rate,
@@ -51,6 +54,7 @@ that has not shipped.
 ### Capture and Duplicate Handling
 
 - Quick-add links from the homepage.
+- Expand the optional save-reason field without blocking URL-only capture.
 - Show five recent links for capture confirmation and correction.
 - Detect exact and possible duplicates using canonical URLs, hosts, and similar
   titles.
@@ -65,6 +69,7 @@ that has not shipped.
 - Search links and run common actions without leaving the current page.
 - Export the complete library as JSON.
 - Export portable Markdown and CSV files.
+- Include save reasons in complete JSON backups and separate Markdown sections; keep the CSV format unchanged.
 - Import JSON and CSV files.
 - Include title, URL, note, status, and saved date in portable exports.
 - Preview JSON, CSV, browser bookmark, and pasted-line imports before saving.
@@ -92,6 +97,7 @@ that has not shipped.
 - Support safe-area insets, phone layouts, tablet layouts, and reduced motion.
 - Save the current browser tab through the browser extension.
 - Capture an optional plain-text note from the extension popup.
+- Capture an optional save reason from the extension popup and retain it through offline capture and sync.
 - Save selected page text as a note from the browser context menu.
 - Show extension badge feedback for saved, duplicate, setup, and failed captures.
 - Configure extension server URL and write-scoped API token.
@@ -110,7 +116,8 @@ that has not shipped.
 
 ## Next
 
-- No feature is currently committed for implementation.
+- Seven remaining features are planned in [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md).
+- Save reasons are implemented in source; existing databases need the manual SQL in [db-changes.sql](db-changes.sql) before running this version.
 
 ## Deferred
 

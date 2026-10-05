@@ -44,6 +44,13 @@
               <input id="quick-add-url" class="field quick-add-row__input" type="url" inputmode="url" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://example.com/article" required />
               <button type="button" id="quick-add-paste" class="button button--ghost quick-add-row__button">Paste</button>
             </div>
+            <details class="quick-add-reason">
+              <summary>Why save this? (optional)</summary>
+              <label class="field-group">
+                <span>Save reason</span>
+                <textarea id="quick-add-reason" class="field" rows="2" maxlength="500" placeholder="For my exam, project, or later reference"></textarea>
+              </label>
+            </details>
             <p id="quick-add-message" class="form-message" role="status" aria-live="polite" tabindex="-1"></p>
           </form>
         </section>
@@ -103,6 +110,7 @@
             <span>&bull;</span>
             <span class="status-text"></span>
           </div>
+          <p class="save-reason hidden"></p>
         </div>
         <div class="recent-row__tail">
           <div class="row-menu">
