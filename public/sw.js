@@ -1,4 +1,4 @@
-const CACHE = 'linknest-v32';
+const CACHE = 'linknest-v33';
 
 // Public assets only — protected pages are cached at runtime after login
 const PRECACHE = [
@@ -12,6 +12,7 @@ const PRECACHE = [
   '/js/editor.js',
   '/js/editor-import.js',
   '/js/editor-related.js',
+  '/js/editor-history.js',
   '/js/login.js',
   '/img/logo-mark.png',
   '/img/icon-192.png',

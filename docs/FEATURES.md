@@ -39,6 +39,8 @@ that has not shipped.
 - Filter unresolved links older than 90 days and review, archive, or keep them
   for another 90 days without changing their meaningful status.
 - Revisit useful links after 30 days and decide Still useful, Add note, or Archive.
+- Expand History in the editor to see saved/imported, notes/reasons, status, snooze, archive/restore, and useful-review events with Bangkok timestamps; load 20 at a time.
+- Group compound changes into one entry without retaining old note text. History starts when enabled, survives soft archive, and clears with permanent deletion.
 
 ### Meaningful Revisit Measurement
 
@@ -79,6 +81,7 @@ that has not shipped.
 - Show invalid and duplicate summaries, then import valid links in progress-tracked
   batches.
 - Restore complete link-record fields and manual relationships from versioned JSON backups.
+- Version 3 complete JSON backups retain per-link history; validated imports restore it atomically for new links. Duplicate links and their histories are skipped.
 
 ### YouTube Workflow
 
@@ -124,8 +127,8 @@ that has not shipped.
 
 ## Next
 
-- Three remaining features are planned in [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md).
-- Save reasons are implemented in source; existing databases need the manual SQL in [db-changes.sql](db-changes.sql) before running this version.
+- Two remaining features are planned in [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md): Undo and offline library access.
+- Existing databases need the applicable manual SQL in [db-changes.sql](db-changes.sql), including the new history table, before running this version.
 
 ## Deferred
 

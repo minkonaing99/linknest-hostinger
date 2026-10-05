@@ -371,6 +371,14 @@ input, textarea, select {
 .suggestion-row > a { flex: 1 1 160px; display: grid; gap: 3px; }
 .suggestion-actions { display: flex; flex-wrap: wrap; gap: 4px; }
 .suggestion-row .suggestion-reason { white-space: normal; overflow-wrap: anywhere; }
+.link-history { border-top: 1px solid var(--border); padding-top: 16px; }
+.link-history[hidden] { display: none; }
+.link-history > summary { cursor: pointer; font-size: 15px; font-weight: 600; }
+.history-hint { color: var(--muted); font-size: 12px; margin: 10px 0; }
+.history-list { list-style: none; padding: 0; margin: 0; }
+.history-list li { padding: 10px 0; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+.history-list p { margin: 0 0 4px; font-size: 13px; }
+.history-list time { color: var(--muted); font-size: 12px; }
 
 .section-header {
   display: flex;

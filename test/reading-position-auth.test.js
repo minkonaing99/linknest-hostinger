@@ -11,6 +11,7 @@ const dbPath = require.resolve('../lib/db');
 require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: {
   query: async sql => {
     queries += 1;
+    if (sql.includes('FROM link_events')) return { rows: [] };
     return sql.startsWith('SELECT') ? { rows: [{ id: 'one', url: 'https://example.com/article', reading_position: null }] }
       : { rowCount: 1, rows: [] };
   },
@@ -56,6 +57,14 @@ it('router enforces authentication and read-token scopes for both reading API pr
     const readSuggestions = await fetch(suggestions, { headers: { authorization: 'Bearer read-token' } });
     assert.equal(readSuggestions.status, 200);
     assert.deepEqual(await readSuggestions.json(), { suggestions: [] });
+    const history = `${base}${prefix}/links/one/history`;
+    const beforeHistory = queries;
+    assert.equal((await fetch(history)).status, 401);
+    assert.equal((await fetch(history, { headers: { authorization: 'Bearer revoked-token' } })).status, 401);
+    assert.equal(queries, beforeHistory);
+    const readHistory = await fetch(history, { headers: { authorization: 'Bearer read-token' } });
+    assert.equal(readHistory.status, 200);
+    assert.deepEqual(await readHistory.json(), { events: [], nextCursor: null });
     const beforeWrite = queries;
     const connect = await fetch(`${base}${prefix}/links/one/related`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', authorization: 'Bearer read-token' },

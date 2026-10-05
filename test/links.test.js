@@ -15,7 +15,8 @@ const dbPath = require.resolve('../lib/db');
 require.cache[dbPath] = {
   id: dbPath, filename: dbPath, loaded: true,
   exports: {
-    query: (...args) => currentImpl(...args),
+    query: (...args) => args[0].includes('INSERT INTO link_events') ? Promise.resolve({ rows: [], rowCount: 1 }) : currentImpl(...args),
+    withTransaction: async work => work((...args) => args[0].includes('INSERT INTO link_events') ? Promise.resolve({ rows: [], rowCount: 1 }) : currentImpl(...args)),
     connectDb: async () => {},
     closeDb: async () => {},
   },
@@ -144,8 +145,8 @@ describe('importLinks', () => {
     const calls = [];
     currentImpl = async (...args) => {
       calls.push(args);
-      if (args[0].startsWith('INSERT')) {
-        if (calls.filter(([sql]) => sql.startsWith('INSERT')).length === 1) return { rows: [], rowCount: 1 };
+      if (args[0].startsWith('INSERT INTO links')) {
+        if (calls.filter(([sql]) => sql.startsWith('INSERT INTO links')).length === 1) return { rows: [], rowCount: 1 };
         throw Object.assign(new Error('duplicate'), { code: 'ER_DUP_ENTRY' });
       }
       return { rows: [{ count: '1' }], rowCount: 1 };
@@ -683,14 +684,14 @@ describe('bulkUpdateStatus', () => {
     const calls = [];
     currentImpl = async (...args) => {
       calls.push(args);
-      return { rows: [], rowCount: 3 };
+      return args[0].startsWith('SELECT') ? { rows: ['id1', 'id2', 'id3'].map(id => makeRow({ id })), rowCount: 3 } : { rows: [], rowCount: 3 };
     };
     const result = await bulkUpdateStatus(['id1', 'id2', 'id3'], 'useful');
     assert.equal(result.updated, 3);
-    assert.ok(calls[0][0].includes('created_at <= DATE_SUB(?, INTERVAL 1 DAY)'));
-    assert.ok(calls[0][0].includes('first_meaningful_at < DATE_ADD(created_at, INTERVAL 1 DAY)'));
-    assert.ok(calls[0][0].includes('first_useful_at'));
-    assert.ok(calls[0][0].includes('created_at <= DATE_SUB(?, INTERVAL 1 DAY)'));
+    assert.ok(calls.find(([sql]) => sql.startsWith('UPDATE'))[0].includes('created_at <= DATE_SUB(?, INTERVAL 1 DAY)'));
+    assert.ok(calls.find(([sql]) => sql.startsWith('UPDATE'))[0].includes('first_meaningful_at < DATE_ADD(created_at, INTERVAL 1 DAY)'));
+    assert.ok(calls.find(([sql]) => sql.startsWith('UPDATE'))[0].includes('first_useful_at'));
+    assert.ok(calls.find(([sql]) => sql.startsWith('UPDATE'))[0].includes('created_at <= DATE_SUB(?, INTERVAL 1 DAY)'));
   });
 
   it('throws 400 for empty ids array', async () => {
@@ -819,13 +820,15 @@ describe('mergeLinkNote', () => {
     const calls = [];
     currentImpl = async (...args) => {
       calls.push(args);
-      if (calls.length === 1) return { rows: [], rowCount: 1 };
+      if (calls.length === 1) return { rows: [makeRow({ notes: ' Existing ' })], rowCount: 1 };
+      if (args[0].startsWith('UPDATE')) return { rows: [], rowCount: 1 };
       return { rows: [makeRow({ notes: ' Existing \n\nNew insight' })], rowCount: 1 };
     };
     const entry = await mergeLinkNote('link-id-123', 'New insight');
-    assert.match(calls[0][0], /^UPDATE links/);
-    assert.match(calls[0][0], /CONCAT/);
-    assert.doesNotMatch(calls[0][0], /TRIM/);
+    assert.match(calls[0][0], /FOR UPDATE/);
+    assert.match(calls[1][0], /^UPDATE links/);
+    assert.match(calls[1][0], /CONCAT/);
+    assert.doesNotMatch(calls[1][0], /TRIM/);
     assert.equal(entry.notes, 'Existing \n\nNew insight');
   });
 
