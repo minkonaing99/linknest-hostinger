@@ -17,14 +17,14 @@ See [FEATURES.md](FEATURES.md) for shipped capabilities.
 
 ## Next
 
-Save reasons and selective Markdown exports are implemented in source. Existing databases require the manual
+Save reasons, selective Markdown exports, and extension clipboard capture are implemented in source. Existing databases require the manual
 SQL in [db-changes.sql](db-changes.sql) before deployment; see
 [release_notes.md](release_notes.md).
 
-Six remaining v3.2 features are planned in
+Five remaining v3.2 features are planned in
 [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md): undo, reading
-position, related-link suggestions, review history, offline library access,
-and extension clipboard capture. The plan defines
+position, related-link suggestions, review history, and offline library access.
+The plan defines
 scope, sequence, storage/API changes, acceptance tests, and rollout requirements.
 
 ## Explicitly Deferred

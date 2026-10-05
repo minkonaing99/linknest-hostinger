@@ -1,5 +1,28 @@
 # Release notes
 
+## v3.2 - Extension clipboard capture - 2026-10-05
+
+- Extension 1.1.0 adds Paste and save for one copied HTTP/HTTPS URL, retaining
+  popup tags, notes, and save reason. No clipboard read occurs on popup load.
+- Optional clipboard permission is requested only from a fresh explicit retry
+  click. The URL field accepts manual paste when clipboard access is denied or
+  unavailable.
+- Different copied or manually edited URLs clear the active tab's title.
+  Metadata lookup has a five-second timeout and falls back to the copied URL.
+- Capture URLs reject credentials, whitespace, unsafe protocols, and input over
+  2,048 characters. Failed requests and duplicates restore both save controls.
+- No dependencies, database changes, SQL queries, or web cache changes were added.
+
+Reload the unpacked extension from Chrome's extension management page to apply
+the popup and optional-permission manifest changes. Test a copied URL from a
+different tab, permission retry/denial, manual paste, and duplicate recovery.
+Real-browser smoke testing remains pending because Chrome automation was
+unavailable during implementation.
+
+Validation: all 328 tests pass. Measured coverage is 84.55% lines, 82.43%
+branches, and 85.38% functions. The popup has 100% line/function coverage and
+98.82% branch coverage, including clipboard permission, timeout, and retry flows.
+
 ## v3.2 - Selective Markdown export
 
 - Browse now offers Export current view and Export selected. Current view

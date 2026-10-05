@@ -26,6 +26,24 @@ Browser UI
 
 ## Main request layers
 
+### Extension clipboard capture
+
+Extension 1.1.0 reads one copied URL only after Paste and save is clicked.
+It validates a trimmed absolute HTTP/HTTPS URL of up to 2,048 characters and
+rejects credentials, internal whitespace, and control characters before any
+network request. Different URLs clear the active tab's title. Missing titles use
+the configured server's authenticated `/api/fetch-title` endpoint, with a
+five-second timeout and URL fallback, followed by the existing `/api/links` POST
+with snapshotted tags, notes, and save reason.
+
+Clipboard read failure changes the button to Allow clipboard and save. The next
+explicit click requests optional `clipboardRead` permission. Denial or an
+unavailable API leaves manual paste into the editable URL field usable. Clipboard
+history is never stored, and no read occurs during popup initialization. Both
+capture buttons and fields stay locked during an action and recover in `finally`,
+including duplicates and failed requests. Tokens are sent only to the configured
+HTTPS server or loopback HTTP development server.
+
 ### Frontend
 
 The frontend is split by page:
