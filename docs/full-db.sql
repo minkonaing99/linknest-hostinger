@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS links (
   remind_at           DATETIME(3)  DEFAULT NULL,
   notes               TEXT         NOT NULL DEFAULT (''),
   save_reason         VARCHAR(500) NOT NULL DEFAULT '',
+  reading_position    JSON         DEFAULT NULL,
   first_meaningful_at DATETIME(3)  DEFAULT NULL,
   first_useful_at     DATETIME(3)  DEFAULT NULL,
   last_useful_reviewed_at DATETIME(3) DEFAULT NULL,

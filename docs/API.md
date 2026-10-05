@@ -732,6 +732,81 @@ Notes:
 - `weekly.revisitPercentage` reuses the fair 30-day eligible-cohort rate; new weekly saves are not yet eligible
 - `weekly.oldestUnresolved` is the oldest active, non-YouTube review candidate at least 14 days old, or `null`
 
+## Reading position
+
+### Look up a saved article
+
+```http
+GET /api/links/lookup?url=https%3A%2F%2Fexample.com%2Farticle
+```
+
+Returns `{"entry":{"id":"...","url":"https://example.com/article"}}`, or
+`{"entry":null}` when the canonical URL is not saved or is soft archived.
+Lookup uses the existing canonicalization rules (including protocol, tracking
+parameters, and fragment handling) with exact, case-sensitive URL comparison.
+Similar titles and fuzzy duplicate candidates are never used as identity.
+URLs must be absolute HTTP/HTTPS, at most 2,048 characters, without credentials,
+whitespace, or control characters.
+
+### Read or save a position
+
+```http
+GET /api/links/:id/reading-position?url=https%3A%2F%2Fexample.com%2Farticle
+PUT /api/links/:id/reading-position
+Content-Type: application/json
+```
+
+PUT body:
+
+```json
+{
+  "url": "https://example.com/article",
+  "ratio": 0.5,
+  "offset": -50,
+  "anchor": "Chapter two",
+  "scrollHeight": 2400
+}
+```
+
+Both return `{"position":{...}}`; GET returns `{"position":null}` when no
+valid position exists. A successful PUT adds server-generated `savedAt` in UTC
+ISO format. Client timestamps do not set the save time. Only the documented
+position fields are stored; unrelated fields are ignored.
+
+- `ratio`: finite number from 0 to 1, relative to the current maximum scroll distance.
+- `offset`: finite heading viewport offset from -100,000 to 100,000 pixels.
+- `anchor`: plain heading text, at most 200 UTF-16 code units, without control
+  characters. Empty text uses ratio fallback.
+- `scrollHeight`: finite maximum scroll distance (`document height - viewport
+  height`, clamped at zero), from 0 to 100,000,000 pixels. Used for layout-change feedback.
+- All requests require authentication; read tokens can use GET, while PUT needs
+  write scope. Responses use `Cache-Control: private, no-store`.
+- Missing/soft-archived links return `404`; a different canonical link URL
+  returns `409`; invalid fields return `400`. Unexpected failures use a generic
+  error rather than exposing database details.
+- PUT changes only `links.reading_position`. It does not change status,
+  `updatedAt`, open counts, meaningful-review timestamps, or useful-review time.
+  The latest successful explicit position write wins.
+- General link create/update does not accept position writes. Editing to a
+  different canonical URL clears the position atomically. Soft archive retains
+  it, restore makes it available again, and hard delete removes it with the link.
+
+The extension operates on the current article tab, independently of the capture
+URL field. It injects only after Save position or Resume reading is clicked,
+uses the isolated top frame, and checks the live URL before scrolling. Unique
+heading matches restore the viewport offset; missing/ambiguous headings use the
+saved ratio. Changed geometry reports approximate feedback. Browser/internal
+pages, extension stores, PDFs, and recognized embedded readers/feeds are
+unsupported. Arbitrary virtualized feeds cannot be detected reliably and are
+outside the supported article flow.
+
+### Backup compatibility
+
+Complete JSON version 2 backups embed nullable `readingPosition` on each link.
+Import and preview validate its fields, URL identity, and exact UTC ISO save time.
+Invalid positions make that import row invalid; missing/null fields support older
+backups. CSV and Markdown are portable notes exports and omit reading positions.
+
 ## Title metadata
 
 ### Fetch title metadata for a URL
@@ -790,6 +865,7 @@ Notes:
 
 - export includes all links, including soft-deleted ones, and manual relationships
 - version 2 link records also include `saveReason`; legacy records that omit it import with an empty reason
+- version 2 link records include nullable `readingPosition`; legacy records default to null
 - response is sent as `application/json`
 
 ### Export portable Markdown or CSV

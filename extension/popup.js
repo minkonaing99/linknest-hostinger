@@ -49,7 +49,8 @@ function validateCaptureUrl(raw) {
 
 function setBusy(value) {
   busy = value;
-  for (const control of [saveButton, pasteSaveButton, urlInput, titleInput, tagsInput, notesInput, saveReasonInput]) {
+  for (const control of [saveButton, pasteSaveButton, urlInput, titleInput, tagsInput, notesInput, saveReasonInput,
+    document.getElementById('save-position'), document.getElementById('resume-reading')].filter(Boolean)) {
     control.disabled = value;
   }
   saveButton.textContent = value ? 'Saving...' : 'Save Link';
@@ -159,6 +160,7 @@ chrome.storage.local.get(['serverUrl', 'apiToken'], async ({ serverUrl, apiToken
   urlInput.addEventListener('input', () => { titleInput.value = ''; });
   saveButton.addEventListener('click', () => saveLink(false, baseUrl, apiToken));
   pasteSaveButton.addEventListener('click', () => saveLink(true, baseUrl, apiToken));
+  if (typeof initReadingPosition === 'function') initReadingPosition(baseUrl, apiToken, () => busy);
   setBusy(false);
 });
 
