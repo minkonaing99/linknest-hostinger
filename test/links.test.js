@@ -173,8 +173,9 @@ describe('importLinks', () => {
     ]);
     assert.deepEqual(preview.relationshipSummary, { total: 3, ready: 1, invalid: 1, duplicates: 1 });
     assert.equal(preview.readyRelationships[0].linkIdA, 'a');
-    currentImpl = async sql => sql.startsWith('INSERT')
-      ? { rows: [], rowCount: 1 } : { rows: [], rowCount: 0 };
+    currentImpl = async sql => sql.includes('FOR UPDATE')
+      ? { rows: [{ id: 'a' }, { id: 'b' }], rowCount: 2 }
+      : { rows: [], rowCount: sql.startsWith('INSERT') ? 1 : 0 };
     assert.deepEqual(await importRelationships(preview.readyRelationships),
       { imported: 1, invalid: 0, duplicates: 0 });
   });
@@ -242,11 +243,12 @@ describe('related links', () => {
     const calls = [];
     currentImpl = async (...args) => {
       calls.push(args);
-      if (calls.length === 1) return { rows: [], rowCount: 1 };
+      if (args[0].includes('FOR UPDATE')) return { rows: [{ id: 'a-link' }, { id: 'z-link' }], rowCount: 2 };
+      if (args[0].startsWith('INSERT')) return { rows: [], rowCount: 1 };
       return { rows: [makeRow({ id: 'a-link' })], rowCount: 1 };
     };
     await addRelatedLink('z-link', 'a-link');
-    assert.deepEqual(calls[0][1].slice(0, 2), ['a-link', 'z-link']);
+    assert.deepEqual(calls.find(([sql]) => sql.startsWith('INSERT'))[1].slice(0, 2), ['a-link', 'z-link']);
   });
 
   it('rejects self-links, missing links, and duplicate pairs', async () => {
@@ -265,9 +267,10 @@ describe('related links', () => {
       return { rows: [], rowCount: 1 };
     };
     await removeRelatedLink('z-link', 'a-link');
-    assert.match(calls[0][0], /DELETE FROM link_relationships/);
-    assert.deepEqual(calls[0][1], ['a-link', 'z-link']);
-    assert.doesNotMatch(calls[0][0], /DELETE FROM links/);
+    const removal = calls.find(([sql]) => sql.startsWith('DELETE'));
+    assert.match(removal[0], /DELETE FROM link_relationships/);
+    assert.deepEqual(removal[1], ['a-link', 'z-link']);
+    assert.doesNotMatch(removal[0], /DELETE FROM links/);
   });
 });
 

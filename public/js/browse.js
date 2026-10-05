@@ -166,12 +166,10 @@ async function openAndArchiveYoutube() {
   dialog.querySelectorAll('button').forEach(button => { button.disabled = true; });
   try {
     await tracked;
-    const response = await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}`, { method: 'DELETE' });
-    if (!response.ok) throw new Error('Could not archive link');
+    await window.LinkNest.performAction({ kind: 'archive', ids: [item.id] });
     removeYoutubeRow(row, item.id);
     youtubeActionState = { ...youtubeActionState, invoker: linkList };
     dialog.close();
-    window.LinkNest.showToast('Opened and archived', 'success');
     window.LinkNest.updateUnreadBadge();
   } catch (error) {
     window.LinkNest.showToast(error.message);
@@ -327,13 +325,17 @@ async function togglePinned(item) {
 }
 
 async function updateLinkFields(item, fields) {
-  const res = await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(fields),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Failed to update link');
+  let data;
+  if (fields.status) {
+    const result = await window.LinkNest.performAction({ kind: 'status', ids: [item.id], ...fields });
+    data = { ...result, entry: result.entries?.[0] };
+  } else {
+    const res = await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fields),
+    });
+    data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Failed to update link');
+  }
   if (state.quickFilter === 'review' || state.quickFilter === 'useful-review') {
     const updated = data.entry || { ...item, ...fields };
     state.links = state.links.map(link => link.id === item.id ? updated : link);
@@ -438,30 +440,31 @@ async function downloadMarkdownExport(mode) {
 }
 
 async function bulkDelete() {
-  if (!state.selected.size) return;
-  const ids = [...state.selected];
-  await Promise.all(ids.map(id => window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(id)}`, { method: 'DELETE' })));
-  exitSelectMode();
-  await fetchPage(state.page);
-  window.LinkNest.updateUnreadBadge();
+  await performBulkAction('archive');
 }
 
 async function bulkChangeStatus(status) {
-  if (!state.selected.size || !status) return;
+  if (status) await performBulkAction('status', status);
+}
+
+async function performBulkAction(kind, status) {
+  if (!state.selected.size || state.bulkBusy) return;
   const ids = [...state.selected];
+  state.bulkBusy = true;
+  bulkDeleteBtn.disabled = true;
+  if (bulkStatusSelect) bulkStatusSelect.disabled = true;
   try {
-    const res = await window.LinkNest.apiFetch('/api/links/bulk', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids, status }),
-    });
-    if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Failed'); }
+    await window.LinkNest.performAction({ kind, ids, ...(status ? { status } : {}) });
+    exitSelectMode();
+    await fetchPage(state.page);
+    window.LinkNest.updateUnreadBadge();
   } catch (err) {
     window.LinkNest.showToast(err.message);
+  } finally {
+    state.bulkBusy = false;
+    bulkDeleteBtn.disabled = state.selected.size === 0;
+    if (bulkStatusSelect) bulkStatusSelect.disabled = false;
   }
-  exitSelectMode();
-  await fetchPage(state.page);
-  window.LinkNest.updateUnreadBadge();
 }
 
 async function loadTagChips() {
@@ -633,12 +636,8 @@ function buildRow(item) {
     try {
       const fields = next === 'useful' ? await window.LinkNest.usefulUpdate(state.links.find(link => link.id === item.id) || item) : { status: next };
       if (!fields) return;
-      const response = await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fields),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Failed to update status');
-      const updated = data.entry || { ...item, ...fields };
+      const data = await window.LinkNest.performAction({ kind: 'status', ids: [item.id], ...fields });
+      const updated = data.entries?.[0] || { ...item, ...fields };
       state.links = state.links.map(link => link.id === item.id ? updated : link);
       const note = rowArticle.querySelector('.library-row__notes');
       note.textContent = updated.notes || '';
@@ -789,12 +788,7 @@ function buildRow(item) {
     event.stopPropagation();
     if (!beginRowAction(rowArticle)) return;
     try {
-      const response = await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}`, { method: 'DELETE' });
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.error || 'Could not archive link');
-      }
-      window.LinkNest.showToast('Moved to archive', 'success');
+      await window.LinkNest.performAction({ kind: 'archive', ids: [item.id] });
       closeAllMenus();
       if (state.quickFilter === 'review') {
         resolveReviewItem(item.id);

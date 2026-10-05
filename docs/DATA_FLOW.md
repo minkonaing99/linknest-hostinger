@@ -347,6 +347,40 @@ Connect uses the existing relationship POST and refreshes the canonical list;
 Request counters reject stale responses, pending IDs prevent duplicate clicks,
 and inline retry and restored keyboard focus handle failures and row updates.
 
+### Undo archive and status changes
+
+Web library rows, review decisions, YouTube open-and-archive, bulk controls, and
+command search use `LinkNest.performAction()` from `public/js/undo.js`. It sends
+one UUID request ID with a single/bulk action and retries a lost transport/JSON
+reply once with the exact same payload. Useful prompts return a takeaway without
+a separate note-merge write. Editor full-form PUT receives an action handle for
+changed status while committing other details in the same transaction.
+
+`lib/link-actions.js` validates the actor, payload, member IDs and note bounds.
+It reserves an actor-scoped request receipt, locks links in sorted order, reuses
+the transaction-scoped domain helpers, records actual stored revisions and
+server-owned field snapshots, and commits the result. Matching retries return
+the original receipt; changed payloads conflict. Invalid bulk members roll back
+every member. Internal revisions advance on ordinary edits, notes, open tracking,
+reading positions, restore, bulk status, and relationship add/remove/import.
+
+The latest successful non-no-op action shows an Undo button for 15 seconds,
+paused while hovered, focused, or pending, within the server's 10-minute expiry.
+Per-tab session storage retains only ID/expiry/timing through editor navigation;
+login, logout, and authentication failure clear it. Failed/no-op actions retain
+the previous toast. There is no recent-action panel or redo stack in this slice.
+
+Undo posts only the action ID. It verifies owner, expiry, all members and exact
+revisions before restoring action-owned fields. Conflicts/missing members reject
+the whole batch. Undo updates time/revision and records a compact Action undone
+event without fabricating a review milestone. Repeated undo returns its saved
+result. Success reloads the current page to refresh rows, queues, selection,
+badges and statistics from canonical data, preserving any newer pending action
+metadata. Expired/conflicting actions clear their toast; transport failures offer
+retry. Cleanup removes up to 100 day-old receipts and snapshots at startup,
+every minute, and action requests. Histories remain durable; action storage and
+revisions are excluded from complete backups.
+
 ### Review history
 
 `public/js/editor-history.js` exposes a collapsed History section for existing

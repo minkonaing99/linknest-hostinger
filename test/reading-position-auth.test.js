@@ -72,5 +72,14 @@ it('router enforces authentication and read-token scopes for both reading API pr
     });
     assert.equal(connect.status, 403);
     assert.equal(queries, beforeWrite);
+    for (const path of [`${prefix}/links/actions`, `${prefix}/actions/11111111-1111-4111-8111-111111111111/undo`]) {
+      for (const authorization of [undefined, 'Bearer revoked-token', 'Bearer read-token']) {
+        const beforeAction = queries;
+        const response = await fetch(`${base}${path}`, { method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(authorization ? { authorization } : {}) }, body: '{}' });
+        assert.equal(response.status, authorization === 'Bearer read-token' ? 403 : 401);
+        assert.equal(queries, beforeAction);
+      }
+    }
   }
 });

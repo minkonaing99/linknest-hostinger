@@ -19,7 +19,7 @@
     saved: 'Link saved', imported: 'Link imported', note_updated: 'Notes updated',
     marked_useful: 'Marked useful', status_changed: 'Status changed', snoozed: 'Snoozed',
     archived: 'Archived', restored: 'Restored', useful_review_completed: 'Useful review completed',
-    save_reason_updated: 'Save reason updated', details_updated: 'Details updated',
+    save_reason_updated: 'Save reason updated', details_updated: 'Details updated', action_undone: 'Action undone',
   };
   let loaded = false;
   let pending = false;

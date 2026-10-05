@@ -41,7 +41,7 @@ it('supports navigation and all five link actions', () => {
   assert.match(script, /notes: note\.value\.trim\(\)/);
   assert.match(script, /status: 'useful'/);
   assert.match(script, /remindAt/);
-  assert.match(script, /remove \? 'DELETE' : 'PUT'/);
+  assert.match(script, /window\.LinkNest\.performAction/);
 });
 
 it('uses the shared optional takeaway for the useful command', () => {
@@ -78,8 +78,8 @@ it('preserves existing notes and handles entered, skipped, and oversized takeawa
     request = { url, body: JSON.parse(options.body) };
     return { ok: true, json: async () => ({}) };
   };
-  assert.deepEqual(await update({ id: 'link-1', notes: '' }), { status: 'useful' });
-  assert.deepEqual(request, { url: '/api/links/link-1/merge-note', body: { note: 'Useful insight' } });
+  assert.deepEqual(await update({ id: 'link-1', notes: '' }), { status: 'useful', takeaway: 'Useful insight' });
+  assert.equal(request, undefined);
   answer = 'x'.repeat(10001);
   assert.equal(await window.LinkNest.usefulUpdate({ notes: '' }), null);
 });

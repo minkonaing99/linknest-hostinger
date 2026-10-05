@@ -28,7 +28,7 @@ it('asks for a YouTube decision before opening a video', () => {
   assert.match(script, /navigator\.share/);
   assert.match(script, /navigator\.clipboard\.writeText/);
   assert.match(script, /state\.links = state\.links\.filter/);
-  assert.match(script, /const tracked = openYoutubeVideo\(item\)[\s\S]{0,180}await tracked[\s\S]{0,180}method: 'DELETE'/);
+  assert.match(script, /const tracked = openYoutubeVideo\(item\)[\s\S]{0,180}await tracked[\s\S]{0,180}performAction/);
   assert.match(script, /aria-haspopup', 'dialog'/);
   assert.match(script, /error\.name === 'AbortError'[\s\S]{0,180}navigator\.clipboard\.writeText/);
   assert.match(css, /\.youtube-action-sheet::backdrop/);
@@ -112,7 +112,7 @@ it('shows actionable warnings for unresolved links older than 90 days', () => {
   assert.match(script, /updateLinkFields\(item, \{ remindAt \}\)/);
   assert.match(html, /Keep for 90 days/);
   assert.match(script, /ageArchiveButton[\s\S]{0,160}deleteButton\.click\(\)/);
-  assert.match(script, /deleteButton\.addEventListener\('click'[\s\S]{0,500}const response = await window\.LinkNest\.apiFetch[\s\S]{0,220}if \(!response\.ok\)/);
+  assert.match(script, /deleteButton\.addEventListener\('click'[\s\S]{0,500}await window\.LinkNest\.performAction/);
   assert.match(script, /else if \(quickFilter !== 'age'\) params\.set\('youtube', 'exclude'\)/);
   assert.match(css, /\.age-warning/);
 });
@@ -140,5 +140,5 @@ it('asks for an optional takeaway across single-link useful actions', () => {
   const editor = fs.readFileSync(path.join(__dirname, '../public/js/editor.js'), 'utf8');
   assert.match(editor, /draft\.status === 'useful' && loadedItem\?\.status !== 'useful' && !String\(loadedItem\?\.notes \|\| ''\)\.trim\(\) && !draft\.notes/);
   assert.match(editor, /await window\.LinkNest\.usefulUpdate/);
-  assert.match(editor, /const \{ notes, \.\.\.withoutNotes \} = draft/);
+  assert.match(editor, /notes: fields\.takeaway \|\| fields\.notes \|\| draft\.notes/);
 });

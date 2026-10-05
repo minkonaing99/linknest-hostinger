@@ -1,5 +1,33 @@
 # Release notes
 
+## v3.2 - Toast Undo for archive/status - 2026-10-05
+
+- Archive/status controls in the library, review, command search, YouTube actions, and bulk selection offer Undo in a 15-second toast. Hover/focus pauses dismissal, bounded by the server's 10-minute undo expiry. Editor status handles survive navigation through per-tab metadata.
+- Undo restores exact status/archive-owned values, pin state and relevant review milestones, plus a compound useful takeaway. Other editor details remain saved. Later link mutations block undo; a conflicting or missing bulk member restores nothing.
+- Actions, snapshots, mutations and history share one transaction. Request IDs make matching action retries return the original result; changed payloads conflict. Repeated undo does not repeat changes or events. Lost action replies retry once with the same payload.
+- Useful prompts no longer merge notes before the status write. Undo updates timestamps/revisions and appends Action undone without qualifying as a new review decision. Successful undo reloads canonical page data.
+- Internal revisions include notes, pins, open tracking, reading position, restore and relationship changes. They and temporary action storage stay out of JSON backups; durable Action undone events remain portable.
+- Bounded cleanup removes at most 100 receipts older than 24 hours at startup, each minute, and during action requests. Their snapshots cascade; durable history remains. Toast metadata clears on login/logout/authentication failure.
+
+Deployment: back up the database, then manually apply only the new `revision`
+ALTER and `link_actions`/`link_action_items` CREATE queries in
+[db-changes.sql](db-changes.sql). Do not reapply earlier ALTERs when columns exist.
+Deploy backend and web assets/service-worker v34 together. No SQL or migration
+was executed during implementation; no dependency was added. Older application
+versions do not increment revisions: expire/remove all temporary actions before
+rollback or re-enabling Undo, retain additive schema and durable history.
+
+This slice implements toast Undo, without a recent-action panel or redo stack.
+Standalone note edits, ordinary restore and permanent deletion are outside its
+scope. Real-browser and disposable-MySQL concurrency/rollback smoke checks remain
+pending; automated domain integration and DOM checks use transaction/state mocks.
+
+Validation: all 429 tests pass. Overall coverage is 89.16% lines, 86.66% branches,
+and 91.36% functions. The action module has 100% lines/functions and 91.55%
+branches; action routes have 100% lines/functions and 96.55% branches. Toast UI
+coverage is 99.15% lines, 84.85% branches, and 100% functions. Code and security
+review found no remaining defects.
+
 ## v3.2 - Review history - 2026-10-05
 
 - Expand History in the editor to load 20 newest events at a time, with Bangkok timestamps, Load more, and retry. New captures hide the section until saved.
