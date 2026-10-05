@@ -334,6 +334,19 @@ Adding sends `POST /api/links/:id/related` with `relatedId`; removing sends
 lexical ID order, rejects self-links and duplicates, and never deletes either
 link when removing a relationship.
 
+The editor independently loads `GET /api/links/:id/suggestions`. The authenticated
+route calls `lib/link-suggestions.js`, which reads at most 200 active candidates
+sharing exact normalized tags or the source host. It excludes the source and
+existing connections before limiting, prioritizing shared-tag count and binary
+ID. Ranking uses shared tags, Jaro-Winkler title similarity, then ID; at most five
+matches qualify through a shared tag or similarity of at least 0.85. Blank and
+URL fallback titles provide no title signal. No external fetch or write occurs.
+
+Connect uses the existing relationship POST and refreshes the canonical list;
+409 responses reconcile through GET. Skip only updates page-session memory.
+Request counters reject stale responses, pending IDs prevent duplicate clicks,
+and inline retry and restored keyboard focus handle failures and row updates.
+
 ## Flow 5: Browse library
 
 ### User action

@@ -48,5 +48,20 @@ it('router enforces authentication and read-token scopes for both reading API pr
     const put = await fetch(target, { ...options, headers: { ...options.headers, authorization: 'Bearer write-token' } });
     assert.equal(put.status, 200);
     assert.equal((await put.json()).position.ratio, 0.5);
+    const suggestions = `${base}${prefix}/links/one/suggestions`;
+    const before = queries;
+    assert.equal((await fetch(suggestions)).status, 401);
+    assert.equal((await fetch(suggestions, { headers: { authorization: 'Bearer revoked-token' } })).status, 401);
+    assert.equal(queries, before);
+    const readSuggestions = await fetch(suggestions, { headers: { authorization: 'Bearer read-token' } });
+    assert.equal(readSuggestions.status, 200);
+    assert.deepEqual(await readSuggestions.json(), { suggestions: [] });
+    const beforeWrite = queries;
+    const connect = await fetch(`${base}${prefix}/links/one/related`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', authorization: 'Bearer read-token' },
+      body: JSON.stringify({ relatedId: 'two' }),
+    });
+    assert.equal(connect.status, 403);
+    assert.equal(queries, beforeWrite);
   }
 });

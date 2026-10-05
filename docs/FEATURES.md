@@ -113,6 +113,7 @@ that has not shipped.
 
 ### Authentication, API, and Quality
 
+- Suggested connections in the editor show up to five matches from saved tags and titles, with reasons. Connect requires confirmation; Skip for now lasts for the current editor session. Existing manual relationship controls remain available.
 - Authenticate the private single-user web application with sessions.
 - Create scoped API tokens for shortcuts, extensions, and scripts.
 - Validate and normalize external URLs.
@@ -123,7 +124,7 @@ that has not shipped.
 
 ## Next
 
-- Four remaining features are planned in [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md).
+- Three remaining features are planned in [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md).
 - Save reasons are implemented in source; existing databases need the manual SQL in [db-changes.sql](db-changes.sql) before running this version.
 
 ## Deferred

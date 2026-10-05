@@ -504,6 +504,32 @@ POST accepts `{ "relatedId": "link-id" }`. Relationships are symmetric.
 Self-links and missing links return `400` or `404`; duplicate pairs return
 `409`. DELETE removes only the relationship and returns `{ "removed": true }`.
 
+### Suggested connections
+
+```http
+GET /api/links/:id/suggestions
+GET /api/v1/links/:id/suggestions
+```
+
+Authenticated sessions and read-scoped tokens can request suggestions. Responses
+use `Cache-Control: private, no-store` and return `{ "suggestions": [] }` when no
+matches qualify. Each item contains `link` (id, title, url, host), `sharedTags`,
+`titleSimilarity` (rounded to three decimals), and a plain-text `reason` such as
+`Shares tags: javascript` or `Similar title`.
+
+Candidates share exact trimmed, case-sensitive tags or the same host, exclude
+the source, archived/deleted links, and existing relationships, and are capped
+at 200 after sorting by shared-tag count and binary ID. Results rank by shared
+tags, Jaro-Winkler title similarity, then ID and are capped at five. Shared tags
+or title similarity of at least 0.85 are required; host alone is insufficient.
+Blank and URL fallback titles provide no title signal. Matching uses saved data,
+does not fetch remote pages, and never writes a relationship or score.
+
+Malformed IDs return `400`; missing, deleted, or archived sources return `404`.
+Unexpected failures return `500` with a generic message. Use the existing
+relationship POST to confirm a connection. Skip for now is local to the editor
+session and has no API write.
+
 ### Update a link
 
 ```http
