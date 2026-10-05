@@ -96,12 +96,16 @@
         <button id="save" class="button" disabled>Save Link</button>
         <button id="paste-save" class="button button--secondary" aria-describedby="clipboard-hint" disabled>Paste and save</button>
         <p id="clipboard-hint" class="capture-hint">Save one copied URL with the tags and notes above. You can also paste into the URL field.</p>
+        <button id="save-position" class="button button--secondary" aria-describedby="reading-hint" disabled>Save position</button>
+        <button id="resume-reading" class="button button--secondary" aria-describedby="reading-hint" disabled>Resume reading</button>
+        <p id="reading-hint" class="capture-hint">For a saved article in the current tab. Save the link first. Position saves do not mark it reviewed.</p>
         <div id="status" class="status" role="status" aria-live="polite"></div>
       </div>
       <div id="not-configured" class="not-configured" style="display:none">
         Configure your Link Nest server in <a href="#" id="open-settings">extension settings</a>.
       </div>
     </div>
+    <script src="reading-position.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

@@ -1,5 +1,40 @@
 # Release notes
 
+## v3.2 - Reading position - 2026-10-05
+
+- Extension 1.2.0 adds explicit Save position and Resume reading for saved
+  articles in the current tab. Clipboard/manual capture URLs do not change the
+  target tab. No automatic scroll tracking or article-body capture is added.
+- Resume restores a unique nearby heading's viewport offset, or uses scroll
+  ratio when the heading is missing/ambiguous. Changed geometry reports an
+  approximate position. Browser pages, extension stores, PDFs, recognized
+  embedded readers, and virtualized feeds are outside the supported flow.
+- Authenticated exact canonical lookup and reading-position GET/PUT support both
+  API prefixes. PUT requires write scope; URL changes and soft archive block stale
+  writes. Position saves leave review status, timestamps, and open counts unchanged.
+- One nullable `links.reading_position` JSON field stores the latest position.
+  Canonical URL edits clear it atomically; archive retains it; hard delete removes
+  it. Complete JSON version 2 backups and validated imports retain positions.
+
+Deployment: back up the database and manually apply only the new
+`reading_position` ALTER query from [db-changes.sql](db-changes.sql) if the column
+is absent. Earlier installations may also need the save-reason query; do not
+reapply a column that already exists. Deploy the backend after the column is
+present, then reload the unpacked extension and accept its added `scripting`
+permission. No migration or database query was executed during implementation.
+
+Rollback can retain the additive column and saved data. Older code ignores it;
+disable reading controls until the compatible backend is restored. No web cache
+or runtime dependency changes are needed. Real Chromium save/reopen/resume and
+disposable-MySQL smoke checks remain pending; automated persistence uses mocks.
+
+Validation: all 350 tests pass. Measured coverage is 85.30% lines, 83.84%
+branches, and 86.90% functions. The reading-position domain and route modules
+have 100% coverage; the extension reading script has 100% lines/functions and
+93.68% branches. Tests cover geometry, stale navigation, credential separation,
+URL-edit clearing, legacy IDs, malformed backups, authorization, and shared
+popup controls. Code and security review findings were fixed before delivery.
+
 ## v3.2 - Extension clipboard capture - 2026-10-05
 
 - Extension 1.1.0 adds Paste and save for one copied HTTP/HTTPS URL, retaining

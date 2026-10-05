@@ -101,6 +101,8 @@ that has not shipped.
 - Save the current browser tab through the browser extension.
 - Use Paste and save to capture one copied URL with the popup's tags, note, and save reason.
 - Read clipboard only on click, with optional permission retry and editable URL fallback.
+- Explicitly save and resume position in the current saved article tab, with heading/scroll-ratio fallback and approximate-layout feedback.
+- Keep position saves independent of review status and metrics; retain positions in complete JSON backups.
 - Capture an optional plain-text note from the extension popup.
 - Capture an optional save reason from the extension popup and retain it through offline capture and sync.
 - Save selected page text as a note from the browser context menu.
@@ -121,7 +123,7 @@ that has not shipped.
 
 ## Next
 
-- Five remaining features are planned in [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md).
+- Four remaining features are planned in [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md).
 - Save reasons are implemented in source; existing databases need the manual SQL in [db-changes.sql](db-changes.sql) before running this version.
 
 ## Deferred

@@ -59,6 +59,26 @@ These scripts collect user input, call the API, and update the DOM.
 
 ### Routing layer
 
+Reading-position requests pass through existing authentication and token-scope
+checks, then `lib/routes/reading-position.js` before generic link routes.
+`lib/reading-position.js` performs exact canonical lookup and conditional writes
+to nullable `links.reading_position`. SQL uses binary URL comparison so path
+case stays significant under the existing case-insensitive table collation.
+
+The extension's reading controller queries the current tab only after an
+explicit action. It checks that the link is saved, rechecks tab URL, and injects
+an isolated top-frame function containing no token or network calls. This
+captures scroll ratio, one bounded heading, viewport offset, and maximum scroll
+distance. Resume matches a unique heading or falls back to ratio with approximate
+feedback. Missing/archived links and unsupported readers show errors.
+
+Position saves update only the JSON column, preserving review and open metrics.
+URL edits compare the live database URL and clear position before assigning a
+different URL, in the same UPDATE. Soft archive retains it; hard delete removes
+it. Complete JSON backups and import previews carry validated embedded positions;
+legacy records default to null. SQL was added to query-only `db-changes.sql` and
+the fresh-install schema, without a migration runner or database execution.
+
 `lib/router.js` receives each request and decides:
 
 - which route matches
