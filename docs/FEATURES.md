@@ -69,6 +69,9 @@ that has not shipped.
 - Search links and run common actions without leaving the current page.
 - Export the complete library as JSON.
 - Export portable Markdown and CSV files.
+- Export selected Browse links (up to 200) or all links matching the current view
+  (up to 5,000) as Markdown, including tags and save reasons.
+- Export exactly the remaining links in a review session without refilling it.
 - Include save reasons in complete JSON backups and separate Markdown sections; keep the CSV format unchanged.
 - Import JSON and CSV files.
 - Include title, URL, note, status, and saved date in portable exports.
@@ -116,7 +119,7 @@ that has not shipped.
 
 ## Next
 
-- Seven remaining features are planned in [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md).
+- Six remaining features are planned in [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md).
 - Save reasons are implemented in source; existing databases need the manual SQL in [db-changes.sql](db-changes.sql) before running this version.
 
 ## Deferred

@@ -1,5 +1,31 @@
 # Release notes
 
+## v3.2 - Selective Markdown export
+
+- Browse now offers Export current view and Export selected. Current view
+  includes all matching pages, search/tag/status/YouTube filters, and sort order.
+- Review and useful-revisit views export exactly their remaining visible links.
+- Markdown includes tags, save reasons, and notes using safe text escaping.
+- Selected exports support 1-200 distinct IDs; missing records produce an error
+  without a partial download. Filtered exports support up to 5,000 matching links
+  and request narrower filters above that limit.
+- Download feedback reports the scope and exact server count. Failed requests
+  produce an inline error, and pending downloads cannot be started twice.
+- Existing unscoped Markdown, complete JSON backups, and CSV exports remain
+  available. No database changes or dependencies were added for this feature.
+
+Deploy backend and web assets together. The service-worker cache changes from
+v30 to v31. The earlier save-reason feature still requires its documented column
+if it has not yet been applied; this export slice adds no SQL.
+
+See [API.md](API.md) for scoped request parameters and limits.
+
+Validation: all 315 tests pass. Backend coverage is 83.72% lines, 81.17%
+branches, and 84.32% functions; the scoped export reader has 100% coverage.
+Browser-script tests cover filters, download feedback, stale searches, and
+completed review sessions. A real-browser smoke check remains pending because
+the browser integration was unavailable during implementation.
+
 ## v3.2 - Save reasons - 2026-10-05
 
 ### Added

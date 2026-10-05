@@ -69,10 +69,12 @@
               <p id="review-progress" class="section-copy hidden" role="status" aria-live="polite"></p>
             </div>
             <div class="browse-actions">
+              <button type="button" id="export-view-btn" class="button button--ghost" disabled>Export current view</button>
               <button type="button" id="select-toggle-btn" class="button button--ghost">Select</button>
               <a class="button button--ghost" href="/archive.html">Archive</a>
             </div>
           </div>
+          <p id="export-message" class="form-message" role="status" aria-live="polite"></p>
           <div id="tag-chips" class="tag-chips hidden"></div>
           <div id="link-list" class="list-stack list-stack--tight list-stack--rows"></div>
           <div id="scroll-sentinel"></div>
@@ -84,6 +86,7 @@
       <span id="bulk-count" class="bulk-bar__count">0 selected</span>
       <div class="bulk-bar__actions">
         <button type="button" id="bulk-select-all" class="button button--ghost button--small">Select all</button>
+        <button type="button" id="export-selected-btn" class="button button--ghost button--small" disabled>Export selected</button>
         <select id="bulk-status-select" class="field field--select field--small">
           <option value="" disabled selected>Set status…</option>
           <option value="saved">Saved</option>

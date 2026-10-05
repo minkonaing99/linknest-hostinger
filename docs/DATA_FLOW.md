@@ -631,6 +631,14 @@ Important detail:
 - JSON uses a versioned envelope and remains the complete backup format
 - Markdown and CSV contain title, URL, notes, status, and saved date
 - Markdown also includes a separate save-reason section; CSV keeps its existing five columns
+- Browse sends `scope=selected` with chosen IDs or `scope=filtered` with the
+  existing list filters, omitting pagination. `lib/link-export.js` validates
+  scope and limits before reading normalized links through `readLinks()`.
+- Scoped Markdown uses the existing serializer, includes tags, and returns
+  `X-Link-Count`. The browser checks errors before creating a download Blob and
+  releases its object URL after starting the attachment download.
+- Review-session downloads send remaining visible IDs; they do not query the
+  review queue again. Selected IDs are limited to 200; filtered exports to 5,000.
 
 ### Import preview and confirmation
 

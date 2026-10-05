@@ -8,7 +8,7 @@ const initialReview = new URLSearchParams(window.location.search).get('review') 
 const initialUsefulReview = new URLSearchParams(window.location.search).get('usefulReview') === '1';
 const initialYoutube = new URLSearchParams(window.location.search).get('youtube') === '1';
 const initialAge = new URLSearchParams(window.location.search).get('age') === '1';
-const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false, requestId: 0, selectMode: false, selected: new Set(), quickFilter: initialReview ? 'review' : (initialUsefulReview ? 'useful-review' : (initialYoutube ? 'youtube' : (initialAge ? 'age' : null))), tagFilter: null, reviewSession: null };
+const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false, exporting: false, exportReady: false, requestId: 0, selectMode: false, selected: new Set(), quickFilter: initialReview ? 'review' : (initialUsefulReview ? 'useful-review' : (initialYoutube ? 'youtube' : (initialAge ? 'age' : null))), tagFilter: null, reviewSession: null };
 
 const SORT_MAP = {
   recent:       { sort: 'updatedAt', order: 'desc' },
@@ -35,6 +35,9 @@ const bulkStatusSelect  = document.getElementById('bulk-status-select');
 const tagChipsContainer = document.getElementById('tag-chips');
 const reviewProgress    = document.getElementById('review-progress');
 const libraryCounts     = document.getElementById('library-counts');
+const exportViewBtn     = document.getElementById('export-view-btn');
+const exportSelectedBtn = document.getElementById('export-selected-btn');
+const exportMessage     = document.getElementById('export-message');
 let youtubeActionState = { item: null, row: null, invoker: null, dialog: null };
 
 document.body.classList.toggle('is-youtube-view', state.quickFilter === 'youtube');
@@ -85,6 +88,7 @@ function resolveReviewItem(id) {
   state.links = state.links.filter(link => link.id !== id);
   state.total = state.links.length;
   updateReviewProgress();
+  updateExportControls();
   if (resolved.size === state.reviewSession.total) renderReviewComplete();
   else render(state.links);
 }
@@ -348,6 +352,7 @@ function closeAllMenus() {
 }
 
 function updateBulkBar() {
+  updateExportControls();
   const count = state.selected.size;
   bulkCount.textContent = `${count} selected`;
   bulkDeleteBtn.disabled = count === 0;
@@ -371,6 +376,65 @@ function exitSelectMode() {
   bulkBar.classList.add('hidden');
   selectToggleBtn.textContent = 'Select';
   document.querySelectorAll('.library-row.is-selected').forEach(r => r.classList.remove('is-selected'));
+  updateExportControls();
+}
+
+function getExportRequest(mode) {
+  if (mode !== 'selected' && (!state.exportReady || state.loading)) {
+    throw new Error('Wait for the current view to finish loading before exporting.');
+  }
+  const queue = state.quickFilter === 'review' || state.quickFilter === 'useful-review';
+  const selected = mode === 'selected' || queue;
+  const ids = mode === 'selected' ? [...state.selected] : state.links.map(link => link.id);
+  const count = selected ? ids.length : state.total;
+  if (!count) throw new Error('Choose at least one link to export.');
+  if (count > (selected ? 200 : 5000)) {
+    throw new Error(selected ? 'Select up to 200 links to export.' : 'Narrow your filters to 5,000 links or fewer.');
+  }
+  const params = selected
+    ? new URLSearchParams({ scope: 'selected', ids: ids.some(id => /[,\[{]/.test(id)) ? JSON.stringify(ids) : ids.join(',') })
+    : buildApiParams(1);
+  if (!selected) { params.delete('page'); params.delete('limit'); params.set('scope', 'filtered'); }
+  return { params, count, label: mode === 'selected' ? 'selected links' : (queue ? 'review links' : 'matching links') };
+}
+
+function updateExportControls() {
+  const queue = state.quickFilter === 'review' || state.quickFilter === 'useful-review';
+  const count = queue ? state.links.length : state.total;
+  exportViewBtn.disabled = state.loading || state.exporting || !state.exportReady || !count || count > 5000;
+  exportSelectedBtn.disabled = state.loading || state.exporting || !state.selected.size || state.selected.size > 200;
+  exportViewBtn.title = count > 5000 ? 'Narrow your filters to 5,000 links or fewer.' : `Export ${count} ${queue ? 'remaining review' : 'matching'} links as Markdown`;
+  exportSelectedBtn.title = state.selected.size > 200 ? 'Select up to 200 links.' : `Export ${state.selected.size} selected links as Markdown`;
+}
+
+async function downloadMarkdownExport(mode) {
+  if (state.exporting || state.loading) return;
+  let request;
+  try { request = getExportRequest(mode); }
+  catch (error) { window.LinkNest.setMessage(exportMessage, error.message, 'error'); return; }
+  state.exporting = true;
+  updateExportControls();
+  window.LinkNest.setMessage(exportMessage, `Preparing ${request.count} ${request.label} as Markdown...`);
+  try {
+    const res = await window.LinkNest.apiFetch(`/api/links/export.md?${request.params}`);
+    if (!res.ok) throw new Error((await res.json()).error || 'Could not export links.');
+    const blob = await res.blob();
+    const count = Number(res.headers.get('X-Link-Count'));
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = request.params.get('scope') === 'selected' ? 'links-selected.md' : 'links-filtered.md';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+    window.LinkNest.setMessage(exportMessage, `Download started: ${count} ${request.label} as Markdown.`, 'success');
+  } catch (error) {
+    window.LinkNest.setMessage(exportMessage, error.message, 'error');
+  } finally {
+    state.exporting = false;
+    updateExportControls();
+  }
 }
 
 async function bulkDelete() {
@@ -777,6 +841,7 @@ function buildRow(item) {
 }
 
 function render(items, append = false) {
+  updateExportControls();
   totalCount.textContent = String(state.total);
   visibleCount.textContent = String(state.links.length);
 
@@ -870,6 +935,8 @@ async function fetchPage(page, append = false) {
   const requestedFilter = state.quickFilter;
   const requestId = ++state.requestId;
   state.loading = true;
+  state.exportReady = false;
+  updateExportControls();
   if (!append) showSkeleton();
 
   try {
@@ -888,6 +955,7 @@ async function fetchPage(page, append = false) {
     state.page = data.page || 1;
     state.totalPages = data.pages || 1;
     state.total = Number.isFinite(data.total) ? data.total : newLinks.length;
+    state.exportReady = true;
     updateReviewProgress();
     render(newLinks, append);
     if (requestedFilter === 'review') linkList.focus({ preventScroll: true });
@@ -896,7 +964,7 @@ async function fetchPage(page, append = false) {
     console.error(err);
     if (!append) linkList.innerHTML = '<div class="empty-state">Failed to load links. Please refresh.</div>';
   } finally {
-    if (requestId === state.requestId) state.loading = false;
+    if (requestId === state.requestId) { state.loading = false; updateExportControls(); }
   }
 }
 
@@ -907,6 +975,12 @@ function debounce(fn, delay) {
 
 document.addEventListener('click', closeAllMenus);
 linkList.addEventListener('keydown', handleReviewShortcut);
+searchInput.addEventListener('input', () => {
+  if (state.quickFilter === 'review' || state.quickFilter === 'useful-review') return;
+  state.requestId += 1;
+  state.exportReady = false;
+  updateExportControls();
+});
 searchInput.addEventListener('input', debounce(() => {
   if (tagChipsContainer) {
     tagChipsContainer.querySelectorAll('.tag-chip').forEach(c => c.classList.remove('is-active'));
@@ -932,6 +1006,8 @@ selectToggleBtn.addEventListener('click', () => {
 });
 
 bulkCancelBtn.addEventListener('click', exitSelectMode);
+exportViewBtn.addEventListener('click', () => downloadMarkdownExport('view'));
+exportSelectedBtn.addEventListener('click', () => downloadMarkdownExport('selected'));
 
 bulkDeleteBtn.addEventListener('click', bulkDelete);
 
