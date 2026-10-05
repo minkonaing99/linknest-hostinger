@@ -149,11 +149,7 @@ els.form.addEventListener('submit', async event => {
     if (draft.status === 'useful' && loadedItem?.status !== 'useful' && !String(loadedItem?.notes || '').trim() && !draft.notes) {
       const fields = await window.LinkNest.usefulUpdate({ ...loadedItem, id: draft.id, notes: draft.notes });
       if (!fields) return;
-      draft = { ...draft, ...fields };
-      if (editing) {
-        const { notes, ...withoutNotes } = draft;
-        draft = withoutNotes;
-      }
+      draft = { ...draft, notes: fields.takeaway || fields.notes || draft.notes };
     }
     if (!editing && !navigator.onLine) {
       await window.LinkNestOffline.queueCapture(draft);
@@ -206,6 +202,7 @@ els.form.addEventListener('submit', async event => {
       return;
     }
     if (!res.ok) throw new Error(data.error || 'Failed to save link');
+    window.LinkNest.rememberUndo(data, 'Link updated');
     setMessage(els.message, editing ? 'Link updated.' : 'Link saved.', 'success');
     const returnTo = queryParam('returnTo');
     const destination = returnTo === '/browse.html?review=1' ? returnTo : '/browse.html';

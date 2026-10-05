@@ -562,7 +562,7 @@ permanently deleted links return `404`; unexpected failures return a generic `50
 
 Types are `saved`, `imported`, `note_updated`, `marked_useful`, `status_changed`,
 `snoozed`, `archived`, `restored`, `useful_review_completed`, `save_reason_updated`,
-and `details_updated`. One compound operation creates one event. Metadata lists
+`details_updated`, and `action_undone`. One compound operation creates one event. Metadata lists
 changed fields and may include before/after status or reminder time; it never
 stores old or new note/reason text. Actor IDs are stored internally from the
 authenticated user and omitted from this response and portable backups.
@@ -570,10 +570,70 @@ authenticated user and omitted from this response and portable backups.
 Writes and events commit together. Unchanged edits, repeated archive/restore,
 opening, and position saves create no event. Useful-review completion records
 each successful completion; merge-note retries append again under the existing
-contract. Request-ID deduplication is reserved for the later Undo feature.
+contract. The explicit action endpoint deduplicates matching request IDs; legacy
+note-merge requests retain their existing append behavior.
 History begins when the schema and compatible application are enabled; existing
 links receive no fabricated past events. Soft archive retains events, while
 permanent deletion cascades them.
+
+### Undoable archive and status actions
+
+```http
+POST /api/links/actions
+POST /api/v1/links/actions
+Content-Type: application/json
+```
+
+```json
+{ "requestId": "11111111-1111-4111-8111-111111111111", "kind": "status", "ids": ["link-id"], "status": "useful", "takeaway": "Used this in my project" }
+```
+
+Sessions and write-scoped tokens can create actions. Allowed keys are exactly
+`requestId`, `kind`, `ids`, `status`, and `takeaway`. Kind is `archive` or `status`;
+IDs must be 1-200 distinct nonempty strings of at most 36 characters. Status
+accepts `saved`, `unread`, `useful`, or `archived` only for a status action.
+Takeaway is optional nonempty plain text, allowed only for one link marked useful,
+and is appended atomically within the existing combined 10,000-character note limit.
+Archived/deleted links reject status actions; archive of an already deleted link
+is a no-op. Missing members reject the entire batch before mutation.
+
+Success returns `{ "entries": [...], "updated": 1, "action": { "id": "...",
+"undoExpiresAt": "..." } }`. No changes return `updated: 0`, empty entries, and
+`action: null`. Optional UUID request IDs are scoped to the authenticated user.
+Repeating the same canonical payload returns its original result; reusing the ID
+with another payload returns `409`. Receipts remain available for 24 hours;
+actions expire for undo after 10 minutes. The browser retries a lost action reply
+once with the same ID and payload, without retrying HTTP rejection responses.
+
+```http
+POST /api/actions/:id/undo
+POST /api/v1/actions/:id/undo
+```
+
+Send no body or `{}`; previous link values are never accepted. Undo checks the
+authenticated owner, expiry, every member, and exact internal revisions under
+locks. Any later edit, open tracking, reading-position save, relationship change,
+or restore blocks undo with `409`, and nothing is restored. Missing members also
+block the whole batch. Expiry returns `410`; another owner's action returns `404`.
+Malformed input returns `400`, unauthenticated requests `401`, and read tokens
+`403`. Unexpected failures use a generic `500`; all responses are private/no-store.
+
+Undo restores only server-held status/archive-owned values, including pin state
+and relevant review milestones, plus a compound useful takeaway. It updates
+`updatedAt` and revision without treating restoration as a new review decision,
+and appends `action_undone`. Success returns restored entries/count and null action.
+Repeated undo returns the stored success without repeating restoration or history.
+Standalone note editing, ordinary restore, permanent delete, and imports are not
+undo actions. Action receipts/snapshots and revisions never enter JSON backups.
+
+The existing link PUT preserves its response and adds nullable `action` when a
+supplied status changes. Editor details commit together, but undo preserves
+unrelated title/URL/tag/reason/reminder changes. Useful status with a changed note
+can reverse that compound note. Other note-derived milestones stay intact.
+Legacy DELETE and bulk routes remain compatible; web archive/status gestures use
+the explicit action endpoint. Cleanup deletes at most 100 receipts older than
+24 hours at startup, every minute, and during action requests; item snapshots
+cascade with receipts, while durable history remains.
 
 ### Update a link
 

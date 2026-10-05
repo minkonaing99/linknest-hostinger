@@ -5,6 +5,7 @@ async function linkNestApiFetch(url, options = {}) {
   });
 
   if (res.status === 401) {
+    window.LinkNest?.clearUndo?.();
     window.location.href = '/login.html';
     throw new Error('Authentication required');
   }
@@ -56,6 +57,7 @@ window.LinkNest = {
   },
 
   async logout() {
+    window.LinkNest.clearUndo?.();
     try {
       await fetch('/api/logout', {
         method: 'POST',
@@ -122,13 +124,7 @@ async function usefulUpdate(item) {
     return null;
   }
   if (!item?.id) return { status: 'useful', notes };
-  const response = await window.LinkNest.apiFetch(`/api/links/${encodeURIComponent(item.id)}/merge-note`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ note: notes }),
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'Could not save takeaway');
-  return { status: 'useful' };
+  return { status: 'useful', takeaway: notes };
 }
 
 window.LinkNest.usefulUpdate = usefulUpdate;
@@ -229,19 +225,24 @@ async function updateCommandItem(body, successMessage, remove = false, item = co
   if (!item || commandState.busy) return;
   setCommandBusy(true);
   try {
-    const response = await linkNestApiFetch(`/api/links/${encodeURIComponent(item.id)}`, {
-      method: remove ? 'DELETE' : 'PUT',
-      headers: remove ? undefined : { 'Content-Type': 'application/json' },
-      body: remove ? undefined : JSON.stringify(body),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Action failed');
+    let data;
+    if (remove || body.status) {
+      data = await window.LinkNest.performAction({ kind: remove ? 'archive' : 'status', ids: [item.id], ...body });
+      data = { ...data, entry: data.entries?.[0] };
+    } else {
+      const response = await linkNestApiFetch(`/api/links/${encodeURIComponent(item.id)}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      });
+      data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Action failed');
+    }
     const items = remove
       ? commandState.items.filter(link => link.id !== item.id)
       : commandState.items.map(link => link.id === item.id ? (data.entry || { ...link, ...body }) : link);
     commandState = { ...commandState, items, selected: Math.min(commandState.selected, items.length - 1) };
     renderCommandResults(items.length ? '' : 'No matching links.');
-    window.LinkNest.showToast(successMessage, 'success');
+    if (data.action) document.querySelector('.command-dialog')?.close();
+    if (!data.action) window.LinkNest.showToast(successMessage, 'success');
     updateUnreadBadge();
     return true;
   } catch (error) {

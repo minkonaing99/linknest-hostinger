@@ -41,6 +41,8 @@ that has not shipped.
 - Revisit useful links after 30 days and decide Still useful, Add note, or Archive.
 - Expand History in the editor to see saved/imported, notes/reasons, status, snooze, archive/restore, and useful-review events with Bangkok timestamps; load 20 at a time.
 - Group compound changes into one entry without retaining old note text. History starts when enabled, survives soft archive, and clears with permanent deletion.
+- Undo accidental single/bulk archive and status changes from a 15-second toast, paused on hover/focus. Useful takeaway and status commit together and can be reversed together.
+- Undo restores prior status, pin state, and review milestones. Any later mutation blocks the entire undo safely; success refreshes the current page and adds Action undone to history.
 
 ### Meaningful Revisit Measurement
 
@@ -127,8 +129,8 @@ that has not shipped.
 
 ## Next
 
-- Two remaining features are planned in [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md): Undo and offline library access.
-- Existing databases need the applicable manual SQL in [db-changes.sql](db-changes.sql), including the new history table, before running this version.
+- Offline library access remains planned in [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md).
+- Existing databases need the applicable manual SQL in [db-changes.sql](db-changes.sql), including revision/action storage, before running this version.
 
 ## Deferred
 

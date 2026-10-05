@@ -1777,6 +1777,9 @@ body.is-selecting .library-row__tags {
   background: var(--success);
   color: #fff;
 }
+.toast--undo { pointer-events: auto; display: flex; align-items: center; gap: 12px; white-space: normal; }
+.toast--undo span { overflow-wrap: anywhere; }
+.toast--undo button { flex-shrink: 0; color: inherit; border-color: currentColor; }
 
 /* ── Skeleton loading ───────────────────────────────────── */
 @keyframes skeleton-shimmer {

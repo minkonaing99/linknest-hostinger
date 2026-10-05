@@ -1,10 +1,15 @@
 const { PORT } = require('./lib/config');
 const { connectDb, ensureAdminUser, closeDb } = require('./lib/db');
 const { server } = require('./lib/router');
+const { cleanupExpiredActions } = require('./lib/link-actions');
 
 async function start() {
   await connectDb();
   await ensureAdminUser();
+  await cleanupExpiredActions();
+  setInterval(() => cleanupExpiredActions().catch(error => {
+    console.error('Could not clean up expired undo actions:', error.message);
+  }), 60_000).unref();
 
   // Close connections that do not complete a request within 30 seconds.
   // This guards against slow-loris and stalled clients holding sockets open.

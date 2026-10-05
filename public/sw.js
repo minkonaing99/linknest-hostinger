@@ -1,4 +1,4 @@
-const CACHE = 'linknest-v33';
+const CACHE = 'linknest-v34';
 
 // Public assets only — protected pages are cached at runtime after login
 const PRECACHE = [
@@ -6,6 +6,7 @@ const PRECACHE = [
   '/offline.html',
   '/css/styles.css',
   '/js/shared.js',
+  '/js/undo.js',
   '/js/offline-queue.js',
   '/js/home.js',
   '/js/browse.js',

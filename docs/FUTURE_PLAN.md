@@ -18,13 +18,12 @@ See [FEATURES.md](FEATURES.md) for shipped capabilities.
 ## Next
 
 Save reasons, selective Markdown exports, extension clipboard capture, reading
-positions, related-link suggestions, and review history are implemented in source. Existing databases require the manual
+positions, related-link suggestions, review history, and toast Undo are implemented in source. Existing databases require the manual
 SQL in [db-changes.sql](db-changes.sql) before deployment; see
 [release_notes.md](release_notes.md).
 
-Two remaining v3.2 features are planned in
-[V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md): undo
-and offline library access.
+Offline library access remains planned in
+[V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md).
 The plan defines
 scope, sequence, storage/API changes, acceptance tests, and rollout requirements.
 

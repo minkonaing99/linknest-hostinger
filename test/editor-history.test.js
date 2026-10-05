@@ -112,7 +112,7 @@ it('failed later page preserves events and retries same cursor', async () => {
 
 it('descriptions cover event types without rendering note or reason contents', async () => {
   const types = ['saved', 'imported', 'note_updated', 'status_changed', 'snoozed', 'archived', 'restored',
-    'useful_review_completed', 'save_reason_updated', 'details_updated', 'unknown'];
+    'useful_review_completed', 'save_reason_updated', 'details_updated', 'action_undone', 'unknown'];
   const events = types.map((type, index) => ({ ...event, id: String(index), type,
     metadata: { changedFields: ['title'], remindAt: '2026-10-06T00:00:00.000Z', note: '<img>', saveReason: '<script>' } }));
   const current = fixture({ apiFetch: async () => response(events) });
@@ -121,5 +121,6 @@ it('descriptions cover event types without rendering note or reason contents', a
   assert.ok(labels.some(label => /Snoozed until 0?6 Oct 2026.*07:00.*Bangkok/.test(label)));
   assert.ok(labels.some(label => /Useful review completed/.test(label)));
   assert.ok(labels.some(label => /Details updated/.test(label)));
+  assert.ok(labels.some(label => /Action undone/.test(label)));
   assert.ok(labels.every(label => !label.includes('<img>') && !label.includes('<script>')));
 });
