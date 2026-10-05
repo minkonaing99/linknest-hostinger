@@ -1,5 +1,26 @@
 # Release notes
 
+## v3.2 - Related-link suggestions - 2026-10-05
+
+- The editor shows up to five suggested connections with shared-tag or similar-title reasons, based on saved values.
+- Matching reads at most 200 active candidates, excludes existing connections, and uses deterministic ranking. Host alone and URL fallback titles cannot qualify.
+- Connect uses the existing explicit relationship action. Skip for now lasts for the current editor session. Loading failures offer retry without blocking manual search.
+- Read-scoped authenticated requests support both API prefixes. No remote fetches, automatic connections, schema changes, or dependencies are added.
+- Request guards preserve connections across late responses; pending controls prevent duplicate clicks, and focus restores after rendering. Long reasons wrap on narrow screens.
+
+Deployment: deploy backend, editor HTML, JavaScript, CSS, and service worker
+cache v32 together. No new SQL is needed. Earlier save-reason and reading-position
+columns still require manual setup when absent; see [db-changes.sql](db-changes.sql).
+Rollback restores those application files together without changing data.
+Automated ranking, limits, authorization, DOM safety, confirmation, retries,
+keyboard focus, races, and manual relationship regression checks pass. Real-browser
+and disposable-MySQL smoke checks remain pending.
+
+Validation: all 368 tests pass. Overall coverage is 86.47% lines, 84.18% branches,
+and 87.88% functions. The suggestion reader and route have 100% line/function
+coverage; editor relationship controls have 100% lines, 82.98% branches, and
+92.59% functions. Code and security review findings were resolved.
+
 ## v3.2 - Reading position - 2026-10-05
 
 - Extension 1.2.0 adds explicit Save position and Resume reading for saved
