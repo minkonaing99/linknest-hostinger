@@ -795,7 +795,38 @@ GET /api/links/export.csv
 
 Both exports include all links. Markdown adds a separate `Why I saved this`
 section for links with a save reason. CSV keeps its existing five columns and
-does not include save reasons; use JSON for a complete backup. CSV uses this exact header:
+does not include save reasons; use JSON for a complete backup.
+
+Markdown also includes tags. Its default, unscoped endpoint still exports the
+complete library, including archived links. Browse offers two scoped downloads:
+
+```http
+GET /api/links/export.md?scope=selected&ids=first-id,second-id
+GET /api/links/export.md?scope=filtered&tag=study&status=saved&youtube=exclude
+```
+
+- `selected`: 1-200 distinct IDs, returned in request order; explicitly selected
+  archived records are allowed. A missing link returns `404` with no partial file.
+- `ids` accepts comma-separated IDs or a URL-encoded JSON array of strings when
+  an imported ID contains a comma or begins with a JSON delimiter. Each ID must
+  be nonempty, at most 36 UTF-16 code units, without edge whitespace/control characters.
+- `filtered`: every matching link across all pages, capped at 5,000. Above the
+  cap, the endpoint returns `400` and asks for narrower filters, rather than truncating.
+- Supported filters are `q` or `search`, `tag`, `status`, `sort`, `order`,
+  `includeDeleted`, `updatedAfter`, `remindBefore`, `staleBefore`, `ageBefore`,
+  `neverOpened`, and `youtube`. Use the existing list filter values; supplied
+  booleans must be `true` or `false` and dates must be valid ISO datetimes with
+  seconds and a timezone. Pagination parameters are rejected.
+- Selected requests accept only `scope` and `ids`. Filtered requests reject IDs,
+  unknown/repeated parameters, unsupported enum values, and simultaneous `q`/`search`.
+- `ids` without a scope is rejected. No scope retains legacy full-export behavior.
+- Browse's review and useful-revisit views export their remaining visible session
+  IDs using selected scope, so a refreshed queue cannot add unseen replacements.
+- Successful downloads use private/no-store headers and report the exact exported
+  count in `X-Link-Count`. Filenames are `links-selected.md` or `links-filtered.md`.
+- GET keeps scoped Markdown exports available to read-scoped API tokens.
+
+CSV retains its five-column contract and full-export behavior:
 
 ```csv
 title,url,notes,status,date

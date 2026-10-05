@@ -1431,6 +1431,7 @@ body.is-selecting .library-row__tags {
   border-radius: 16px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.12);
   white-space: nowrap;
+  max-width: calc(100% - 20px);
 }
 .bulk-bar.hidden { display: none; }
 .bulk-bar__count {
@@ -1442,6 +1443,7 @@ body.is-selecting .library-row__tags {
 .bulk-bar__actions {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
 }
 #bulk-delete-btn {
   background: var(--danger);
