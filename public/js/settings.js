@@ -8,12 +8,16 @@ const tokenValue   = document.getElementById('token-reveal-value');
 const copyButton   = document.getElementById('copy-token-button');
 const tokenList    = document.getElementById('token-list');
 const tokenEmpty   = document.getElementById('token-empty');
-const logoutButton = document.getElementById('logout-button');
 
 async function apiFetch(method, path, body = null) {
   const opts = { method, headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin' };
   if (body !== null) opts.body = JSON.stringify(body);
   const res = await fetch(path, opts);
+  if (res.status === 401) {
+    try { await window.LinkNestOfflineStore?.invalidate('authentication'); }
+    finally { window.location.href = '/login.html'; }
+    throw new Error('Authentication required');
+  }
   const data = await res.json();
   if (!res.ok) throw Object.assign(new Error(data.error || 'Request failed'), { status: res.status });
   return data;
@@ -95,11 +99,6 @@ copyButton.addEventListener('click', () => {
     copyButton.textContent = 'Copied';
     setTimeout(() => { copyButton.textContent = 'Copy'; }, 2000);
   });
-});
-
-logoutButton.addEventListener('click', async () => {
-  try { await apiFetch('POST', '/api/logout'); } catch {}
-  window.location.href = '/login.html';
 });
 
 loadTokens();

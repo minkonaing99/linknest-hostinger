@@ -102,6 +102,10 @@ that has not shipped.
 - Offline sharing requires a prior online editor visit; logged-out shares require login
   and may need to be shared again afterward.
 - Cache the application shell and show an offline page.
+- Explicitly download up to 2,000 active links and 25 MiB of metadata/notes in Settings, with last download time, count, partial scope, refresh, and removal.
+- Browse and search downloaded titles, URLs, tags, notes, and save reasons in a read-only offline library; article pages are not downloaded.
+- Bind device data and captures to a verified account. Logout, online authentication failure, and account changes remove downloaded data without deleting pending captures; older drafts require explicit claim.
+- Offer optional browser persistent storage and tolerate quota failures or eviction.
 - Support safe-area insets, phone layouts, tablet layouts, and reduced motion.
 - Save the current browser tab through the browser extension.
 - Use Paste and save to capture one copied URL with the popup's tags, note, and save reason.
@@ -129,7 +133,7 @@ that has not shipped.
 
 ## Next
 
-- Offline library access remains planned in [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md).
+- All eight features in [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md) are implemented in source. Real-browser/MySQL deployment verification remains documented per release.
 - Existing databases need the applicable manual SQL in [db-changes.sql](db-changes.sql), including revision/action storage, before running this version.
 
 ## Deferred

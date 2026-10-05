@@ -18,10 +18,13 @@
       <main class="page-stack page-stack--airy">
         <section class="surface surface--soft surface--group" style="text-align: center; padding: 48px 24px;">
           <h1 class="section-title" style="margin-bottom: 8px;">You're offline</h1>
-          <p class="section-copy" style="margin-bottom: 24px;">Check your connection and try again.</p>
-          <button type="button" onclick="window.location.reload()" class="button">Try again</button>
+          <p class="section-copy" style="margin-bottom: 24px;">Check your connection, or read your downloaded library.</p>
+          <a href="/offline-library.html" class="button">Open offline library</a>
+          <button type="button" id="offline-retry" class="button">Try again</button>
         </section>
       </main>
     </div>
+    <script src="/js/offline-store.js"></script>
+    <script src="/js/offline-library.js"></script>
   </body>
 </html>

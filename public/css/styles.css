@@ -1930,6 +1930,11 @@ body.is-youtube-view .link-thumbnail[role="button"]:focus-visible {
   outline-offset: 2px;
 }
 
+.offline-library-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.offline-library-row { padding: 20px; overflow-wrap: anywhere; }
+.offline-library-note { white-space: pre-wrap; }
+.offline-library-url { color: var(--secondary-label); font-size: 14px; }
+
 @media (max-width: 1024px) {
   .youtube-action-sheet {
     width: 100%; max-width: none; margin: auto 0 0;

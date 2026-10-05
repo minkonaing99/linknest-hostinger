@@ -1,5 +1,36 @@
 # Release notes
 
+## v3.2 - Offline library access - 2026-10-05
+
+- Settings offers explicit Download library, Refresh download, Remove download, and optional browser persistent storage. Show last successful download, link count, and partial scope. The public offline library view searches downloaded title, URL, tags, notes, and save reason, with a status filter.
+- Read-only downloads exclude article bodies and archived/deleted links. A consistent snapshot endpoint under both API prefixes returns up to 2,000 recently updated links and 25 MiB of UTF-8 JSON, including its envelope. Refresh replaces the entire snapshot; failed fetches or quota/transaction failures keep the old download.
+- IndexedDB v2 preserves capture drafts and adds separate library and metadata stores. Owner/generation guards reject late downloads and stale writes. Blocked upgrades explain how to retry; version changes close connections.
+- Logout, online 401, and verified account changes clear downloads, visible notes, and protected navigation caches across tabs. A pending-cleanup marker prevents failed storage cleanup from exposing old downloads when storage becomes accessible again. Storage failure does not prevent online login/logout or successful navigation.
+- Captures belong to their verified account. Legacy/unowned and other-account drafts stay hidden behind generic Claim after sign in controls; only matching-owner drafts sync automatically. Expected-user headers reject cookie/account races before server reads/writes. Clearing the library preserves captures.
+- API requests remain network-only. Protected offline capture shells require matching local identity; the public offline library shell is available after offline restart. Download opt-in explains that remote session expiry cannot revoke local notes while disconnected.
+
+Deployment: deploy backend, all page script lists, new public assets, and service
+worker v35 together over HTTPS (or localhost for development). No dependency,
+SQL, or migration was added or executed for this feature. Earlier features still
+require their applicable manual SQL when absent. Keep the shared IndexedDB v2
+opener during rollback; do not downgrade the opener to v1 or remove unsynced
+captures. Disable the library interface if rolling back without compatible
+storage/authentication cleanup.
+
+Validation: all 474 tests pass. Overall coverage is 90.50% lines, 86.85% branches,
+and 91.38% functions. Snapshot domain coverage is 100% on all three measures;
+snapshot routes have 100% lines/functions and 87.50% branches. Offline UI,
+shared storage, capture queue, and service worker exceed 80% on all three
+measures. Quota/commit rollback, blocked upgrades, eviction, owner/generation
+races, safe rendering, and storage failures during authentication/navigation
+are covered by runnable behavior tests. Code and security review findings were
+fixed. Real-browser smoke could not run:
+no browser integration was available and Computer Use denied Safari access.
+Native IndexedDB/service-worker behavior, mobile layout, cross-tab logout,
+offline restart, and live MySQL snapshot consistency remain deployment checks;
+automated verification uses DOM, transaction/state, and worker mocks. No
+production data was accessed during the attempted disposable browser fixture.
+
 ## v3.2 - Toast Undo for archive/status - 2026-10-05
 
 - Archive/status controls in the library, review, command search, YouTube actions, and bulk selection offer Undo in a 15-second toast. Hover/focus pauses dismissal, bounded by the server's 10-minute undo expiry. Editor status handles survive navigation through per-tab metadata.

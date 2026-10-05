@@ -4,9 +4,10 @@ async function linkNestApiFetch(url, options = {}) {
     ...options,
   });
 
-  if (res.status === 401) {
+  if (res.status === 401 || (res.status === 409 && options.headers?.['X-LinkNest-User-ID'])) {
     window.LinkNest?.clearUndo?.();
-    window.location.href = '/login.html';
+    try { await window.LinkNestOfflineStore?.invalidate('authentication'); }
+    finally { window.location.href = '/login.html'; }
     throw new Error('Authentication required');
   }
 
@@ -57,7 +58,11 @@ window.LinkNest = {
   },
 
   async logout() {
+    window.LinkNest.loggingOut = true;
     window.LinkNest.clearUndo?.();
+    try { await window.LinkNestOfflineStore?.invalidate('logout'); }
+    catch { window.LinkNest.showToast('Offline storage could not be cleared. Close other tabs and clear site data.', 'error'); }
+    navigator.serviceWorker?.controller?.postMessage('linknest-clear-private-data');
     try {
       await fetch('/api/logout', {
         method: 'POST',
@@ -68,6 +73,14 @@ window.LinkNest = {
     }
   },
 };
+
+window.addEventListener('linknest:offline-invalidated', () => {
+  window.LinkNest.clearUndo?.();
+  if (!window.LinkNest.loggingOut && !['login', 'offline', 'offline-library'].includes(document.body.dataset.page)) {
+    document.body.hidden = true;
+    window.location.href = '/login.html';
+  }
+});
 
 function renderUnreadBadge(count) {
   const badge = document.getElementById('unread-badge');
@@ -360,7 +373,7 @@ function handleCommandInputKey(event) {
 }
 
 function setupCommandSearch(logoutButton) {
-  if (document.body.dataset.page === 'login' || !logoutButton) return;
+  if (['login', 'offline-library'].includes(document.body.dataset.page) || !logoutButton) return;
   const dialog = buildCommandDialog();
   const open = document.createElement('button');
   open.type = 'button'; open.className = 'button button--ghost button--small command-open-button';
@@ -379,10 +392,16 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   setupCommandSearch(logoutButton);
-  if (!['home', 'login', 'offline'].includes(document.body.dataset.page)) updateUnreadBadge();
+  if (!['home', 'login', 'offline', 'offline-library'].includes(document.body.dataset.page)) updateUnreadBadge();
 });
 
 if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', event => {
+    if (event.data === 'linknest-offline-invalidated') {
+      window.LinkNest.clearUndo?.();
+      window.dispatchEvent(new CustomEvent('linknest:offline-invalidated'));
+    }
+  });
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
   });
