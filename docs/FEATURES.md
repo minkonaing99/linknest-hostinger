@@ -134,7 +134,7 @@ that has not shipped.
 ## Next
 
 - All eight features in [V3.2_IMPLEMENTATION_PLAN.md](V3.2_IMPLEMENTATION_PLAN.md) are implemented in source. Real-browser/MySQL deployment verification remains documented per release.
-- Existing databases need the applicable manual SQL in [db-changes.sql](db-changes.sql), including revision/action storage, before running this version.
+- Existing databases need the applicable manual SQL in [new-changes-db.sql](new-changes-db.sql), including revision/action storage, before running this version.
 
 ## Deferred
 

@@ -42,7 +42,7 @@ production data was accessed during the attempted disposable browser fixture.
 
 Deployment: back up the database, then manually apply only the new `revision`
 ALTER and `link_actions`/`link_action_items` CREATE queries in
-[db-changes.sql](db-changes.sql). Do not reapply earlier ALTERs when columns exist.
+[new-changes-db.sql](new-changes-db.sql). Do not reapply earlier ALTERs when columns exist.
 Deploy backend and web assets/service-worker v34 together. No SQL or migration
 was executed during implementation; no dependency was added. Older application
 versions do not increment revisions: expire/remove all temporary actions before
@@ -68,7 +68,7 @@ review found no remaining defects.
 - Complete JSON version 3 backups include all history per link from a repeatable-read snapshot. Validated imports restore IDs and times atomically for new links, attribute events to the current importer, and append Imported. Duplicate links skip their histories; conflicts roll back and count invalid. Legacy arrays/version 2 remain compatible.
 
 Deployment: back up the database, then manually apply the new
-`CREATE TABLE IF NOT EXISTS link_events` query in [db-changes.sql](db-changes.sql).
+`CREATE TABLE IF NOT EXISTS link_events` query in [new-changes-db.sql](new-changes-db.sql).
 Do not reapply earlier ALTER queries when their columns already exist. Deploy
 backend and web assets/service worker v33 together after the table exists.
 Fresh-install schema includes the table. No SQL, migration, or new dependency
@@ -97,7 +97,7 @@ grouping.
 
 Deployment: deploy backend, editor HTML, JavaScript, CSS, and service worker
 cache v32 together. No new SQL is needed. Earlier save-reason and reading-position
-columns still require manual setup when absent; see [db-changes.sql](db-changes.sql).
+columns still require manual setup when absent; see [new-changes-db.sql](new-changes-db.sql).
 Rollback restores those application files together without changing data.
 Automated ranking, limits, authorization, DOM safety, confirmation, retries,
 keyboard focus, races, and manual relationship regression checks pass. Real-browser
@@ -125,7 +125,7 @@ coverage; editor relationship controls have 100% lines, 82.98% branches, and
   it. Complete JSON version 2 backups and validated imports retain positions.
 
 Deployment: back up the database and manually apply only the new
-`reading_position` ALTER query from [db-changes.sql](db-changes.sql) if the column
+`reading_position` ALTER query from [new-changes-db.sql](new-changes-db.sql) if the column
 is absent. Earlier installations may also need the save-reason query; do not
 reapply a column that already exists. Deploy the backend after the column is
 present, then reload the unpacked extension and accept its added `scripting`
@@ -211,7 +211,7 @@ Review-history events will be added with the future history feature.
 
 ### Deployment
 
-1. Back up the database and apply [db-changes.sql](db-changes.sql) manually once
+1. Back up the database and apply [new-changes-db.sql](new-changes-db.sql) manually once
    to an existing installation before starting the new backend.
 2. Deploy the application and reload the unpacked browser extension to load its
    updated popup. The web service-worker cache changes from v29 to v30.

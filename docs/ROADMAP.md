@@ -2,6 +2,8 @@
 
 Last updated: 2026-06-01
 
+> **Status (2026-10-06): historical.** Most items here have shipped (notes, duplicate detection, tests, activity history, import quality, API tokens). Current state lives in [FEATURES.md](FEATURES.md), deferred work in [FUTURE_PLAN.md](FUTURE_PLAN.md), and active tasks in [PLAN.md](PLAN.md).
+
 This roadmap is based on the current codebase, current product shape, and the gaps that matter most for usefulness.
 
 ## Implementation note

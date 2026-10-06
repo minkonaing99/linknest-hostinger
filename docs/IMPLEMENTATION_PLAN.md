@@ -1,5 +1,7 @@
 # Implementation Plan: Duplicate Detection, Auth Tests, Scoped Tokens, Browser Extension
 
+> **Status: completed 2026-06-01 (historical).** All four phases shipped. See [PLAN.md](PLAN.md) for current work.
+
 Created: 2026-06-01
 
 ## Branch
