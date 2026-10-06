@@ -19,7 +19,7 @@ See [FEATURES.md](FEATURES.md) for shipped capabilities.
 
 Save reasons, selective Markdown exports, extension clipboard capture, reading
 positions, related-link suggestions, review history, toast Undo, and offline library access are implemented in source. Existing databases require the manual
-SQL in [db-changes.sql](db-changes.sql) before deployment; see
+SQL in [new-changes-db.sql](new-changes-db.sql) before deployment; see
 [release_notes.md](release_notes.md).
 
 All eight requested features are now implemented.

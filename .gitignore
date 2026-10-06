@@ -36,5 +36,9 @@ coverage/
 start-link-vault.sh
 stop-link-vault.sh
 
-# Claude Code
+# Claude
 CLAUDE.md
+.claude/
+
+# graphify
+graphify-out/

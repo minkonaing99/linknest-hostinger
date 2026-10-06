@@ -76,7 +76,7 @@ Position saves update only the JSON column, preserving review and open metrics.
 URL edits compare the live database URL and clear position before assigning a
 different URL, in the same UPDATE. Soft archive retains it; hard delete removes
 it. Complete JSON backups and import previews carry validated embedded positions;
-legacy records default to null. SQL was added to query-only `db-changes.sql` and
+legacy records default to null. SQL was added to query-only `new-changes-db.sql` and
 the fresh-install schema, without a migration runner or database execution.
 
 `lib/router.js` receives each request and decides:
@@ -190,7 +190,7 @@ new draft's reason.
 `links.save_reason` and maps it back to `saveReason`. Partial updates retain an
 omitted reason; an empty string clears it. Reason changes never set meaningful
 or useful-review milestones. Home/library cards render it as text separately
-from notes. Existing databases need the manual [SQL update](db-changes.sql).
+from notes. Existing databases need the manual [SQL update](new-changes-db.sql).
 
 ### User action
 
@@ -762,7 +762,7 @@ Each batch reports imported, duplicate, and invalid counts, including conflicts
 created after preview. JSON imports restore complete link-record fields and
 manual relationships and save reasons. Legacy JSON arrays remain accepted;
 records without `saveReason` default to empty text. Importing reasons requires
-the `save_reason` column included in the manual [SQL update](db-changes.sql).
+the `save_reason` column included in the manual [SQL update](new-changes-db.sql).
 
 History follows each ready link through the same existing preview and 100-link
 batch workflow. The server validates event IDs, types, canonical ISO timestamps,

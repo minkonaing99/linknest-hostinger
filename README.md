@@ -1,6 +1,6 @@
-# Link Nest · v1.3.0
+# Link Nest · v3.2
 
-Last updated: 2026-06-01
+Last updated: 2026-10-06
 
 Link Nest is a private website for saving, organizing, and revisiting useful links in one clean library.
 
@@ -22,7 +22,13 @@ You can:
 - bulk-select links and change their status or delete them at once
 - set a reminder date on any link to revisit it later
 - surface due reminders and stale unread links with one-tap filters
-- export data as JSON
+- export data as JSON, CSV, or Markdown (whole library, current view, or selection)
+- record why you saved a link, separately from notes
+- review a five-link queue that ends each link with a decision
+- undo archive and status changes from a 15-second toast
+- see per-link history and suggested related links in the editor
+- capture from the browser extension (current tab, clipboard, or selection) and save reading position
+- download the library for read-only offline access and queue captures while offline
 - use the same backend for both the website and future mobile clients
 
 ## Main Pages
@@ -108,6 +114,13 @@ Key fields include:
 - `lastOpenedAt`
 - `openedCount`
 - `remindAt`
+- `notes`
+- `saveReason`
+- `readingPosition`
+- `firstMeaningfulAt`, `firstUsefulAt`, `lastUsefulReviewedAt`
+- `revision`
+
+The full schema is in [docs/SCHEMA.md](./docs/SCHEMA.md) and [docs/full-db.sql](./docs/full-db.sql).
 
 ## Authentication Modes
 
@@ -137,6 +150,9 @@ Main API groups:
 - tag usage counts (`GET /api/tags`)
 - title fetching
 - import and export
+- review history, undo actions, reading position, related links, suggestions
+- offline library snapshot
+- scoped API tokens
 
 Full API details are documented in [docs/API.md](./docs/API.md). To capture links
 from the iOS share sheet, follow the
@@ -152,3 +168,16 @@ Link Nest is intended to be more than a simple bookmark page. The long-term dire
 - sync-friendly data handling
 
 That makes the current website a usable product on its own while also serving as the backend foundation for future iOS development.
+
+## Documentation
+
+| Topic | File |
+| --- | --- |
+| Product + app flow | [docs/PRD.md](./docs/PRD.md) |
+| Architecture, ADRs, security | [docs/TECH.md](./docs/TECH.md) |
+| Schema + API summary | [docs/SCHEMA.md](./docs/SCHEMA.md) |
+| UI/UX design | [docs/DESIGN.md](./docs/DESIGN.md) |
+| Plan + tasks | [docs/PLAN.md](./docs/PLAN.md) |
+| Setup, testing, changelog | [docs/SETUP.md](./docs/SETUP.md) |
+| Full API reference | [docs/API.md](./docs/API.md) |
+| Release notes | [docs/release_notes.md](./docs/release_notes.md) |

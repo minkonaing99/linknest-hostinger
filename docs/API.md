@@ -1231,51 +1231,105 @@ Behavior:
 - missing or invalid links are skipped
 - imported bookmark items default to `status: saved`
 
-## Link health checking
+## Duplicate scan
 
-### Check saved links for reachability
+### Find likely duplicate pairs across the library
 
 ```http
-GET /api/links/check-health
+GET /api/links/scan-duplicates
 ```
 
-Optional query params:
+Behavior:
 
-- `limit` (default `100`, max `200`)
+- scans up to 2,000 non-deleted links
+- compares titles (or URLs when a title is empty) only within the same host
+- returns pairs with Jaro-Winkler similarity of `0.75` or higher, highest first
 
 Success response:
 
 ```json
 {
-  "total": 3,
-  "broken": 1,
-  "checks": [
+  "pairs": [
     {
-      "id": "id-1",
-      "url": "https://example.com",
-      "title": "Example",
-      "ok": true,
-      "status": 200
-    },
+      "a": { "id": "id-1", "url": "https://example.com/a", "title": "Example guide" },
+      "b": { "id": "id-2", "url": "https://example.com/b", "title": "Example guide v2" },
+      "similarity": 0.94
+    }
+  ],
+  "total": 1
+}
+```
+
+## API tokens
+
+Scoped tokens for shortcuts, the browser extension, and scripts. Send them as
+`Authorization: Bearer <token>`. Read-scoped tokens receive `403` on
+`POST`, `PUT`, `PATCH`, and `DELETE`.
+
+### List tokens
+
+```http
+GET /api/tokens
+```
+
+```json
+{
+  "tokens": [
     {
-      "id": "id-2",
-      "url": "https://bad.example",
-      "title": "Bad",
-      "ok": false,
-      "status": 0,
-      "error": "timeout"
+      "id": "token-id",
+      "name": "iPhone Shortcut",
+      "scope": "write",
+      "createdAt": "2026-10-05T00:00:00.000Z",
+      "lastUsedAt": null,
+      "expiresAt": null,
+      "revokedAt": null
     }
   ]
 }
 ```
 
-Behavior:
+The raw token value is never returned after creation.
 
-- checks active links only
-- uses `HEAD` requests with redirect following
-- times out each request after about 7 seconds
-- blocks private or reserved targets before making the request
-- possible error values include `blocked`, `timeout`, `unreachable`, and `failed`
+### Create a token
+
+```http
+POST /api/tokens
+Content-Type: application/json
+```
+
+```json
+{
+  "name": "iPhone Shortcut",
+  "scope": "write",
+  "expiresAt": "2027-01-01T00:00:00.000Z"
+}
+```
+
+- `name` is required, 100 characters max
+- `scope` is `read` or `write` (default `write`)
+- `expiresAt` is optional
+
+Response `201`:
+
+```json
+{ "ok": true, "token": "raw-token-shown-once", "name": "iPhone Shortcut", "scope": "write" }
+```
+
+### Revoke a token
+
+```http
+DELETE /api/tokens/:id
+```
+
+Returns `{ "ok": true }`, or `404` when the token is missing or already revoked.
+
+## Health check
+
+```http
+GET /api/health
+```
+
+Public. Returns `{ "ok": true }` without touching the database.
 
 ## Common errors
 
@@ -1295,6 +1349,7 @@ Common status codes:
 - `401` authentication required or invalid credentials
 - `404` resource not found
 - `409` duplicate or conflicting resource
+- `403` read-only API token used on a write endpoint
 - `429` too many login attempts
 - `500` internal server error
 
