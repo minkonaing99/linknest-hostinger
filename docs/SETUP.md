@@ -35,7 +35,7 @@ On first start the server creates the admin user from `LINKNEST_ADMIN_USERNAME` 
 
 | Key | Required | Default | Description |
 | --- | --- | --- | --- |
-| `DB_HOST` | no | `localhost` | MySQL host (Hostinger: `localhost`) |
+| `DB_HOST` | no | `localhost` | MySQL host (Hostinger Node.js: `127.0.0.1`; `localhost` can resolve to IPv6) |
 | `DB_PORT` | no | `3306` | MySQL port |
 | `DB_NAME` | yes | - | database name |
 | `DB_USER` | yes | - | database user |
@@ -116,7 +116,19 @@ history, with deployment and validation notes, lives in [release_notes.md](relea
 
 Current version: **v3.2** (`package.json` still says `0.2.0`, see [PLAN.md](PLAN.md)).
 
-### [3.2.0] - 2026-10-06 (unreleased to production)
+### [3.2.0] - 2026-10-07
+
+#### Deployed
+- Production: https://link-nest.merxylab.com upgraded v3.0 -> v3.2 (Hostinger
+  Node.js, Node 22, git `main` @ `deffc14`). Database `u580993728_newlinknest`
+  backed up, then upgraded in place with idempotent `ADD COLUMN IF NOT EXISTS` /
+  `CREATE TABLE IF NOT EXISTS` statements equivalent to `new-changes-db.sql`.
+- Parallel fresh install at https://links.merxylab.com (database
+  `u580993728_links`), pending removal by the owner.
+
+#### Fixed
+- `docs/full-db.sql` no longer fails on a fresh database: removed trailing
+  `ALTER TABLE` statements that re-added columns already in `CREATE TABLE links`.
 
 #### Added
 - Save reasons, selective Markdown export, extension clipboard capture,
