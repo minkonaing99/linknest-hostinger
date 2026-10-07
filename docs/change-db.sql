@@ -1,1 +1,0 @@
--- Run manually in Hostinger phpMyAdmin before deploying application changes.
