@@ -197,6 +197,7 @@ body.is-selecting.collection-page .library-results .library-row.has-thumbnail {
 }
 
 @media (max-width: 520px) {
+  .library-toolbar { display: none; }
   .collection-page .library-results .library-row.is-pinned {
     margin-left: calc(-1 * var(--library-gutter-left));
     margin-right: calc(-1 * var(--library-gutter-right));
