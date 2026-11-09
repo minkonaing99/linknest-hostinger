@@ -206,13 +206,13 @@ body.is-selecting.collection-page .library-results .library-row.has-thumbnail {
     border-radius: 0;
   }
   body.is-youtube-view .library-results .library-row.is-pinned:where(:not(.is-selected)) { background: #f2faf5; }
-  body:not(.is-review-view, .is-youtube-view, .is-selecting) .library-results .library-row:has(.status-dot--unread) {
+  body:not(.is-youtube-view, .is-selecting) .library-results .library-row {
     grid-template-columns: minmax(0, 1fr) auto;
   }
-  body:not(.is-review-view, .is-youtube-view, .is-selecting) .library-results .library-row.has-thumbnail:has(.status-dot--unread) {
+  body:not(.is-youtube-view, .is-selecting) .library-results .library-row.has-thumbnail {
     grid-template-columns: 104px minmax(0, 1fr) auto;
   }
-  body:not(.is-review-view) .library-results .library-row__status:has(.status-dot--unread) { display: none; }
+  .library-results .library-row__status { display: none; }
 }
 
 @media (any-pointer: coarse) {
