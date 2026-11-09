@@ -373,6 +373,7 @@ function enterSelectMode() {
   document.body.classList.add('is-selecting');
   bulkBar.classList.remove('hidden');
   selectToggleBtn.textContent = 'Done';
+  selectToggleBtn.title = 'Done selecting';
   updateBulkBar();
 }
 
@@ -382,6 +383,7 @@ function exitSelectMode() {
   document.body.classList.remove('is-selecting');
   bulkBar.classList.add('hidden');
   selectToggleBtn.textContent = 'Select';
+  selectToggleBtn.title = 'Select links';
   document.querySelectorAll('.library-row.is-selected').forEach(r => r.classList.remove('is-selected'));
   updateExportControls();
 }

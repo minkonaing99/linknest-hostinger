@@ -49,6 +49,33 @@ describe('homepage workflow', () => {
     assert.equal(scope.deleteAllBtn.disabled, false);
   });
 
+  it('keeps Archive busy until loading finishes and offers retry after a failed initial request', async () => {
+    const start = archiveScript.indexOf('async function fetchPage(');
+    const fetchPage = archiveScript.slice(start, archiveScript.indexOf('\n}\n', start) + 2);
+    const classes = () => {
+      const hidden = new Set(['hidden']);
+      return { add: value => hidden.add(value), remove: value => hidden.delete(value), contains: value => hidden.has(value) };
+    };
+    const archiveLoading = { classList: classes() };
+    const archiveError = { classList: classes() };
+    const attrs = {};
+    let finish;
+    const scope = {
+      state: { page: 0, links: [] }, LIMIT: 50, URLSearchParams, archiveLoading, archiveError,
+      linkList: { setAttribute: (name, value) => { attrs[name] = value; } }, loadMoreBtn: null,
+      window: { LinkNest: { apiFetch: () => new Promise(resolve => { finish = resolve; }) } },
+    };
+    const pending = vm.runInNewContext(`${fetchPage}\nfetchPage(1);`, scope);
+    assert.equal(archiveLoading.classList.contains('hidden'), false);
+    assert.equal(attrs['aria-busy'], 'true');
+    finish({ ok: false, json: async () => ({}) });
+    await pending;
+    assert.equal(archiveLoading.classList.contains('hidden'), true);
+    assert.equal(archiveError.classList.contains('hidden'), false);
+    assert.equal(attrs['aria-busy'], 'false');
+    assert.equal(scope.state.loading, false);
+  });
+
   it('orders review, recent links, then secondary measurement', () => {
     const review = html.indexOf('id="review-links"');
     const recent = html.indexOf('id="recent-links"');

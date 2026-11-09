@@ -37,7 +37,6 @@
         <div class="library-intro">
           <div class="page-heading">
             <h1 class="page-title">Library</h1>
-            <p class="page-subtitle">Find saved links and revisit what matters.</p>
           </div>
           <a class="button library-add" href="/editor.html"><span aria-hidden="true">+</span> Add link</a>
         </div>
@@ -75,10 +74,10 @@
           </div>
           <aside class="library-filters" aria-label="Library filters">
             <div class="quick-filter-row" role="group" aria-label="Quick filters">
-              <button type="button" class="button button--ghost button--small quick-filter-btn" aria-pressed="false" data-filter="remind">Due to revisit</button>
-              <button type="button" class="button button--ghost button--small quick-filter-btn" aria-pressed="false" data-filter="review">Review queue</button>
-              <button type="button" class="button button--ghost button--small quick-filter-btn" aria-pressed="false" data-filter="age">Older than 90 days</button>
-              <button type="button" class="button button--ghost button--small quick-filter-btn" aria-pressed="false" data-filter="youtube">YouTube</button>
+              <button type="button" class="button button--ghost button--small quick-filter-btn" title="Due to revisit" aria-pressed="false" data-filter="remind">Due to revisit</button>
+              <button type="button" class="button button--ghost button--small quick-filter-btn" title="Review queue" aria-pressed="false" data-filter="review">Review queue</button>
+              <button type="button" class="button button--ghost button--small quick-filter-btn" title="Older than 90 days" aria-pressed="false" data-filter="age">Older than 90 days</button>
+              <button type="button" class="button button--ghost button--small quick-filter-btn" title="YouTube" aria-pressed="false" data-filter="youtube">YouTube</button>
             </div>
           </aside>
 
@@ -91,7 +90,7 @@
               </div>
               <div class="browse-actions">
                 <button type="button" id="export-view-btn" class="button button--ghost" disabled>Export current view</button>
-                <button type="button" id="select-toggle-btn" class="button button--ghost">Select</button>
+                <button type="button" id="select-toggle-btn" class="button button--ghost" title="Select links">Select</button>
               </div>
             </div>
             <p id="export-message" class="form-message" role="status" aria-live="polite"></p>

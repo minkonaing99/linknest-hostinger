@@ -1,5 +1,5 @@
 const LIMIT = 50;
-const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false };
+const state = { links: [], page: 0, totalPages: 1, total: 0, loading: false };
 
 const linkList    = document.getElementById('link-list');
 const template    = document.getElementById('archive-template');
@@ -8,6 +8,8 @@ const totalCount  = document.getElementById('total-count');
 const loadMoreWrap = document.getElementById('load-more-wrap');
 const loadMoreBtn  = document.getElementById('load-more');
 const deleteAllBtn = document.getElementById('delete-all-btn');
+const archiveLoading = document.getElementById('archive-loading');
+const archiveError = document.getElementById('archive-load-error');
 let deletingAll = false;
 
 function safeHost(url) {
@@ -84,6 +86,11 @@ function render(items) {
 async function fetchPage(page, append = false) {
   if (state.loading) return;
   state.loading = true;
+  const initialLoad = state.page === 0;
+  const loadMoreLabel = loadMoreBtn?.textContent;
+  linkList.setAttribute('aria-busy', 'true');
+  archiveError?.classList.add('hidden');
+  if (initialLoad) archiveLoading?.classList.remove('hidden');
   if (loadMoreBtn) { loadMoreBtn.textContent = 'Loading…'; loadMoreBtn.disabled = true; }
 
   try {
@@ -96,9 +103,16 @@ async function fetchPage(page, append = false) {
     state.totalPages = data.pages;
     state.total = data.total;
     render(state.links);
-  } catch (err) {
-    console.error(err);
+  } catch {
+    if (initialLoad && archiveError) archiveError.classList.remove('hidden');
+    else window.LinkNest.showToast('Could not load deleted links.');
+    if (loadMoreBtn) {
+      loadMoreBtn.textContent = loadMoreLabel;
+      loadMoreBtn.disabled = false;
+    }
   } finally {
+    archiveLoading?.classList.add('hidden');
+    linkList.setAttribute('aria-busy', 'false');
     state.loading = false;
   }
 }
@@ -106,6 +120,7 @@ async function fetchPage(page, append = false) {
 if (loadMoreBtn) {
   loadMoreBtn.addEventListener('click', () => fetchPage(state.page + 1, true));
 }
+document.getElementById('archive-retry')?.addEventListener('click', () => fetchPage(1));
 
 if (window.LinkNest.initPullToRefresh) {
   window.LinkNest.initPullToRefresh(() => fetchPage(1, false));

@@ -352,6 +352,7 @@ function setupCommandSearch(logoutButton) {
   const open = document.createElement('button');
   open.type = 'button'; open.className = 'button button--ghost button--small command-open-button';
   open.textContent = 'Search'; open.setAttribute('aria-keyshortcuts', '/ Meta+K Control+K');
+  open.title = 'Search';
   open.addEventListener('click', () => { dialog.showModal(); document.getElementById('command-search-input').focus(); });
   logoutButton.before(open);
 }
@@ -359,6 +360,7 @@ function setupCommandSearch(logoutButton) {
 window.addEventListener('DOMContentLoaded', () => {
   const logoutButton = document.getElementById('logout-button');
   if (logoutButton) {
+    logoutButton.title = 'Logout';
     logoutButton.addEventListener('click', () => {
       window.LinkNest.logout().catch(() => {
         window.location.href = '/login.html';

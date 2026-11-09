@@ -36,7 +36,6 @@
         <div class="library-intro">
           <div class="page-heading">
             <h1 class="page-title">Archive</h1>
-            <p class="page-subtitle">Restore deleted links to your library or remove them permanently.</p>
           </div>
         </div>
 
@@ -44,11 +43,20 @@
           <div class="section-header">
             <div>
               <h2 class="section-title" id="archive-heading">Deleted links</h2>
-              <p class="section-copy" role="status"><span id="total-count">0</span> total</p>
+              <p class="section-copy" role="status"><span id="total-count">—</span> total</p>
             </div>
             <button type="button" id="delete-all-btn" class="button button--ghost button--danger" disabled>Delete all permanently</button>
           </div>
-          <div id="link-list" class="list-stack list-stack--tight list-stack--rows"></div>
+          <div id="archive-loading" class="list-stack list-stack--rows" role="status" aria-label="Loading deleted links">
+            <div class="skeleton-row" aria-hidden="true"></div>
+            <div class="skeleton-row" aria-hidden="true"></div>
+            <div class="skeleton-row" aria-hidden="true"></div>
+          </div>
+          <div id="link-list" class="list-stack list-stack--tight list-stack--rows" aria-busy="true"></div>
+          <div id="archive-load-error" class="empty-state hidden">
+            <p role="alert">Could not load deleted links.</p>
+            <button type="button" id="archive-retry" class="button button--ghost">Try again</button>
+          </div>
           <div id="load-more-wrap" class="load-more-wrap hidden">
             <button type="button" id="load-more" class="button button--ghost">Load more</button>
           </div>
