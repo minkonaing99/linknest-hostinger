@@ -40,14 +40,16 @@ function element() {
 }
 
 it('editor capture, editing, and offline draft recovery preserve separate save reasons', async () => {
-  const els = Object.fromEntries(['id', 'title', 'url', 'date', 'status', 'tags', 'notes', 'saveReason', 'remindAt', 'formHeading', 'pageTitle', 'submitButton', 'message'].map(name => [name, element()]));
+  const els = Object.fromEntries(['id', 'title', 'url', 'date', 'status', 'tags', 'notes', 'saveReason', 'remindAt', 'formHeading', 'submitButton', 'message'].map(name => [name, element()]));
   const item = { id: 'one', url: 'https://example.com', saveReason: 'For my exam', notes: 'Takeaway', tags: [] };
   const { payload, loadForEdit, loadOfflineDraft } = loadFunctions('public/js/editor.js', ['payload', 'loadForEdit', 'loadOfflineDraft'], {
-    els, loadedItem: null, queryParam: () => 'one', thailandDate: () => '2026-10-05',
+    els, queryParam: () => 'one', thailandDate: () => '2026-10-05',
     parseTags: () => [], setMessage() {}, apiFetch: async () => ({ ok: true, json: async () => ({ entry: item }) }),
     window: { LinkNestOffline: { listCaptures: async () => [item] } },
   });
   await loadForEdit();
+  assert.equal(els.formHeading.textContent, 'Edit link');
+  assert.equal(els.submitButton.textContent, 'Save changes');
   assert.equal(els.saveReason.value, item.saveReason);
   els.saveReason.value = '  New intent  ';
   assert.equal(payload().saveReason, 'New intent');
@@ -62,8 +64,9 @@ it('Quick Add snapshots capture intent before requests and carries it through du
   const saved = [], queued = [], duplicates = [];
   let candidates = [];
   const navigator = { onLine: true };
+  const quickAddSubmit = element();
   const { saveQuickAdd } = loadFunctions('public/js/home.js', ['saveQuickAdd'], {
-    navigator, quickAddReason, quickAddUrl: element(), quickAddPaste: element(), quickAddMessage: element(),
+    navigator, quickAddReason, quickAddUrl: element(), quickAddPaste: element(), quickAddMessage: element(), quickAddSubmit,
     quickAddForm: { reset() { quickAddReason.value = ''; } },
     setMessage() {}, thailandDate: () => '2026-10-05',
     fetchTitleMetadata: async url => { quickAddReason.value = 'Changed while loading'; return { url, title: 'Article' }; },
@@ -73,7 +76,12 @@ it('Quick Add snapshots capture intent before requests and carries it through du
     shouldQueueOffline: () => false,
     window: { LinkNestOffline: { queueCapture: async draft => queued.push(draft) } },
   });
-  await saveQuickAdd('https://example.com');
+  const saving = saveQuickAdd('https://example.com');
+  assert.equal(quickAddSubmit.disabled, true);
+  await saveQuickAdd('https://example.net');
+  await saving;
+  assert.equal(quickAddSubmit.disabled, false);
+  assert.equal(saved.length, 1);
   assert.equal(saved[0].saveReason, 'For my project');
   candidates = [{ exact: false }];
   quickAddReason.value = 'Duplicate intent';
@@ -116,6 +124,30 @@ it('home and library review cards render reason as plain text, separately from n
   buildRow(item);
   assert.equal(library.querySelector('.save-reason').textContent, 'Why I saved this: ' + item.saveReason);
   assert.equal(library.querySelector('.library-row__notes').textContent, 'Takeaway');
+});
+
+it('copies the saved URL from the Browse row menu and reports clipboard rejection', async () => {
+  const row = element();
+  const copied = [];
+  const messages = [];
+  const navigator = { clipboard: { async writeText(url) { copied.push(url); } } };
+  const { buildRow } = loadFunctions('public/js/browse.js', ['buildRow'], {
+    navigator, template: { content: { cloneNode: () => row } },
+    state: { selected: new Set(), quickFilter: 'youtube' },
+    applyStatusStyles() {}, setupReviewSwipe() {}, setupReviewNote() {},
+    setupAgeWarning() {}, setupUsefulReview() {}, closeAllMenus() {},
+    window: { LinkNest: { showToast: (...args) => messages.push(args) } },
+  });
+  const item = { id: 'video', host: 'youtube.com', url: 'https://www.youtube.com/watch?v=12345678901' };
+  buildRow(item);
+  row.querySelector('.row-menu').querySelector('.row-menu__trigger').focus = () => {};
+  const click = row.querySelector('.copy-link-button').listeners.click;
+  await click({ stopPropagation() {} });
+  assert.deepEqual(copied, [item.url]);
+  assert.deepEqual(messages, [['Link copied', 'success']]);
+  navigator.clipboard = undefined;
+  await click({ stopPropagation() {} });
+  assert.deepEqual(messages[1], ['Could not copy link']);
 });
 
 it('offline validation, queueing, and sync retain intent and reject invalid reasons', async () => {

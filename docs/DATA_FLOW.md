@@ -352,8 +352,7 @@ and inline retry and restored keyboard focus handle failures and row updates.
 Web library rows, review decisions, YouTube open-and-archive, bulk controls, and
 command search use `LinkNest.performAction()` from `public/js/undo.js`. It sends
 one UUID request ID with a single/bulk action and retries a lost transport/JSON
-reply once with the exact same payload. Useful prompts return a takeaway without
-a separate note-merge write. Editor full-form PUT receives an action handle for
+reply once with the exact same payload. Editor full-form PUT receives an action handle for
 changed status while committing other details in the same transaction.
 
 `lib/link-actions.js` validates the actor, payload, member IDs and note bounds.

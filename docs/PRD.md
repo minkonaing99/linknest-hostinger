@@ -116,7 +116,7 @@ Home compares against a 30-day baseline.
 
 **3. Review**
 1. Home shows a five-link queue (due reminders first, then oldest eligible).
-2. Each card shows save reason; actions: archive, useful (optional takeaway), note, snooze, open.
+2. Each card shows the save reason and offers actions to archive, mark useful, add a note, snooze, or open the link.
 3. Keyboard (Left/Right/Up/N/O) and swipe gestures map to the same actions.
 4. Completion screen after the last item; Undo toast available after archive/status.
 

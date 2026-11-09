@@ -13,35 +13,40 @@
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/img/apple-touch-icon.png" />
     <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/collection.css" />
   </head>
-  <body data-page="archive">
-    <div class="app-shell app-shell--narrow">
-      <header class="page-header">
+  <body class="collection-page" data-page="archive">
+    <div class="app-shell">
+      <header class="page-header library-header">
         <div class="page-bar">
           <div class="page-bar__identity">
-            <img class="brand-mark" src="/img/logo-mark.png" alt="Link Nest logo" />
+            <img class="brand-mark" src="/img/logo-mark.png" alt="" />
             <span class="page-kicker">Link Nest</span>
           </div>
+          <nav class="segmented-nav" aria-label="Primary">
+            <a class="segmented-nav__item" href="/">Home</a>
+            <a class="segmented-nav__item" href="/browse.html">Browse <span class="nav-badge hidden" id="unread-badge"></span></a>
+            <a class="segmented-nav__item is-active" href="/archive.html" aria-current="page">Archive</a>
+          </nav>
           <button type="button" class="button button--ghost button--small button--logout" id="logout-button">Logout</button>
         </div>
-        <nav class="segmented-nav" aria-label="Primary">
-          <a class="segmented-nav__item" href="/">Home</a>
-          <a class="segmented-nav__item" href="/browse.html">Browse <span class="nav-badge hidden" id="unread-badge"></span></a>
-          <a class="segmented-nav__item" href="/editor.html">Add Link</a>
-        </nav>
       </header>
 
-      <main class="page-stack page-stack--airy">
-        <section class="surface surface--soft surface--group">
+      <main class="library-main">
+        <div class="library-intro">
+          <div class="page-heading">
+            <h1 class="page-title">Archive</h1>
+            <p class="page-subtitle">Restore deleted links to your library or remove them permanently.</p>
+          </div>
+        </div>
+
+        <section class="surface surface--group library-panel archive-panel" aria-labelledby="archive-heading">
           <div class="section-header">
             <div>
-              <h2 class="section-title">Archive</h2>
-              <p class="section-copy"><span id="total-count">0</span> deleted links</p>
+              <h2 class="section-title" id="archive-heading">Deleted links</h2>
+              <p class="section-copy" role="status"><span id="total-count">0</span> total</p>
             </div>
-            <div class="browse-actions">
-              <a class="button button--ghost" href="/browse.html">← Browse</a>
-              <button type="button" id="delete-all-btn" class="button button--ghost button--danger">Delete all</button>
-            </div>
+            <button type="button" id="delete-all-btn" class="button button--ghost button--danger" disabled>Delete all permanently</button>
           </div>
           <div id="link-list" class="list-stack list-stack--tight list-stack--rows"></div>
           <div id="load-more-wrap" class="load-more-wrap hidden">
@@ -50,6 +55,20 @@
         </section>
       </main>
     </div>
+
+    <template id="archive-empty-template">
+      <div class="library-empty">
+        <div class="library-empty__art" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="20" height="5" x="2" y="3" rx="1" />
+            <path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4" />
+          </svg>
+        </div>
+        <h3>No deleted links</h3>
+        <p>Links you archive from your library will appear here.</p>
+        <a class="button button--ghost" href="/browse.html">Back to library</a>
+      </div>
+    </template>
 
     <template id="archive-template">
       <article class="library-row">
@@ -70,7 +89,7 @@
         </div>
         <div class="library-row__tail archive-actions">
           <button type="button" class="button button--ghost button--small restore-button">Restore</button>
-          <button type="button" class="button button--ghost button--small button--danger hard-delete-button">Delete</button>
+          <button type="button" class="button button--ghost button--small button--danger hard-delete-button">Delete permanently</button>
         </div>
       </article>
     </template>

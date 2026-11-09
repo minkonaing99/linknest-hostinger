@@ -4,10 +4,57 @@ const { it } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const html = fs.readFileSync(path.join(__dirname, '../views/browse.html'), 'utf8');
 const script = fs.readFileSync(path.join(__dirname, '../public/js/browse.js'), 'utf8');
 const css = fs.readFileSync(path.join(__dirname, '../public/css/styles.css'), 'utf8');
+
+it('gives the library one page heading, labeled filters and an onboarding state', () => {
+  assert.match(html, /<h1[^>]*>Library<\/h1>/);
+  assert.match(html, /href="\/browse\.html"[^>]*aria-current="page"/);
+  assert.match(html, /id="search"[^>]*aria-label="Search saved links"/);
+  assert.match(html, /<label[^>]*for="status-filter"[^>]*>Status<\/label>/);
+  assert.match(html, /<label[^>]*for="sort-mode"[^>]*>Sort by<\/label>/);
+  assert.match(html, /<template id="library-empty-template">[\s\S]*?href="\/editor\.html"/);
+});
+
+it('uses the onboarding state only when the default library view is empty', () => {
+  const start = script.indexOf('function render(items, append = false)');
+  const render = script.slice(start, script.indexOf('\n}\n', start) + 2);
+  for (const filter of ['default', 'search', 'status', 'tag', 'review', 'youtube']) {
+    const onboarding = {};
+    const rendered = [];
+    const scope = {
+      state: { total: 0, links: [], tagFilter: filter === 'tag' ? 'study' : null,
+        quickFilter: ['review', 'youtube'].includes(filter) ? filter : null },
+      searchInput: { value: filter === 'search' ? 'no match' : '' },
+      statusFilter: { value: filter === 'status' ? 'saved' : 'all' },
+      document: { createElement: () => ({}) },
+      emptyTemplate: { content: { cloneNode: () => onboarding } },
+      totalCount: {}, visibleCount: {}, updateExportControls() {},
+      linkList: { appendChild: node => rendered.push(node) },
+    };
+    vm.runInNewContext(`${render}\nrender([]);`, scope);
+    assert.equal(rendered.length, 1);
+    assert.equal(rendered[0] === onboarding, filter === 'default', filter);
+  }
+});
+
+it('renders the empty view after archiving the last matching link', () => {
+  const start = script.indexOf('function removeLinkRow(row, id)');
+  assert.ok(start >= 0);
+  const removeRow = script.slice(start, script.indexOf('\n}\n', start) + 2);
+  const removed = [];
+  const state = { links: [{ id: 'last' }], total: 1 };
+  const group = { querySelector: () => null, remove: () => removed.push('group') };
+  const row = { closest: () => group, remove: () => removed.push('row') };
+  const scope = { state, row, totalCount: {}, visibleCount: {},
+    render: items => removed.push(items.length) };
+  vm.runInNewContext(`${removeRow}\nremoveLinkRow(row, 'last');`, scope);
+  assert.deepEqual(removed, ['row', 'group', 0]);
+  assert.equal(state.total, 0);
+});
 
 it('shows finite review progress and completion state', () => {
   assert.match(html, /id="review-progress"[^>]*role="status"[^>]*aria-live="polite"/);
@@ -16,6 +63,23 @@ it('shows finite review progress and completion state', () => {
   assert.match(script, /Review \$\{current\} of \$\{session\.total\}/);
   assert.match(script, /Review complete/);
   assert.match(script, /You made a decision on all/);
+});
+
+it('disables Browse controls during Review and restores them when leaving', () => {
+  const start = script.indexOf('function updateQuickViewControls()');
+  assert.ok(start >= 0);
+  const update = script.slice(start, script.indexOf('\n}\n', start) + 2);
+  const controls = [{}, {}, {}, {}];
+  const [searchInput, statusFilter, sortModeSelect, selectToggleBtn] = controls;
+  const state = { quickFilter: 'review', selectMode: true };
+  const scope = { state, searchInput, statusFilter, sortModeSelect, selectToggleBtn,
+    quickFilterButtons: [], exitSelectMode: () => { state.selectMode = false; } };
+  vm.runInNewContext(`${update}\nupdateQuickViewControls();`, scope);
+  assert.ok(controls.every(control => control.disabled));
+  assert.equal(state.selectMode, false);
+  state.quickFilter = 'remind';
+  vm.runInNewContext(`${update}\nupdateQuickViewControls();`, scope);
+  assert.ok(controls.every(control => control.disabled === false));
 });
 
 it('asks for a YouTube decision before opening a video', () => {
@@ -118,7 +182,7 @@ it('shows actionable warnings for unresolved links older than 90 days', () => {
 });
 
 it('supports a separate 30-day useful revisit queue', () => {
-  assert.match(html, /data-filter="useful-review">Useful revisit/);
+  assert.doesNotMatch(html, /data-filter="useful-review"/);
   assert.match(html, /class="useful-review-prompt age-warning hidden"/);
   assert.match(html, /class="[^\"]*useful-review-confirm[^\"]*">Still useful/);
   assert.match(html, /class="[^\"]*useful-review-note[^\"]*">Add note/);
@@ -131,14 +195,11 @@ it('supports a separate 30-day useful revisit queue', () => {
   assert.match(script, /Nothing due for useful review/);
 });
 
-it('asks for an optional takeaway across single-link useful actions', () => {
-  assert.match(script, /next === 'useful' \? await window\.LinkNest\.usefulUpdate/);
-  assert.match(script, /if \(!fields\) return;/);
-  assert.match(script, /updateLinkFields\(item, fields\)/);
+it('marks Browse links useful without requesting a takeaway', () => {
+  assert.match(script, /await updateLinkFields\(item, \{ status: 'useful' \}\);[\s\S]{0,50}resolveReviewItem\(item\.id\)/);
+  assert.match(script, /performAction\(\{ kind: 'status', ids: \[item\.id\], status: next \}\)/);
   assert.match(script, /ArrowRight: '\.mark-useful-button'/);
   assert.match(script, /dx >= SWIPE_THRESHOLD[\s\S]{0,120}'\.mark-useful-button'/);
   const editor = fs.readFileSync(path.join(__dirname, '../public/js/editor.js'), 'utf8');
-  assert.match(editor, /draft\.status === 'useful' && loadedItem\?\.status !== 'useful' && !String\(loadedItem\?\.notes \|\| ''\)\.trim\(\) && !draft\.notes/);
-  assert.match(editor, /await window\.LinkNest\.usefulUpdate/);
-  assert.match(editor, /notes: fields\.takeaway \|\| fields\.notes \|\| draft\.notes/);
+  assert.doesNotMatch(editor, /usefulUpdate/);
 });

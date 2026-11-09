@@ -19,6 +19,7 @@ const SORT_MAP = {
 
 const linkList          = document.getElementById('link-list');
 const template          = document.getElementById('link-template');
+const emptyTemplate     = document.getElementById('library-empty-template');
 const totalCount        = document.getElementById('total-count');
 const visibleCount      = document.getElementById('visible-count');
 const searchInput       = document.getElementById('search');
@@ -57,7 +58,7 @@ function updateReviewProgress() {
     linkList.removeAttribute('aria-keyshortcuts');
   }
   reviewProgress.classList.toggle('hidden', !reviewing || !session?.total);
-  libraryCounts.classList.toggle('hidden', reviewing);
+  libraryCounts.classList.toggle('hidden', reviewing && Boolean(session?.total));
   if (!reviewing || !session?.total) return;
   const current = Math.min(session.resolved.size + 1, session.total);
   reviewProgress.textContent = `Review ${current} of ${session.total}`;
@@ -127,12 +128,16 @@ function openYoutubeVideo(item) {
   return trackYoutubeOpen(item);
 }
 
-function removeYoutubeRow(row, id) {
+function removeLinkRow(row, id) {
   const group = row.closest('.date-group');
   row.remove();
   if (group && !group.querySelector('.library-row')) group.remove();
   state.links = state.links.filter(link => link.id !== id);
   state.total = Math.max(0, state.total - 1);
+  if (!state.links.length && !state.total) {
+    render(state.links);
+    return;
+  }
   totalCount.textContent = String(state.total);
   visibleCount.textContent = String(state.links.length);
 }
@@ -167,7 +172,7 @@ async function openAndArchiveYoutube() {
   try {
     await tracked;
     await window.LinkNest.performAction({ kind: 'archive', ids: [item.id] });
-    removeYoutubeRow(row, item.id);
+    removeLinkRow(row, item.id);
     youtubeActionState = { ...youtubeActionState, invoker: linkList };
     dialog.close();
     window.LinkNest.updateUnreadBadge();
@@ -634,10 +639,8 @@ function buildRow(item) {
     const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
     statusDot.classList.add('status-dot--transitioning');
     try {
-      const fields = next === 'useful' ? await window.LinkNest.usefulUpdate(state.links.find(link => link.id === item.id) || item) : { status: next };
-      if (!fields) return;
-      const data = await window.LinkNest.performAction({ kind: 'status', ids: [item.id], ...fields });
-      const updated = data.entries?.[0] || { ...item, ...fields };
+      const data = await window.LinkNest.performAction({ kind: 'status', ids: [item.id], status: next });
+      const updated = data.entries?.[0] || { ...item, status: next };
       state.links = state.links.map(link => link.id === item.id ? updated : link);
       const note = rowArticle.querySelector('.library-row__notes');
       note.textContent = updated.notes || '';
@@ -749,9 +752,7 @@ function buildRow(item) {
     event.stopPropagation();
     if (!beginRowAction(rowArticle)) return;
     try {
-      const fields = await window.LinkNest.usefulUpdate(state.links.find(link => link.id === item.id) || item);
-      if (!fields) return;
-      await updateLinkFields(item, fields);
+      await updateLinkFields(item, { status: 'useful' });
       resolveReviewItem(item.id);
     }
     catch (err) { window.LinkNest.showToast(err.message); }
@@ -798,13 +799,7 @@ function buildRow(item) {
         resolveUsefulItem(item.id);
         return;
       }
-      const group = rowArticle.closest('.date-group');
-      rowArticle.remove();
-      if (!group.querySelector('.library-row')) group.remove();
-      state.links = state.links.filter(link => link.id !== item.id);
-      state.total = Math.max(0, state.total - 1);
-      totalCount.textContent = String(state.total);
-      visibleCount.textContent = String(state.links.length);
+      removeLinkRow(rowArticle, item.id);
     } catch (err) {
       window.LinkNest.showToast(err.message);
     } finally {
@@ -830,6 +825,19 @@ function buildRow(item) {
     row.classList.toggle('is-menu-open', willOpen);
   });
   popover.addEventListener('click', event => event.stopPropagation());
+  const copyButton = node.querySelector('.copy-link-button');
+  copyButton?.addEventListener('click', async event => {
+    event.stopPropagation();
+    closeAllMenus();
+    trigger.focus();
+    try {
+      await navigator.clipboard.writeText(item.url);
+      window.LinkNest.showToast('Link copied', 'success');
+    } catch {
+      window.LinkNest.showToast('Could not copy link');
+    }
+  });
+  copyButton?.classList.remove('hidden');
 
   return node;
 }
@@ -842,6 +850,10 @@ function render(items, append = false) {
   if (!append) {
     linkList.innerHTML = '';
     if (!items.length) {
+      if (emptyTemplate && !state.quickFilter && !state.tagFilter && !searchInput.value.trim() && statusFilter.value === 'all') {
+        linkList.appendChild(emptyTemplate.content.cloneNode(true));
+        return;
+      }
       const empty = document.createElement('div');
       empty.className = 'empty-state';
       empty.textContent = state.quickFilter === 'review'
@@ -1019,8 +1031,22 @@ bulkSelectAllBtn.addEventListener('click', () => {
   updateBulkBar();
 });
 
-document.querySelectorAll('.quick-filter-btn').forEach(btn => {
-  btn.classList.toggle('is-active', btn.dataset.filter === state.quickFilter);
+const quickFilterButtons = document.querySelectorAll('.quick-filter-btn');
+function updateQuickViewControls() {
+  const reviewing = state.quickFilter === 'review';
+  if (reviewing && state.selectMode) exitSelectMode();
+  for (const control of [searchInput, statusFilter, sortModeSelect, selectToggleBtn]) {
+    control.disabled = reviewing;
+  }
+  quickFilterButtons.forEach(button => {
+    const active = button.dataset.filter === state.quickFilter;
+    button.classList.toggle('is-active', active);
+    button.setAttribute('aria-pressed', String(active));
+  });
+}
+
+updateQuickViewControls();
+quickFilterButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     const filter = btn.dataset.filter;
     const active = state.quickFilter === filter;
@@ -1028,7 +1054,7 @@ document.querySelectorAll('.quick-filter-btn').forEach(btn => {
     state.reviewSession = null;
     document.body.classList.toggle('is-youtube-view', state.quickFilter === 'youtube');
     document.body.classList.toggle('is-review-view', state.quickFilter === 'review');
-    document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.toggle('is-active', b.dataset.filter === state.quickFilter));
+    updateQuickViewControls();
     fetchPage(1);
   });
 });

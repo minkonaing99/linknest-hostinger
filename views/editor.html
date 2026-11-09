@@ -13,45 +13,43 @@
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/img/apple-touch-icon.png" />
     <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/collection.css" />
   </head>
-  <body data-page="editor">
-    <div class="app-shell app-shell--narrow">
-      <header class="page-header">
+  <body class="collection-page" data-page="editor">
+    <div class="app-shell">
+      <header class="page-header library-header">
         <div class="page-bar">
           <div class="page-bar__identity">
-            <img class="brand-mark" src="/img/logo-mark.png" alt="Link Nest logo" />
+            <img class="brand-mark" src="/img/logo-mark.png" alt="" />
             <span class="page-kicker">Link Nest</span>
           </div>
+          <nav class="segmented-nav" aria-label="Primary">
+            <a class="segmented-nav__item" href="/">Home</a>
+            <a class="segmented-nav__item" href="/browse.html">Browse <span class="nav-badge hidden" id="unread-badge"></span></a>
+            <a class="segmented-nav__item" href="/archive.html">Archive</a>
+          </nav>
           <button type="button" class="button button--ghost button--small button--logout" id="logout-button">Logout</button>
         </div>
-        <nav class="segmented-nav" aria-label="Primary">
-          <a class="segmented-nav__item" href="/">Home</a>
-          <a class="segmented-nav__item" href="/browse.html">Browse <span class="nav-badge hidden" id="unread-badge"></span></a>
-          <a class="segmented-nav__item is-active" href="/editor.html">Add Link</a>
-        </nav>
       </header>
 
-      <main class="page-stack page-stack--airy editor-stack">
-        <section class="surface surface--soft surface--group editor-primary">
-          <div class="section-header section-header--stack">
-            <div>
-              <h2 id="form-heading" class="section-title">Add a link</h2>
-              <p class="section-copy">Tracking parameters are cleaned automatically.</p>
-            </div>
-          </div>
+      <main class="library-main editor-stack">
+        <div class="library-intro">
+          <h1 id="form-heading" class="page-title">Add a link</h1>
+        </div>
 
+        <section class="surface surface--group library-panel editor-primary" aria-labelledby="form-heading">
           <form id="link-form" class="form-stack editor-form">
             <input type="hidden" id="link-id" />
 
             <div class="settings-group">
-              <label class="field-group">
-                <span>URL</span>
+              <div class="field-group">
+                <label for="url">URL</label>
                 <div class="quick-entry quick-entry--stretch">
                   <input type="url" id="url" class="field editor-field editor-url-input" inputmode="url" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://example.com/article" required />
                   <button type="button" id="paste-clipboard" class="button button--ghost editor-action">Paste</button>
-                  <button type="button" id="fetch-title" class="button editor-action">Fetch</button>
+                  <button type="button" id="fetch-title" class="button button--ghost editor-action">Fetch title</button>
                 </div>
-              </label>
+              </div>
 
               <label class="field-group">
                 <span>Title</span>
@@ -74,15 +72,16 @@
                 </label>
               </div>
 
-              <label class="field-group">
-                <span>Remind me</span>
-                <input type="date" id="remind-at" class="field editor-field" />
-              </label>
-
-              <label class="field-group">
-                <span>Tags</span>
-                <input type="text" id="tags" class="field editor-field" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="security, cloud, certification" />
-              </label>
+              <div class="two-up">
+                <label class="field-group">
+                  <span>Remind me</span>
+                  <input type="date" id="remind-at" class="field editor-field" />
+                </label>
+                <label class="field-group">
+                  <span>Tags</span>
+                  <input type="text" id="tags" class="field editor-field" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="security, cloud, certification" />
+                </label>
+              </div>
 
               <label class="field-group">
                 <span>Why save this? (optional)</span>
@@ -131,16 +130,16 @@
             </div>
 
             <div class="form-stack form-stack--tight editor-submit-row">
-              <button type="submit" id="submit-button" class="button editor-submit">Save link</button>
+              <button type="submit" id="submit-button" class="button library-primary editor-submit">Save link</button>
               <p id="form-message" class="form-message" role="status" aria-live="polite" tabindex="-1"></p>
             </div>
           </form>
         </section>
 
-        <section class="surface surface--soft surface--group editor-secondary">
-          <button type="button" id="import-export-toggle" class="import-export-toggle">
-            <span>Import / Export</span>
-            <span class="import-export-toggle__chevron">›</span>
+        <section class="surface surface--group library-panel editor-secondary">
+          <button type="button" id="import-export-toggle" class="import-export-toggle" aria-expanded="false" aria-controls="import-export-body">
+            <span>Import and export</span>
+            <span class="import-export-toggle__chevron" aria-hidden="true">›</span>
           </button>
           <div id="import-export-body" class="form-stack form-stack--tight editor-utility hidden">
             <a class="button button--ghost editor-export" href="/api/links/export">Export JSON</a>

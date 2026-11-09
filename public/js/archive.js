@@ -3,9 +3,12 @@ const state = { links: [], page: 1, totalPages: 1, total: 0, loading: false };
 
 const linkList    = document.getElementById('link-list');
 const template    = document.getElementById('archive-template');
+const archiveEmptyTemplate = document.getElementById('archive-empty-template');
 const totalCount  = document.getElementById('total-count');
 const loadMoreWrap = document.getElementById('load-more-wrap');
 const loadMoreBtn  = document.getElementById('load-more');
+const deleteAllBtn = document.getElementById('delete-all-btn');
+let deletingAll = false;
 
 function safeHost(url) {
   try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return ''; }
@@ -54,8 +57,11 @@ function buildRow(item) {
 function render(items) {
   linkList.innerHTML = '';
   totalCount.textContent = String(state.total);
+  if (deleteAllBtn) deleteAllBtn.disabled = deletingAll || state.total === 0;
 
-  if (!items.length) {
+  if (!items.length && archiveEmptyTemplate) {
+    linkList.appendChild(archiveEmptyTemplate.content.cloneNode(true));
+  } else if (!items.length) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
     empty.textContent = 'No deleted links.';
@@ -105,10 +111,10 @@ if (window.LinkNest.initPullToRefresh) {
   window.LinkNest.initPullToRefresh(() => fetchPage(1, false));
 }
 
-const deleteAllBtn = document.getElementById('delete-all-btn');
 if (deleteAllBtn) {
   deleteAllBtn.addEventListener('click', async () => {
-    if (!state.total) return;
+    if (deletingAll || !state.total) return;
+    deletingAll = true;
     try {
       deleteAllBtn.disabled = true;
       deleteAllBtn.textContent = 'Deleting…';
@@ -130,8 +136,9 @@ if (deleteAllBtn) {
     } catch (err) {
       window.LinkNest.showToast(err.message);
     } finally {
-      deleteAllBtn.disabled = false;
-      deleteAllBtn.textContent = 'Delete all';
+      deletingAll = false;
+      deleteAllBtn.disabled = state.total === 0;
+      deleteAllBtn.textContent = 'Delete all permanently';
     }
   });
 }

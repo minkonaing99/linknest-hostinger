@@ -1033,11 +1033,8 @@ body.is-review-view .library-row.is-swiping {
 }
 .review-complete h3,
 .review-complete p { margin: 0; }
-body.is-review-view #select-toggle-btn,
 body.is-review-view #tag-chips,
-body.is-review-view #scroll-sentinel,
-body.is-review-view #search,
-body.is-review-view .filter-grid { display: none; }
+body.is-review-view #scroll-sentinel { display: none; }
 .library-row__tags { margin-top: 1px; }
 .library-row__tail {
   display: flex;

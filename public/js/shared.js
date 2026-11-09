@@ -128,20 +128,6 @@ window.LinkNest.showToast = function(message, kind = 'error') {
   }, 3000);
 };
 
-async function usefulUpdate(item) {
-  if (String(item?.notes || '').trim()) return { status: 'useful' };
-  const notes = String(window.prompt('What was useful? (optional - Cancel to skip)') || '').trim();
-  if (!notes) return { status: 'useful' };
-  if (notes.length > 10000) {
-    window.LinkNest.showToast('Takeaway must be 10,000 characters or fewer.');
-    return null;
-  }
-  if (!item?.id) return { status: 'useful', notes };
-  return { status: 'useful', takeaway: notes };
-}
-
-window.LinkNest.usefulUpdate = usefulUpdate;
-
 let commandState = {
   items: [], selected: 0, requestId: 0, controller: null, timer: null, busy: false,
 };
@@ -319,7 +305,7 @@ function buildCommandActions() {
   toolbar.className = 'command-actions'; toolbar.hidden = true;
   const actions = [
     ['Open', openCommandItem], ['Add note', () => toggleCommandNote(true)],
-    ['Useful', markCommandItemUseful],
+    ['Useful', () => updateCommandItem({ status: 'useful' }, 'Marked useful')],
     ['Snooze', () => updateCommandItem({ remindAt: new Date(Date.now() + 604800000).toISOString() }, 'Snoozed one week')],
     ['Archive', () => updateCommandItem({}, 'Archived', true)],
   ];
@@ -348,18 +334,6 @@ function buildCommandActions() {
   });
   notePanel.append(note, save, cancel);
   return { toolbar, notePanel };
-}
-
-async function markCommandItemUseful() {
-  const item = commandSelectedItem();
-  if (!item || commandState.busy) return;
-  setCommandBusy(true);
-  try {
-    const fields = await window.LinkNest.usefulUpdate(item);
-    setCommandBusy(false);
-    if (fields) await updateCommandItem(fields, 'Marked useful', false, item);
-  } catch (error) { window.LinkNest.showToast(error.message); }
-  finally { setCommandBusy(false); }
 }
 
 function handleCommandInputKey(event) {

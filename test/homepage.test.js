@@ -7,6 +7,8 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const html = fs.readFileSync(path.join(__dirname, '../views/index.html'), 'utf8');
+const archiveHtml = fs.readFileSync(path.join(__dirname, '../views/archive.html'), 'utf8');
+const archiveScript = fs.readFileSync(path.join(__dirname, '../public/js/archive.js'), 'utf8');
 const editorHtml = fs.readFileSync(path.join(__dirname, '../views/editor.html'), 'utf8');
 const script = fs.readFileSync(path.join(__dirname, '../public/js/home.js'), 'utf8');
 const shared = fs.readFileSync(path.join(__dirname, '../public/js/shared.js'), 'utf8');
@@ -16,6 +18,37 @@ const editorImport = fs.readFileSync(path.join(__dirname, '../public/js/editor-i
 const browse = fs.readFileSync(path.join(__dirname, '../public/js/browse.js'), 'utf8');
 
 describe('homepage workflow', () => {
+  it('shows a labeled URL field and a visible save action in the shared library shell', () => {
+    assert.match(html, /<h1[^>]*>Home<\/h1>/);
+    assert.match(html, /href="\/"[^>]*aria-current="page"/);
+    assert.match(html, /<label[^>]*for="quick-add-url"/);
+    assert.match(html, /<button[^>]*type="submit"[^>]*>Save link<\/button>/);
+  });
+
+  it('gives Archive an empty recovery state and disables permanent deletion before loading', () => {
+    assert.match(archiveHtml, /<h1[^>]*>Archive<\/h1>/);
+    assert.match(archiveHtml, /href="\/archive\.html"[^>]*aria-current="page"/);
+    assert.match(archiveHtml, /id="delete-all-btn"[^>]*disabled/);
+    assert.match(archiveHtml, /<template id="archive-empty-template">[\s\S]*?No deleted links/);
+  });
+
+  it('keeps bulk deletion disabled during a refresh while deletion is in progress', () => {
+    const start = archiveScript.indexOf('function render(items)');
+    const render = archiveScript.slice(start, archiveScript.indexOf('\n}\n', start) + 2);
+    const scope = {
+      state: { total: 1, page: 1, totalPages: 1 },
+      deleteAllBtn: {}, deletingAll: true, totalCount: {}, loadMoreWrap: null, loadMoreBtn: null,
+      linkList: { appendChild() {} },
+      document: { createDocumentFragment: () => ({ appendChild() {} }) },
+      buildRow: () => ({}),
+    };
+    vm.runInNewContext(`${render}\nrender([{}]);`, scope);
+    assert.equal(scope.deleteAllBtn.disabled, true);
+    scope.deletingAll = false;
+    vm.runInNewContext(`${render}\nrender([{}]);`, scope);
+    assert.equal(scope.deleteAllBtn.disabled, false);
+  });
+
   it('orders review, recent links, then secondary measurement', () => {
     const review = html.indexOf('id="review-links"');
     const recent = html.indexOf('id="recent-links"');

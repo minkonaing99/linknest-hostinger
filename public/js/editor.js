@@ -1,7 +1,6 @@
 const { getLinks, setMessage, parseTags, queryParam, apiFetch, findDuplicateCandidates, thailandDateString: thailandDate } = window.LinkNest;
 
 let allowDuplicateOnce = false;
-let loadedItem = null;
 
 const els = {
   form: document.getElementById('link-form'),
@@ -18,7 +17,6 @@ const els = {
   pasteClipboard: document.getElementById('paste-clipboard'),
   submitButton: document.getElementById('submit-button'),
   formHeading: document.getElementById('form-heading'),
-  pageTitle: document.getElementById('page-title'),
   message: document.getElementById('form-message'),
 };
 
@@ -123,7 +121,6 @@ async function loadForEdit() {
   const data = await res.json();
   const item = data.entry;
   if (!item) return;
-  loadedItem = { ...item };
   els.id.value = item.id;
   els.title.value = item.title || '';
   els.url.value = item.url || '';
@@ -134,7 +131,6 @@ async function loadForEdit() {
   els.saveReason.value = item.saveReason || '';
   els.remindAt.value = item.remindAt ? item.remindAt.slice(0, 10) : '';
   els.formHeading.textContent = 'Edit link';
-  els.pageTitle.textContent = 'Edit Link';
   els.submitButton.textContent = 'Save changes';
 }
 
@@ -146,11 +142,6 @@ els.form.addEventListener('submit', async event => {
   allowDuplicateOnce = false;
   setMessage(els.message, editing ? 'Saving changes...' : 'Saving...');
   try {
-    if (draft.status === 'useful' && loadedItem?.status !== 'useful' && !String(loadedItem?.notes || '').trim() && !draft.notes) {
-      const fields = await window.LinkNest.usefulUpdate({ ...loadedItem, id: draft.id, notes: draft.notes });
-      if (!fields) return;
-      draft = { ...draft, notes: fields.takeaway || fields.notes || draft.notes };
-    }
     if (!editing && !navigator.onLine) {
       await window.LinkNestOffline.queueCapture(draft);
       els.form.reset();
@@ -327,6 +318,7 @@ if (importExportToggle && importExportBody) {
     const open = !importExportBody.classList.contains('hidden');
     importExportBody.classList.toggle('hidden', open);
     importExportToggle.classList.toggle('is-open', !open);
+    importExportToggle.setAttribute('aria-expanded', String(!open));
   });
 }
 

@@ -1,5 +1,5 @@
 importScripts('/js/offline-store.js');
-const CACHE = 'linknest-v35';
+const CACHE = 'linknest-v46';
 const PRIVACY_CACHE = 'linknest-offline-privacy';
 
 // Only public assets and the public offline library shell are cached.
@@ -11,6 +11,8 @@ const PRECACHE = [
   '/js/offline-library.js',
   '/js/settings.js',
   '/css/styles.css',
+  '/css/collection.css',
+  '/css/browse.css',
   '/js/shared.js',
   '/js/undo.js',
   '/js/offline-queue.js',

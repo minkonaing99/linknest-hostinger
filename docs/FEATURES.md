@@ -27,8 +27,6 @@ that has not shipped.
 - Require a meaningful decision before removing a link from the queue.
 - Add or edit a note, mark useful, snooze, archive, or open during review.
 - Show the original save reason on home review cards and library rows.
-- Optionally capture a plain-text takeaway when marking a link without a note useful.
-- Skip the takeaway with a blank answer or Cancel without blocking the useful decision.
 - Snooze for one week or until a custom date.
 - Show review position, such as `2 of 5`, and a completion screen.
 - Support keyboard controls: Left archives, Right marks useful, Up snoozes,

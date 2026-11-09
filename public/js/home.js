@@ -13,6 +13,7 @@ const quickAddForm = document.getElementById('quick-add-form');
 const quickAddUrl = document.getElementById('quick-add-url');
 const quickAddReason = document.getElementById('quick-add-reason');
 const quickAddPaste = document.getElementById('quick-add-paste');
+const quickAddSubmit = document.getElementById('quick-add-submit');
 const quickAddMessage = document.getElementById('quick-add-message');
 
 function applyStatusStyles(dot, textEl, status) {
@@ -253,6 +254,7 @@ async function loadHome() {
 }
 
 async function saveQuickAdd(rawUrl) {
+  if (quickAddUrl.disabled) return;
   if (!rawUrl) {
     setMessage(quickAddMessage, 'Paste a URL first.', 'error');
     return;
@@ -262,6 +264,7 @@ async function saveQuickAdd(rawUrl) {
   quickAddUrl.disabled = true;
   quickAddReason.disabled = true;
   quickAddPaste.disabled = true;
+  if (quickAddSubmit) quickAddSubmit.disabled = true;
   setMessage(quickAddMessage, 'Fetching title...');
 
   try {
@@ -292,6 +295,7 @@ async function saveQuickAdd(rawUrl) {
     quickAddUrl.disabled = false;
     quickAddReason.disabled = false;
     quickAddPaste.disabled = false;
+    if (quickAddSubmit) quickAddSubmit.disabled = false;
   }
 }
 

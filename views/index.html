@@ -13,36 +13,46 @@
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/img/apple-touch-icon.png" />
     <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/collection.css" />
   </head>
-  <body data-page="home">
-    <div class="app-shell app-shell--narrow">
-      <header class="page-header">
+  <body class="collection-page" data-page="home">
+    <div class="app-shell">
+      <header class="page-header library-header">
         <div class="page-bar">
           <div class="page-bar__identity">
-            <img class="brand-mark" src="/img/logo-mark.png" alt="Link Nest logo" />
+            <img class="brand-mark" src="/img/logo-mark.png" alt="" />
             <span class="page-kicker">Link Nest</span>
           </div>
+          <nav class="segmented-nav" aria-label="Primary">
+            <a class="segmented-nav__item is-active" href="/" aria-current="page">Home</a>
+            <a class="segmented-nav__item" href="/browse.html">Browse <span class="nav-badge hidden" id="unread-badge"></span></a>
+            <a class="segmented-nav__item" href="/archive.html">Archive</a>
+          </nav>
           <button type="button" class="button button--ghost button--small button--logout" id="logout-button">Logout</button>
         </div>
-        <nav class="segmented-nav" aria-label="Primary">
-          <a class="segmented-nav__item is-active" href="/">Home</a>
-          <a class="segmented-nav__item" href="/browse.html">Browse <span class="nav-badge hidden" id="unread-badge"></span></a>
-          <a class="segmented-nav__item" href="/editor.html">Add Link</a>
-        </nav>
       </header>
 
-      <main class="page-stack page-stack--airy">
-        <section class="surface surface--soft surface--group">
-          <div class="section-header section-header--stack">
+      <main class="library-main home-layout">
+        <div class="library-intro">
+          <div class="page-heading">
+            <h1 class="page-title">Home</h1>
+            <p class="page-subtitle">Save what matters. Come back when it’s useful.</p>
+          </div>
+        </div>
+
+        <section class="surface surface--group library-panel home-capture" aria-labelledby="capture-heading">
+          <div class="section-header">
             <div>
-              <h2 class="section-title">Quick Add</h2>
-              <p class="section-copy">Paste a URL and save it with an auto-fetched title.</p>
+              <h2 class="section-title" id="capture-heading">Quick capture</h2>
             </div>
+            <a class="button button--ghost button--small" href="/editor.html">Open link editor</a>
           </div>
           <form id="quick-add-form" class="form-stack form-stack--tight">
+            <label for="quick-add-url">Link URL</label>
             <div class="quick-entry">
               <input id="quick-add-url" class="field quick-add-row__input" type="url" inputmode="url" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://example.com/article" required />
-              <button type="button" id="quick-add-paste" class="button button--ghost quick-add-row__button">Paste</button>
+              <button type="submit" id="quick-add-submit" class="button library-primary">Save link</button>
+              <button type="button" id="quick-add-paste" class="button button--ghost quick-add-row__button">Paste and save</button>
             </div>
             <details class="quick-add-reason">
               <summary>Why save this? (optional)</summary>
@@ -55,32 +65,30 @@
           </form>
         </section>
 
-        <section class="surface surface--soft surface--group" aria-labelledby="review-heading">
+        <section class="surface surface--group library-panel home-links" aria-labelledby="review-heading">
           <div class="section-header">
             <div>
               <div class="title-with-badge">
                 <h2 class="section-title" id="review-heading">Review</h2>
                 <span class="review-badge hidden" id="review-badge" aria-label="Review items pending" aria-live="polite"></span>
               </div>
-              <p class="section-copy">Due reminders first, then oldest untouched links.</p>
             </div>
             <a class="button button--ghost" href="/browse.html?review=1">Review all</a>
           </div>
           <div id="review-links" class="recent-list" aria-live="polite"></div>
         </section>
 
-        <section class="surface surface--soft surface--group" aria-labelledby="recent-heading">
+        <section class="surface surface--group library-panel home-links" aria-labelledby="recent-heading">
           <div class="section-header">
             <div>
               <h2 class="section-title" id="recent-heading">Recently saved</h2>
-              <p class="section-copy">Confirm captures and correct details quickly.</p>
             </div>
             <a class="button button--ghost" href="/browse.html">Open library</a>
           </div>
           <div id="recent-links" class="recent-list"></div>
         </section>
 
-        <section id="weekly-summary" class="surface surface--soft surface--group insight-section" aria-labelledby="weekly-heading">
+        <section id="weekly-summary" class="home-insights insight-section" aria-labelledby="weekly-heading">
           <div class="section-header section-header--compact">
             <div>
               <h2 class="section-title" id="weekly-heading">This week</h2>

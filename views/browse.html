@@ -13,74 +13,108 @@
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/img/apple-touch-icon.png" />
     <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/collection.css" />
+    <link rel="stylesheet" href="/css/browse.css" />
   </head>
-  <body data-page="browse">
-    <div class="app-shell app-shell--narrow">
-      <header class="page-header">
+  <body class="collection-page" data-page="browse">
+    <div class="app-shell">
+      <header class="page-header library-header">
         <div class="page-bar">
           <div class="page-bar__identity">
-            <img class="brand-mark" src="/img/logo-mark.png" alt="Link Nest logo" />
+            <img class="brand-mark" src="/img/logo-mark.png" alt="" />
             <span class="page-kicker">Link Nest</span>
           </div>
+          <nav class="segmented-nav" aria-label="Primary">
+            <a class="segmented-nav__item" href="/">Home</a>
+            <a class="segmented-nav__item is-active" href="/browse.html" aria-current="page">Browse <span class="nav-badge hidden" id="unread-badge"></span></a>
+            <a class="segmented-nav__item" href="/archive.html">Archive</a>
+          </nav>
           <button type="button" class="button button--ghost button--small button--logout" id="logout-button">Logout</button>
         </div>
-        <nav class="segmented-nav" aria-label="Primary">
-          <a class="segmented-nav__item" href="/">Home</a>
-          <a class="segmented-nav__item is-active" href="/browse.html">Browse <span class="nav-badge hidden" id="unread-badge"></span></a>
-          <a class="segmented-nav__item" href="/editor.html">Add Link</a>
-        </nav>
       </header>
 
-      <main class="page-stack page-stack--airy">
-        <section class="surface surface--soft surface--group">
-          <div class="filter-stack">
-            <input id="search" class="field field--search" type="search" enterkeyhint="search" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Search title, notes, host, tags, URL" />
-            <div class="filter-grid">
-              <select id="status-filter" class="field field--select">
-                <option value="all">All statuses</option>
-                <option value="saved">Saved</option>
-                <option value="unread">Unread</option>
-                <option value="useful">Useful</option>
-                <option value="archived">Archived</option>
-              </select>
-              <select id="sort-mode" class="field field--select">
-                <option value="recent">Most recent</option>
-                <option value="date-asc">Oldest first</option>
-                <option value="title-asc">Title A-Z</option>
-                <option value="title-desc">Title Z-A</option>
-              </select>
-              <a class="button" href="/editor.html">Add new</a>
-            </div>
-            <div class="quick-filter-row">
-              <button type="button" class="button button--ghost button--small quick-filter-btn" data-filter="remind">Due to revisit</button>
-              <button type="button" class="button button--ghost button--small quick-filter-btn" data-filter="review">Review queue</button>
-              <button type="button" class="button button--ghost button--small quick-filter-btn" data-filter="useful-review">Useful revisit</button>
-              <button type="button" class="button button--ghost button--small quick-filter-btn" data-filter="age">Older than 90 days</button>
-              <button type="button" class="button button--ghost button--small quick-filter-btn" data-filter="youtube">YouTube</button>
-            </div>
+      <main class="library-main">
+        <div class="library-intro">
+          <div class="page-heading">
+            <h1 class="page-title">Library</h1>
+            <p class="page-subtitle">Find saved links and revisit what matters.</p>
           </div>
-        </section>
+          <a class="button library-add" href="/editor.html"><span aria-hidden="true">+</span> Add link</a>
+        </div>
 
-        <section class="surface surface--soft surface--group">
-          <div class="section-header">
-            <div class="section-header__left">
-              <h2 class="section-title">Library</h2>
-              <p class="section-copy" id="library-counts"><span id="visible-count">0</span> loaded of <span id="total-count">0</span> total</p>
-              <p id="review-progress" class="section-copy hidden" role="status" aria-live="polite"></p>
+        <div class="surface surface--group library-workspace">
+          <div class="library-toolbar">
+            <div class="library-search" role="search">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              <input id="search" class="field field--search" type="search" aria-label="Search saved links" enterkeyhint="search" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Search links, notes, and tags" />
             </div>
-            <div class="browse-actions">
-              <button type="button" id="export-view-btn" class="button button--ghost" disabled>Export current view</button>
-              <button type="button" id="select-toggle-btn" class="button button--ghost">Select</button>
-              <a class="button button--ghost" href="/archive.html">Archive</a>
+            <div class="filter-grid">
+              <div>
+                <label for="status-filter">Status</label>
+                <select id="status-filter" class="field field--select">
+                  <option value="all">All statuses</option>
+                  <option value="saved">Saved</option>
+                  <option value="unread">Unread</option>
+                  <option value="useful">Useful</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </div>
+              <div>
+                <label for="sort-mode">Sort by</label>
+                <select id="sort-mode" class="field field--select">
+                  <option value="recent">Most recent</option>
+                  <option value="date-asc">Oldest first</option>
+                  <option value="title-asc">Title A-Z</option>
+                  <option value="title-desc">Title Z-A</option>
+                </select>
+              </div>
             </div>
           </div>
-          <p id="export-message" class="form-message" role="status" aria-live="polite"></p>
-          <div id="tag-chips" class="tag-chips hidden"></div>
-          <div id="link-list" class="list-stack list-stack--tight list-stack--rows"></div>
-          <div id="scroll-sentinel"></div>
-        </section>
+          <aside class="library-filters" aria-label="Library filters">
+            <div class="quick-filter-row" role="group" aria-label="Quick filters">
+              <button type="button" class="button button--ghost button--small quick-filter-btn" aria-pressed="false" data-filter="remind">Due to revisit</button>
+              <button type="button" class="button button--ghost button--small quick-filter-btn" aria-pressed="false" data-filter="review">Review queue</button>
+              <button type="button" class="button button--ghost button--small quick-filter-btn" aria-pressed="false" data-filter="age">Older than 90 days</button>
+              <button type="button" class="button button--ghost button--small quick-filter-btn" aria-pressed="false" data-filter="youtube">YouTube</button>
+            </div>
+          </aside>
+
+          <section class="library-results" aria-labelledby="library-results-title">
+            <div class="section-header">
+              <div class="section-header__left">
+                <h2 class="section-title" id="library-results-title">Saved links</h2>
+                <p class="section-copy" id="library-counts"><span id="visible-count">0</span> of <span id="total-count">0</span> links</p>
+                <p id="review-progress" class="section-copy hidden" role="status" aria-live="polite"></p>
+              </div>
+              <div class="browse-actions">
+                <button type="button" id="export-view-btn" class="button button--ghost" disabled>Export current view</button>
+                <button type="button" id="select-toggle-btn" class="button button--ghost">Select</button>
+              </div>
+            </div>
+            <p id="export-message" class="form-message" role="status" aria-live="polite"></p>
+            <div id="tag-chips" class="tag-chips hidden"></div>
+            <div id="link-list" class="list-stack list-stack--tight list-stack--rows"></div>
+            <div id="scroll-sentinel"></div>
+          </section>
+        </div>
       </main>
     </div>
+
+    <template id="library-empty-template">
+      <div class="library-empty">
+        <div class="library-empty__art" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round">
+            <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
+          </svg>
+        </div>
+        <h3>No links in this view yet</h3>
+        <p>Save an article, a reference, or anything worth coming back to.</p>
+        <a class="button button--ghost" href="/editor.html">Save a link</a>
+      </div>
+    </template>
 
     <div id="bulk-bar" class="bulk-bar hidden">
       <span id="bulk-count" class="bulk-bar__count">0 selected</span>
@@ -149,6 +183,7 @@
           <div class="row-menu">
             <button type="button" class="row-menu__trigger" aria-label="More actions" aria-expanded="false">•••</button>
             <div class="row-menu__popover hidden">
+              <button type="button" class="row-menu__item copy-link-button hidden">Copy link</button>
               <button type="button" class="row-menu__item favorite-button">Add to Favorites</button>
               <a class="row-menu__item edit-link" href="#">Add note</a>
               <button type="button" class="row-menu__item mark-useful-button">Mark useful</button>
